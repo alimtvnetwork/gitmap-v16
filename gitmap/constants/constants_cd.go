@@ -45,7 +45,17 @@ const (
 )
 
 // CD shell wrapper functions — installed by setup/completion.
-const CDFuncMarker = "# gitmap shell wrapper v2"
+// Bump the version suffix whenever the wrapper bodies change so the
+// installer replaces the previous managed block instead of leaving stale
+// definitions in the user's profile.
+const (
+	CDFuncMarker    = "# gitmap shell wrapper v3"
+	CDFuncEndMarker = "# end gitmap shell wrapper"
+	// CDFuncMarkerPrefix matches every historical marker line so the
+	// installer can find and remove old managed blocks regardless of
+	// version suffix.
+	CDFuncMarkerPrefix = "# gitmap shell wrapper"
+)
 
 // CD shell wrapper env var — set by wrappers so the binary can detect them.
 const (
