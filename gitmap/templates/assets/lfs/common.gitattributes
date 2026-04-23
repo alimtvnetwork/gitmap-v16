@@ -3,8 +3,8 @@
 # lang: common
 # version: 1
 #
-# IMPORTANT: *.svg is NOT here on purpose. SVG is XML and diffs cleanly.
-# It belongs in attributes/common.gitattributes as `text eol=lf`.
+# IMPORTANT: SVG is NOT tracked here on purpose. SVG is XML and diffs
+# cleanly. It belongs in attributes/common.gitattributes as text eol=lf.
 
 # Raster images
 *.png   filter=lfs diff=lfs merge=lfs -text

@@ -235,11 +235,22 @@ func walkParallel(root string, exclude map[string]bool, workers int, progress fu
 // back onto the queue. Errors short-circuit further enqueues for THIS
 // dir but do not stop other workers — the first error is captured and
 // returned at the end.
+//
+// Repo-detection is two-pass on purpose: we MUST scan all entries for a
+// `.git` child first, and only descend into siblings if none was found.
+// Otherwise a single-pass loop would enqueue earlier-listed subdirs
+// (e.g. `outer/submodule/`) before discovering `.git` later in the same
+// readdir, violating the "do not descend into a discovered repo" rule.
 func (st *scanState) processDir(dir string) {
 	entries, err := os.ReadDir(dir)
 	st.dirsWalked.Add(1)
 	if err != nil {
 		st.recordErr(err)
+
+		return
+	}
+	if st.containsGitDir(entries) {
+		st.recordRepo(dir)
 
 		return
 	}
@@ -251,17 +262,24 @@ func (st *scanState) processDir(dir string) {
 	}
 }
 
-// handleSubdir applies the exclude filter and the repo-detection rule,
-// then either records the parent as a repo or enqueues the subdir for
-// further walking.
+// containsGitDir reports whether any entry is a `.git` directory — the
+// signal that `dir` itself is a repo root.
+func (st *scanState) containsGitDir(entries []os.DirEntry) bool {
+	for _, entry := range entries {
+		if entry.IsDir() && entry.Name() == constants.ExtGit {
+			return true
+		}
+	}
+
+	return false
+}
+
+// handleSubdir applies the exclude filter and enqueues the subdir for
+// further walking. `.git` is handled by the caller (processDir) so it is
+// never seen here.
 func (st *scanState) handleSubdir(parent string, entry os.DirEntry) {
 	name := entry.Name()
 	if st.exclude[name] {
-		return
-	}
-	if name == constants.ExtGit {
-		st.recordRepo(parent)
-
 		return
 	}
 	st.enqueue(filepath.Join(parent, name))
