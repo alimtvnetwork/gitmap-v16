@@ -534,20 +534,63 @@ jobs:
 
       - name: go test ./... (every package)
         if: needs.sha-check.outputs.already-built != 'true'
+        id: full-test
         working-directory: gitmap
-        run: go test ./... -count=1
+        shell: bash
+        run: |
+          set -uo pipefail
+          mkdir -p /tmp/full-suite
+          set +e
+          go test ./... -count=1 2>&1 | tee /tmp/full-suite/test-output.txt
+          rc=${PIPESTATUS[0]}
+          set -e
+          echo "exit_code=$rc" >> "$GITHUB_OUTPUT"
+          # Tally PASS/FAIL package lines for the PR summary comment.
+          passed=$(grep -cE '^ok[[:space:]]' /tmp/full-suite/test-output.txt || true)
+          failed=$(grep -cE '^FAIL[[:space:]]' /tmp/full-suite/test-output.txt || true)
+          echo "packages_passed=$passed" >> "$GITHUB_OUTPUT"
+          echo "packages_failed=$failed" >> "$GITHUB_OUTPUT"
+          exit "$rc"
 
       - name: golangci-lint (strict, full suite)
-        if: needs.sha-check.outputs.already-built != 'true'
-        uses: golangci/golangci-lint-action@v6
+        if: |
+          always() &&
+          needs.sha-check.outputs.already-built != 'true' &&
+          steps.full-test.conclusion != 'skipped'
+        id: full-lint
+        working-directory: gitmap
+        shell: bash
+        # Run the linter directly (instead of golangci-lint-action@v6) so we
+        # can capture stdout into an artifact for the PR summary AND keep
+        # the step's exit code as the gate. The linter binary itself is
+        # cached by the previous setup-go layer + ~/.cache/golangci-lint.
+        run: |
+          set -uo pipefail
+          mkdir -p /tmp/full-suite
+          # Install pinned linter version (mirrors lint-baseline-diff job).
+          curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh \
+            | sh -s -- -b "$(go env GOPATH)/bin" v1.64.8
+          export PATH="$(go env GOPATH)/bin:$PATH"
+          set +e
+          golangci-lint run ./... \
+            --timeout=5m \
+            --max-issues-per-linter=0 \
+            --max-same-issues=0 2>&1 | tee /tmp/full-suite/lint-output.txt
+          rc=${PIPESTATUS[0]}
+          set -e
+          echo "exit_code=$rc" >> "$GITHUB_OUTPUT"
+          # Count linter issues for the PR summary (lines like "path:line:col: msg (linter)").
+          issues=$(grep -cE '^[^[:space:]].+:[0-9]+:[0-9]+:' /tmp/full-suite/lint-output.txt || true)
+          echo "issue_count=$issues" >> "$GITHUB_OUTPUT"
+          exit "$rc"
+
+      - name: Upload full-suite outputs
+        if: always() && needs.sha-check.outputs.already-built != 'true'
+        uses: actions/upload-artifact@v4
         with:
-          version: v1.64.8
-          working-directory: gitmap
-          # --max-issues-per-linter=0 / --max-same-issues=0 disable the
-          # default truncation in .golangci.yml so EVERY finding (not
-          # just the first 50) blocks the merge. Belt-and-suspenders
-          # vs. the lint job above, which honors the truncation cap.
-          args: --timeout=5m --max-issues-per-linter=0 --max-same-issues=0
+          name: full-suite-outputs
+          path: /tmp/full-suite/
+          retention-days: 14
 
   test-summary:
     name: Test Summary
