@@ -19,6 +19,8 @@ func Replay(plan ReplayPlan, opts Options) (ReplayResult, error) {
 	if opts.DryRun {
 		return ReplayResult{}, nil
 	}
+	stopGuard := installInterruptGuard(plan.SourceDir, plan.SourceHEAD, opts.LogPrefix)
+	defer stopGuard()
 	defer func() { _ = checkoutRef(plan.SourceDir, plan.SourceHEAD) }()
 
 	res := ReplayResult{}
