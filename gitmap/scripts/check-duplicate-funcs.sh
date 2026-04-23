@@ -68,9 +68,21 @@ buildTagBucket() {
     return
   fi
   # Look for an explicit go:build directive on the first ~10 lines.
+  # Honor negation: `//go:build !windows` is mutually exclusive with
+  # `//go:build windows`, so route it to a "not-windows" bucket so the
+  # two files DON'T collide. Without this, console_other.go (!windows)
+  # and console_windows.go would falsely flag as a duplicate.
   local tag_line
   tag_line=$(head -n 10 "$file" | grep -E '^//go:build ' | head -n 1 || true)
   if [ -n "$tag_line" ]; then
+    if [[ "$tag_line" =~ \!${goos_re} ]]; then
+      printf 'not-%s' "${BASH_REMATCH[1]}"
+      return
+    fi
+    if [[ "$tag_line" =~ \!${goarch_re} ]]; then
+      printf 'not-%s' "${BASH_REMATCH[1]}"
+      return
+    fi
     if [[ "$tag_line" =~ $goos_re ]]; then
       printf '%s' "${BASH_REMATCH[1]}"
       return
