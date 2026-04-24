@@ -1,5 +1,44 @@
 # Changelog
 
+## v3.110.0 — (2026-04-24) — Plan 05 Phase 2 closeout: `gitmap templates init` (alias `ti`)
+
+### Verified
+
+- **Phase 2 already shipped** — `gitmap templates init <lang> [<lang>...]
+  [--lfs] [--dry-run] [--force]` (alias `ti`) is fully implemented in
+  `gitmap/cmd/templatesinit.go` (297 lines), wired into the dispatcher in
+  `templatescli.go`, covered by 9 unit tests in
+  `gitmap/cmd/templatesinit_test.go`, and documented in
+  `gitmap/helptext/templates-init.md` (133 lines).
+- **Behavior:** per lang, `ignore/<lang>` is required (hard-fail with hint
+  pointing at `templates list`); `attributes/<lang>` is optional with a
+  dim soft-skip notice (matches embed corpus reality where some langs
+  lack an attributes file). `--lfs` adds a single `lfs/common` step
+  targeting `.gitattributes` — same marker tag as `add lfs-install` so
+  the two are interchangeable.
+- **Idempotency:** re-running `init <lang>` produces "unchanged" lines.
+  Running `add ignore <lang>` after `init <lang>` is also a no-op (same
+  marker tag `ignore/<lang>`). Confirmed by inspection of `merge.go`
+  block-tag plumbing.
+- **UX deviations from original plan:** positional `<lang>...` chosen
+  over `--lang <csv>` (more natural for a scaffolder), and `--cwd`
+  deferred (`cd && gitmap templates init …` covers it).
+
+### Docs site
+
+- Added `templates init` entry to `src/data/commands.ts` so the docs
+  site command browser surfaces it alongside `templates list`,
+  `templates show`, and `templates diff`.
+
+### Plan status
+
+- Plan 05: Phase 0 ✅, Phase 1 ✅, Phase 2 ✅, Phase 3 ✅, Phase 4 ⏳
+  (only README snippet remains), Phase 5 ⏳ (QA + tag).
+
+### Bumped
+
+- `constants.Version` → `3.110.0` (docs + plan closeout, no code changes).
+
 ## v3.109.0 — (2026-04-24) — Plan 05 Phase 1 closeout: language corpus verified
 
 ### Verified
