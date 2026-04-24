@@ -59,9 +59,9 @@ const InstallBlock = ({ command, tabs }: InstallBlockProps) => {
                   ? {
                       borderWidth: "1px",
                       borderStyle: "solid",
-                      borderColor: "hsl(var(--accent-success-border))",
-                      backgroundColor: "hsl(var(--accent-success-bg))",
-                      color: "hsl(var(--accent-success))",
+                      borderColor: "hsl(var(--primary) / 0.6)",
+                      backgroundColor: "hsl(var(--primary) / 0.12)",
+                      color: "hsl(var(--primary))",
                     }
                   : undefined
               }
