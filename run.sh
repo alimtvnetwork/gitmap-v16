@@ -483,6 +483,14 @@ build_binary() {
     abs_repo_root=$(cd "$REPO_ROOT" && pwd)
     local ldflags="-X 'github.com/alimtvnetwork/gitmap-v7/gitmap/constants.RepoPath=$abs_repo_root'"
 
+    # Pre-build provenance stamp — prints commit SHA, branch, declared
+    # version, and a fingerprint of the historically-problematic cmd/
+    # files so a stale checkout is obvious in the build log before
+    # `go build` runs. Non-fatal: stamp failures never block the build.
+    if [ -f "$REPO_ROOT/scripts/build-stamp.sh" ]; then
+        bash "$REPO_ROOT/scripts/build-stamp.sh" || true
+    fi
+
     if ! go build -ldflags "$ldflags" -o "$out_path" . 2>&1; then
         write_fail "Go build failed"
         exit 1

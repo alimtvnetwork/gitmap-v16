@@ -697,6 +697,15 @@ function Build-Binary {
         $absRepoRoot = (Resolve-Path $RepoRoot).Path
         $ldflags = "-X 'github.com/alimtvnetwork/gitmap-v7/gitmap/constants.RepoPath=$absRepoRoot'"
 
+        # Pre-build provenance stamp — prints commit SHA, branch, declared
+        # version, and a fingerprint of the historically-problematic cmd/
+        # files so a stale checkout is obvious in the build log before
+        # `go build` runs. Non-fatal: stamp failures never block the build.
+        $stampScript = Join-Path $RepoRoot 'scripts\build-stamp.ps1'
+        if (Test-Path $stampScript) {
+            try { & $stampScript } catch { Write-Warn "build-stamp failed: $_" }
+        }
+
         $prevPref = $ErrorActionPreference
         $ErrorActionPreference = "Continue"
         $buildOutput = go build -ldflags $ldflags -o $outPath . 2>&1
