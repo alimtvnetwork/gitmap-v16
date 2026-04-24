@@ -1,5 +1,20 @@
 # Changelog
 
+## v3.118.0 — (2026-04-24) — `gitmap clone <url>` cds into the cloned folder
+
+Single-URL `gitmap clone <url>` now writes the cloned folder's absolute
+path to the shell-handoff sentinel, so the wrapper function chdirs the
+parent shell into the new repo — same UX as `gitmap cn` and `gitmap cd`.
+
+Multi-URL `clone` (comma-list or `clone url1 url2 ...`) deliberately
+skips handoff: the destination is ambiguous when N>1, and silently
+picking one would surprise users running batch clones.
+
+File: `gitmap/cmd/clone.go` — one `WriteShellHandoff(absPath)` call
+inside `executeDirectClone`, placed after the DB upsert + Desktop
+registration but before the VS Code open so the cd happens regardless
+of whether VS Code is installed.
+
 ## v3.117.0 — (2026-04-24) — `gitmap cn vX <folder>` + `gitmap cn <folder>` (defaults to v++); hero card UI polish
 
 ### CLI: clone-next folder-arg dispatch
