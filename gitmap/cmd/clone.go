@@ -72,14 +72,38 @@ func runClone(args []string) {
 
 // shouldUseMultiClone returns true when the positional args describe a
 // batch of URLs rather than a single source + optional folder name.
+// Three triggers (any one is sufficient):
+//  1. Any positional arg contains a list separator (`,` or `;`) — the
+//     user explicitly listed URLs, even if PowerShell didn't pre-split.
+//  2. 2+ positional args AND any arg beyond the first parses as a URL
+//     — covers PowerShell's silent comma-split into separate argv slots
+//     AND the `clone url1 url2 url3` space-only form.
+//  3. The first arg flattens (after sanitisation) to 2+ valid URLs —
+//     covers `clone "url1,url2"` where the whole list is one token.
 func shouldUseMultiClone(cf CloneFlags) bool {
 	for _, p := range cf.Positional {
-		if strings.Contains(p, ",") {
+		if strings.ContainsAny(p, urlListSeparators) {
 			return true
 		}
 	}
-	if len(cf.Positional) >= 2 && isDirectURL(cf.Positional[0]) && isDirectURL(cf.Positional[1]) {
-		return true
+	if len(cf.Positional) >= 2 {
+		for _, p := range cf.Positional[1:] {
+			if isDirectURL(sanitizeURLToken(p)) {
+				return true
+			}
+		}
+	}
+	if len(cf.Positional) >= 1 {
+		flat := flattenURLArgs(cf.Positional[:1])
+		urlCount := 0
+		for _, u := range flat {
+			if isDirectURL(u) {
+				urlCount++
+			}
+		}
+		if urlCount >= 2 {
+			return true
+		}
 	}
 
 	return false
@@ -124,12 +148,25 @@ func runCloneMulti(cf CloneFlags) {
 }
 
 // isDirectURL returns true when source is a git URL (not a file path).
+// Accepts HTTPS, HTTP, SSH (`ssh://`), and SSH-shorthand (`git@host:owner/repo`).
+// Kept in lockstep with isLikelyURL in rootflags.go so folder-name
+// disambiguation and URL classification never disagree.
 func isDirectURL(source string) bool {
 	lower := strings.ToLower(source)
-
-	return strings.HasPrefix(lower, constants.PrefixHTTPS) ||
+	if strings.HasPrefix(lower, constants.PrefixHTTPS) ||
 		strings.HasPrefix(lower, "http://") ||
-		strings.HasPrefix(lower, constants.PrefixSSH)
+		strings.HasPrefix(lower, constants.PrefixSSH) {
+		return true
+	}
+	// SSH shorthand: git@host:owner/repo(.git)?  — must contain `:` after `@`.
+	if strings.HasPrefix(lower, "git@") {
+		at := strings.Index(lower, "@")
+		colon := strings.Index(lower[at:], ":")
+
+		return colon > 0
+	}
+
+	return false
 }
 
 // repoNameFromURL derives the repository name from a clone URL.

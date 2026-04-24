@@ -10,13 +10,24 @@ import (
 	"github.com/alimtvnetwork/gitmap-v7/gitmap/constants"
 )
 
-// flattenURLArgs splits each positional arg on commas, trims whitespace,
-// drops empties, and returns the ordered, deduplicated list of URLs.
-// Both space- and comma-separated forms are accepted, mixable:
+// urlListSeparators are the characters that split a single positional
+// arg into multiple URLs. Comma is the documented form; semicolon is
+// accepted because (a) bash users reach for it naturally and (b) when
+// PowerShell sees an unquoted `;` it terminates the statement, so by
+// the time we receive a `;`-bearing token the user almost certainly
+// meant a list (single quoted form: `clone 'a;b;c'`).
+const urlListSeparators = ",;"
+
+// flattenURLArgs splits each positional arg on commas/semicolons,
+// sanitizes each segment (BOM, smart quotes, zero-width chars,
+// surrounding whitespace), drops empties, and returns the ordered,
+// deduplicated list of URLs. Both space- and list-separated forms
+// are accepted, mixable:
 //
 //	gitmap clone a b c          → [a, b, c]
 //	gitmap clone a,b,c          → [a, b, c]
-//	gitmap clone a,b c d,e      → [a, b, c, d, e]
+//	gitmap clone "a;b;c"        → [a, b, c]   (PowerShell quoted)
+//	gitmap clone a,b c d;e      → [a, b, c, d, e]
 //
 // Dedup is case-insensitive with trailing ".git" normalised; first-seen wins.
 // See: spec/01-app/104-clone-multi.md and mem://features/clone-multi.
@@ -25,8 +36,8 @@ func flattenURLArgs(args []string) []string {
 	seen := make(map[string]struct{}, len(args))
 
 	for _, raw := range args {
-		for _, part := range strings.Split(raw, ",") {
-			cleaned := strings.TrimSpace(part)
+		for _, part := range splitOnURLSeparators(raw) {
+			cleaned := sanitizeURLToken(part)
 			if cleaned == "" {
 				continue
 			}
@@ -41,6 +52,79 @@ func flattenURLArgs(args []string) []string {
 	}
 
 	return out
+}
+
+// splitOnURLSeparators splits on every rune in urlListSeparators.
+// We deliberately do not use strings.Split because we want both
+// `,` and `;` to act as boundaries simultaneously.
+func splitOnURLSeparators(raw string) []string {
+	return strings.FieldsFunc(raw, func(r rune) bool {
+		return strings.ContainsRune(urlListSeparators, r)
+	})
+}
+
+// sanitizeURLToken removes characters that survive copy-paste from
+// browsers, docs, and terminals but break URL parsing downstream:
+//   - U+FEFF (BOM) — Windows clipboard frequently injects this
+//   - U+200B…U+200D (zero-width spaces) — copied from rich-text sources
+//   - Smart quotes (U+2018, U+2019, U+201C, U+201D) — Word/Slack auto-fix
+//   - Surrounding ASCII whitespace and matched ASCII quotes/backticks
+//
+// A token that is nothing but separators / quotes / whitespace
+// returns "" so the caller drops it instead of producing a bogus
+// "invalid URL" warning for what was really a typo.
+func sanitizeURLToken(s string) string {
+	cleaned := stripInvisibleRunes(s)
+	cleaned = replaceSmartQuotes(cleaned)
+	cleaned = strings.TrimSpace(cleaned)
+	cleaned = trimMatchingWrappers(cleaned)
+	cleaned = strings.TrimSpace(cleaned)
+	cleaned = strings.Trim(cleaned, urlListSeparators)
+
+	return strings.TrimSpace(cleaned)
+}
+
+// stripInvisibleRunes drops BOM and zero-width characters anywhere
+// in the string. These never belong in a URL.
+func stripInvisibleRunes(s string) string {
+	var b strings.Builder
+	b.Grow(len(s))
+	for _, r := range s {
+		switch r {
+		case '\uFEFF', '\u200B', '\u200C', '\u200D':
+			continue
+		}
+		b.WriteRune(r)
+	}
+
+	return b.String()
+}
+
+// replaceSmartQuotes folds curly quotes back to ASCII so that
+// trimMatchingWrappers can strip them in one pass.
+func replaceSmartQuotes(s string) string {
+	r := strings.NewReplacer(
+		"\u2018", "'", "\u2019", "'",
+		"\u201C", "\"", "\u201D", "\"",
+	)
+
+	return r.Replace(s)
+}
+
+// trimMatchingWrappers strips one matched pair of `'`, `"`, or backticks
+// surrounding the token. Only matched pairs are stripped — a stray
+// trailing quote stays, so the caller still sees a recognisably broken
+// URL rather than a silently "fixed" one.
+func trimMatchingWrappers(s string) string {
+	if len(s) < 2 {
+		return s
+	}
+	first, last := s[0], s[len(s)-1]
+	if first == last && (first == '\'' || first == '"' || first == '`') {
+		return s[1 : len(s)-1]
+	}
+
+	return s
 }
 
 // normaliseURLKey lowercases and trims a trailing ".git" so that

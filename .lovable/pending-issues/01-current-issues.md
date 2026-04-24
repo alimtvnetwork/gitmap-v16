@@ -260,3 +260,30 @@
   3. Confirmation prompts are mandatory for any DB-mutating command unless `--yes` is explicitly passed.
   4. Path classifiers (`isURLShapedTarget`, `hasIllegalPathChar`) belong in the cleanup command, not in the clone path — the clone path already rejects bad inputs at the entry point (issues #11/#12); the cleanup command exists specifically to handle rows that predate those guards.
 
+## 17 — Robust multi-URL clone parsing (PowerShell + bash) (FIXED v3.89.0)
+- **Status**: Fixed in v3.89.0
+- **Reported**: Follow-up to #11/#16. Three real failure modes still bit users after the v3.80 multi-URL feature shipped:
+  1. `gitmap clone url1;url2` in bash (bash users naturally reach for `;`) produced a single ugly task and a "command not found" hint because semicolon wasn't a list separator.
+  2. Copy-pasting a URL from PowerShell history or the browser carried a U+FEFF BOM or a U+200B zero-width space and produced a phantom invalid-URL warning.
+  3. `gitmap clone url1 url2 url3` (space-only, no commas) cloned only the first two because `shouldUseMultiClone` only sampled `Positional[0]` and `Positional[1]`.
+  4. `gitmap clone git@github.com:foo/bar.git` was misclassified as a file path by `isDirectURL` (which only knew `https://`/`http://`/`ssh://`) even though `isLikelyURL` already accepted it — silent disagreement between two helpers that should have been in lockstep.
+- **Root Cause**:
+  1. `flattenURLArgs` only split on `,` — no `;` support; no sanitisation of invisible runes; no smart-quote folding; no leading/trailing-separator stripping.
+  2. `shouldUseMultiClone` had a 2-positional ceiling on its URL detection, so the third+ args were silently treated as folder names by the single-clone path.
+  3. `isDirectURL` and `isLikelyURL` were defined separately and drifted: `isLikelyURL` accepted `git@`, `isDirectURL` did not.
+- **Solution**:
+  1. New `urlListSeparators = ",;"` constant; `splitOnURLSeparators` uses `strings.FieldsFunc` so both characters act as boundaries simultaneously.
+  2. New `sanitizeURLToken` pipeline: `stripInvisibleRunes` (BOM, U+200B/C/D) → `replaceSmartQuotes` (curly → ASCII so wrapper-trim works) → `TrimSpace` → `trimMatchingWrappers` (only matched `'`/`"`/backtick pairs) → strip leading/trailing separators → final `TrimSpace`.
+  3. `shouldUseMultiClone` rewritten with three triggers (any one sufficient): (a) any positional contains `,` or `;`; (b) 2+ positionals AND any arg beyond the first parses as a URL; (c) the first positional flattens to 2+ valid URLs.
+  4. `isDirectURL` extended to accept `git@host:owner/repo` shorthand; doc-comment cross-references added between the two helpers so future edits keep them in lockstep.
+  5. `isLikelyURL` also gained `ssh://` for symmetry.
+- **Files Affected**:
+  - `gitmap/cmd/clonemulti.go` — sanitisation pipeline + new helpers
+  - `gitmap/cmd/clone.go` — three-trigger detection + SSH-shorthand recognition
+  - `gitmap/cmd/rootflags.go` — `isLikelyURL` extension + cross-ref comment
+  - `gitmap/constants/constants.go` — version bumped to `3.89.0`
+- **Prevention**:
+  1. Two helpers that classify the same thing (`isDirectURL` vs `isLikelyURL`) MUST cross-reference each other in their doc comments. Drift between them is a Code Red.
+  2. Any "scan the positional args" heuristic that hardcodes `[0]` or `[1]` indices is a bug waiting to happen — always iterate the slice.
+  3. Real-world URL input is never clean: BOM, smart quotes, zero-width spaces, and stray wrappers are the norm, not edge cases. Sanitise on every entry point.
+  4. Empty/separator-only tokens after sanitisation must be dropped silently — emitting "invalid URL: ``" is worse than emitting nothing.

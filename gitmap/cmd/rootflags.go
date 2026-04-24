@@ -111,10 +111,12 @@ func resolveCloneFolderName(fs *flag.FlagSet) string {
 
 // isLikelyURL is a cheap prefix check used to disambiguate
 // "folder name" vs "second URL" without importing the clone package.
+// Mirrors isDirectURL in clone.go — keep both in sync.
 func isLikelyURL(s string) bool {
 	lower := strings.ToLower(strings.TrimSpace(s))
 
 	return strings.HasPrefix(lower, "https://") ||
 		strings.HasPrefix(lower, "http://") ||
+		strings.HasPrefix(lower, "ssh://") ||
 		strings.HasPrefix(lower, "git@")
 }
