@@ -37,9 +37,13 @@ func dumpDebugWindowsCommandPlan(deployed string, childArgs []string) {
 		return
 	}
 	full := append([]string{deployed}, childArgs...)
-	fmt.Fprintf(os.Stderr, constants.MsgDebugWinCmdLine,
-		renderShellCommand(full))
+	cmdLine := renderShellCommand(full)
+	fmt.Fprintf(os.Stderr, constants.MsgDebugWinCmdLine, cmdLine)
 	fmt.Fprint(os.Stderr, constants.MsgDebugWinCmdNote)
+	emitDebugWindowsJSON("command_plan", map[string]any{
+		"deployed": deployed, "child_args": childArgs,
+		"command_line": cmdLine,
+	})
 }
 
 // renderShellCommand quotes each token with double quotes (escaping
