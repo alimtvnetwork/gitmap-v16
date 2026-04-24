@@ -91,12 +91,12 @@ func dumpDebugWindowsHandoff(source, target string, childArgv []string) {
 	}
 	fmt.Fprintf(os.Stderr, constants.MsgDebugWinSource, source)
 	fmt.Fprintf(os.Stderr, constants.MsgDebugWinTarget, target)
-	fmt.Fprintf(os.Stderr, constants.MsgDebugWinTargetExists, fileExists(target))
+	fmt.Fprintf(os.Stderr, constants.MsgDebugWinTargetExists, fileExistsLoose(target))
 	fmt.Fprintf(os.Stderr, constants.MsgDebugWinChildArgv, childArgv)
 	dumpDebugWindowsRelevantEnv()
 	emitDebugWindowsJSON("handoff", map[string]any{
 		"source": source, "target": target,
-		"target_exists": fileExists(target),
+		"target_exists": fileExistsLoose(target),
 		"child_argv":    childArgv,
 	})
 }
