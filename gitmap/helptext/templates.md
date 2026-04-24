@@ -116,6 +116,18 @@ re-syncing.
 Both `tpl` (the umbrella alias) and `tl` / `ts` (the per-subcommand
 aliases) round-trip identically with their long forms.
 
+### Example 5: Filter the listing
+
+    gitmap templates list --kind ignore
+    gitmap tpl tl --lang go
+    gitmap templates list --kind attributes --lang node
+
+Filters are case-insensitive and AND together. An unknown `--kind` value
+exits 1 with `templates list: unknown --kind "foo" (want ignore | attributes | lfs)`
+so typos surface immediately instead of silently emptying the table.
+A valid filter that simply matches no rows prints
+`(no templates match the requested filter)`.
+
 ## How forking works
 
 To customize a template, copy the embedded version to the overlay path

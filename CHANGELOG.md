@@ -1,5 +1,42 @@
 # Changelog
 
+## v3.106.0 — (2026-04-24) — `templates list` --kind / --lang filters
+
+### Added
+
+- **`gitmap templates list --kind <ignore|attributes|lfs>`** narrows the
+  output table to one kind so `templates list --kind ignore` no longer
+  scrolls past the `attributes` block.
+- **`gitmap templates list --lang <name>`** narrows by language across
+  every kind (case-insensitive). Useful for spotting whether you have
+  both `ignore/go` and `attributes/go` on disk.
+- Filters AND together: `--kind ignore --lang go` matches at most one
+  row.
+- **Strict --kind validation**: unknown values exit 1 with
+  `templates list: unknown --kind "foo" (want ignore | attributes | lfs)`.
+  Empty result from a valid filter prints
+  `(no templates match the requested filter)`.
+
+### Tests
+
+- `TestFilterTemplatesNoFilters` — identity case (no filter = full list).
+- `TestFilterTemplatesByKind`, `TestFilterTemplatesByLang` — single-axis filters.
+- `TestFilterTemplatesByKindAndLang` — pins AND semantics so the two
+  filters can't accidentally OR.
+- `TestFilterTemplatesEmptyResult` — pins the trigger condition for the
+  filtered-empty message.
+- `TestIsValidKindFilter` — locks the kind allow-list.
+- `TestParseTemplatesListFlagsLowersValues` — pins case-folding + trim.
+
+### Files
+
+- Edited: `gitmap/cmd/templatescli.go` (filter parsing, validation,
+  pure `filterTemplates` helper), `gitmap/helptext/templates.md`
+  (Flags table + Example 5), `gitmap/constants/constants.go` (v3.106.0),
+  `CHANGELOG.md`, `.lovable/memory/index.md`
+- New: `gitmap/cmd/templatescli_filter_test.go`
+
+
 ## v3.105.0 — (2026-04-24) — `gitmap add ignore` / `add attributes`
 
 ### Added
