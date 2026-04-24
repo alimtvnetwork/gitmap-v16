@@ -111,5 +111,6 @@ func scheduleSelfDelete() {
 		"ping", "127.0.0.1", "-n", "2", ">nul", "&", "del", "/F", "/Q", self)
 	cmd.Stdout = nil
 	cmd.Stderr = nil
+	setHiddenProcessAttr(cmd)
 	_ = cmd.Start()
 }

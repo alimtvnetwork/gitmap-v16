@@ -28,13 +28,13 @@ import (
 //   - the handoff copy (gitmap-update-<pid>.exe) — locked by us
 //   - the *.exe.old backup — sometimes briefly held by AV/Explorer
 //
-// On Windows we spawn a detached cmd.exe that pings briefly (so this
-// process can exit and release its lock) and then runs the deployed
-// binary's `update-cleanup`. On Unix we just exec it inline since
-// no lock conflicts exist.
+// On Windows we launch the deployed binary directly in a hidden process
+// and let `update-cleanup` sleep briefly before removal starts, so the
+// current handoff process has time to exit and release its file lock.
+// On Unix we just exec it inline since no lock conflicts exist.
 //
-// Best-effort: any failure is silent. The user can always re-run
-// `gitmap update-cleanup` manually.
+// Best-effort cleanup remains non-fatal, but launch failures are now
+// printed to stderr so the user can see what went wrong.
 func scheduleDeployedCleanupHandoff() {
 	deployed := resolveDeployedBinaryPath()
 	if len(deployed) == 0 {
@@ -94,22 +94,23 @@ func deployedBinaryName() string {
 	return constants.GitMapBin
 }
 
-// spawnDeployedCleanupWindows launches a detached cmd.exe that waits ~1.5s
-// (so this handoff process can exit and release its file lock) and then
-// runs `<deployed> update-cleanup`. Output is suppressed because the user
-// already saw the update completion message.
+// spawnDeployedCleanupWindows launches the deployed binary directly in a
+// detached hidden process. We avoid `cmd.exe /C start ...` entirely because
+// its quoting rules are brittle when combined with Go's Windows argument
+// escaping and can surface GUI popups like "Windows cannot find '\\'".
 func spawnDeployedCleanupWindows(deployed string) {
 	fmt.Printf(constants.MsgUpdatePhase3Handoff, filepath.Base(deployed))
+	fmt.Printf(constants.MsgUpdatePhase3Target, deployed)
 
-	// `start "" /B` detaches without opening a new window.
-	// `ping 127.0.0.1 -n 3 >nul` sleeps ~2s using only built-in cmd.
-	const startPrefix = `ping 127.0.0.1 -n 3 >nul & start "" /B `
-	cmdLine := startPrefix + fmt.Sprintf("%q %s", deployed, constants.CmdUpdateCleanup)
-	cmd := exec.Command("cmd.exe", "/C", cmdLine)
-	cmd.Stdout = nil
-	cmd.Stderr = nil
+	cmd := exec.Command(deployed, constants.CmdUpdateCleanup)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
 	cmd.Stdin = nil
-	_ = cmd.Start()
+	setHiddenProcessAttr(cmd)
+	cmd.Env = append(os.Environ(), constants.EnvUpdateCleanupDelayMS+"=1500")
+	if err := cmd.Start(); err != nil {
+		fmt.Fprintf(os.Stderr, constants.ErrUpdatePhase3Handoff, deployed, err)
+	}
 }
 
 // spawnDeployedCleanupUnix invokes the deployed binary's update-cleanup

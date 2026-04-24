@@ -17,9 +17,10 @@ const FlagDebugRepoDetect = "--debug-repo-detect"
 
 // Report-errors values and env-var bridge to run.ps1 / run.sh.
 const (
-	ReportErrorsJSON      = "json"
-	EnvReportErrorsFormat = "GITMAP_REPORT_ERRORS"
-	EnvReportErrorsFile   = "GITMAP_REPORT_ERRORS_FILE"
+	ReportErrorsJSON       = "json"
+	EnvReportErrorsFormat  = "GITMAP_REPORT_ERRORS"
+	EnvReportErrorsFile    = "GITMAP_REPORT_ERRORS_FILE"
+	EnvUpdateCleanupDelayMS = "GITMAP_UPDATE_CLEANUP_DELAY_MS"
 	ReportErrorsFilePrefix = "gitmap-update-report-"
 	ReportErrorsFileSuffix = ".jsonl"
 )
@@ -48,11 +49,13 @@ const (
 const (
 	MsgUpdateActive        = "  → Active: %s\n  → Handoff: %s\n"
 	MsgUpdateCleanStart    = "\n  Cleaning up update artifacts..."
+	MsgUpdateCleanDelay    = "  → Waiting %dms for deploy handles to settle...\n"
 	MsgUpdateCleanDone     = "  ✓ Removed %d file(s)\n\n"
 	MsgUpdateCleanNone     = "  ✓ Nothing to clean up"
 	MsgUpdateTempRemoved   = "  → Removed temp copy: %s\n"
 	MsgUpdateOldRemoved    = "  → Removed backup: %s\n"
 	MsgUpdatePhase3Handoff = "\n  → Handing off cleanup to deployed binary: %s update-cleanup\n"
+	MsgUpdatePhase3Target  = "  → Cleanup target path: %s\n"
 	UpdateRunnerLogStart   = "update-runner starting, repo=%s"
 	UpdateScriptLogExec    = "executing update script: %s"
 	UpdateScriptLogExit    = "update script exited: err=%v"
@@ -67,6 +70,7 @@ const (
 	ErrUpdateCleanupConfigRead = "Error: could not read cleanup config at %s: %v (operation: read config, reason: cleanup path resolution unavailable)\n"
 	ErrUpdateCleanupGlob       = "Error: could not enumerate cleanup matches at %s: %v (operation: glob, reason: invalid cleanup pattern)\n"
 	ErrUpdateCleanupRemove     = "Error: could not remove cleanup artifact at %s: %v (operation: remove, reason: file may be locked or missing)\n"
+	ErrUpdatePhase3Handoff     = "Error: could not hand off update cleanup to deployed binary at %s: %v (operation: start cleanup handoff, reason: detached launch failed)\n"
 )
 
 // Unix update messages.
