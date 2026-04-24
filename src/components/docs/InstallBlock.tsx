@@ -51,9 +51,20 @@ const InstallBlock = ({ command, tabs }: InstallBlockProps) => {
               data-active={i === active}
               className={`px-4 py-1.5 rounded-md text-sm font-sans font-medium transition-all duration-300 ${
                 i === active
-                  ? "border border-emerald-500/50 bg-emerald-500/10 text-emerald-300 shadow-sm"
+                  ? "shadow-sm"
                   : "border border-transparent bg-transparent text-muted-foreground hover:border-border hover:bg-card hover:text-foreground"
               }`}
+              style={
+                i === active
+                  ? {
+                      borderWidth: "1px",
+                      borderStyle: "solid",
+                      borderColor: "hsl(var(--accent-success-border))",
+                      backgroundColor: "hsl(var(--accent-success-bg))",
+                      color: "hsl(var(--accent-success))",
+                    }
+                  : undefined
+              }
             >
               {tab.label}
             </button>

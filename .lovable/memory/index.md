@@ -18,8 +18,8 @@ Clone-next flattens by default (v2.75.0+): clones into base name folder, tracks 
 Clone-next `-f` / `--force` (v3.50.0+): chdir-to-parent before remove when cwd IS target folder; refuses versioned-folder fallback.
 Completion generator uses marker-comment opt-in (v3.0.0+): `// gitmap:cmd top-level` on const block, `// gitmap:cmd skip` per spec. CI `generate-check` enforces drift.
 VS Code Project Manager sync: resolve user-data root per OS first, then append `User/globalStorage/alefragnani.project-manager/projects.json` — never hardcode the full path.
-Current version: v3.116.0.
-README "Update Source Before Building" section (v3.116.0) documents the canonical pull sequence + 3 verification commands for the v3.92.0+ rename fix + pointer to the v3.115.0 build stamp. The `fileExists redeclared` error is ALWAYS a stale-checkout symptom — the current source cannot produce it.
+Current version: v3.117.0.
+`gitmap cn` accepts folder-arg forms (v3.117.0+): `cn vX <folder>`, `cn v+1 <folder>`, `cn <folder>` (defaults v++). Dispatcher in `clonenextfolderdispatch.go` runs BEFORE alias dispatcher; uses path-hint + os.Stat heuristic. Hero card uses `--accent-success` semantic token (no hardcoded greens).
 Templates Phase 1+2+3+4+5 complete (v3.108.0+): full 11-lang corpus, `add ignore`/`add attributes` (sorted-tag marker blocks), `templates list --kind/--lang`, `templates init`, `templates show` (pretty/raw), `templates diff` (alias `td`, standard diff(1) exit codes 0/1/2, block-scoped, TTY-aware coloring). Pretty renderer corpus at 9 fixtures.
 Clone audit (v3.99.0+): `gitmap clone --audit <manifest>` is read-only; never invokes git, refuses direct URLs, prints diff-style markers (+/~/=/?/!).
 Cross-platform install/update reference (v3.100.0+): canonical matrix at `spec/01-app/108-cross-platform-install-update.md`, mirrored on `/install-gitmap` page and linked from README top.

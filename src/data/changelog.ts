@@ -8,6 +8,19 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: "v3.117.0",
+    date: "2026-04-24",
+    subtitle: "`gitmap cn vX <folder>` + `gitmap cn <folder>` (defaults to v++); hero card UI polish",
+    items: [
+      "CLI: three new clone-next forms — `cn vX <folder>` (explicit), `cn v+1 <folder>` / `cn v++ <folder>` (bump shortcuts), and `cn <folder>` (single positional, defaults to v++). Folder accepts absolute, relative, ~-prefixed, or bare-name paths. Dispatcher chdirs in, runs existing pipeline, chdirs back — version-history, shell handoff, desktop registration all behave identically to the in-place form.",
+      "Disambiguation: `looksLikeVersion` regex extended to match `v++` and `v+N` in addition to `v?N.N.N`. `isFolderShaped` returns true when the token contains `/`, `\\`, or starts with `~`, OR `os.Stat` succeeds as a directory. Bare alias names with no path-hint and no on-disk match keep falling through to the existing release-alias resolver, so back-compat is preserved.",
+      "Files: `gitmap/cmd/clonenextfolderdispatch.go` (new), `clonenextfolderdispatch_test.go` (new — 5 test groups), regex extension in `releaserebase.go`, dispatch wiring in `clonenext.go`, new error/default constants. Spec: `spec/01-app/111-cn-folder-arg.md`. Plan: `08-cn-folder-arg-plan.md`.",
+      "UI: hero terminal card polished per user direction. Centered install code blocks (`max-w-2xl mx-auto`) so the cards read as the focal CTA. Removed redundant outer pill background on OS tab strip — no more second coloring section. Bigger badges: `text-sm` + `px-4 py-1.5` (was `text-xs` + `px-3 py-1`), `font-sans` (Ubuntu) so they read as UI labels not code.",
+      "Green accent via new semantic tokens `--accent-success` / `--accent-success-bg` / `--accent-success-border` (light + dark variants in `src/index.css`). No hardcoded color classes — clears the design-token lint warnings. Section labels switched to `font-sans` (Ubuntu) per the user's font directive — mono now reserved exclusively for the command text inside the code blocks.",
+      "Bumped `constants.Version` to `3.117.0`.",
+    ],
+  },
+  {
     version: "v3.116.0",
     date: "2026-04-24",
     subtitle: "README: canonical \"Update Source Before Building\" section with v3.92.0+ rename verification",
