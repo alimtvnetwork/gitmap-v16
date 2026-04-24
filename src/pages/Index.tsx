@@ -6,52 +6,33 @@ import FeatureCard from "@/components/docs/FeatureCard";
 import InstallBlock from "@/components/docs/InstallBlock";
 import { VERSION } from "@/constants/index";
 
-type Mode = "install" | "uninstall";
-
-const COMMAND_TABS: Record<Mode, { label: string; command: string }[]> = {
-  install: [
-    {
-      label: "Windows",
-      command:
-        "irm https://raw.githubusercontent.com/alimtvnetwork/gitmap-v7/main/install-quick.ps1 | iex",
-    },
-    {
-      label: "Linux / macOS",
-      command:
-        "curl -fsSL https://raw.githubusercontent.com/alimtvnetwork/gitmap-v7/main/install-quick.sh | bash",
-    },
-  ],
-  uninstall: [
-    {
-      label: "Windows",
-      command:
-        "irm https://raw.githubusercontent.com/alimtvnetwork/gitmap-v7/main/uninstall-quick.ps1 | iex",
-    },
-    {
-      label: "Linux / macOS",
-      command:
-        "curl -fsSL https://raw.githubusercontent.com/alimtvnetwork/gitmap-v7/main/uninstall-quick.sh | bash",
-    },
-  ],
-};
-
-const MODES: { key: Mode; label: string; tooltip: string }[] = [
+const INSTALL_TABS = [
   {
-    key: "install",
-    label: "Install",
-    tooltip: "Runs install-quick.ps1 / install-quick.sh — the one-line installer",
+    label: "Windows",
+    command:
+      "irm https://raw.githubusercontent.com/alimtvnetwork/gitmap-v7/main/install-quick.ps1 | iex",
   },
   {
-    key: "uninstall",
-    label: "Uninstall",
-    tooltip:
-      "Runs uninstall-quick.ps1 / uninstall-quick.sh — the one-line uninstaller",
+    label: "Linux / macOS",
+    command:
+      "curl -fsSL https://raw.githubusercontent.com/alimtvnetwork/gitmap-v7/main/install-quick.sh | bash",
+  },
+];
+
+const UNINSTALL_TABS = [
+  {
+    label: "Windows",
+    command:
+      "irm https://raw.githubusercontent.com/alimtvnetwork/gitmap-v7/main/uninstall-quick.ps1 | iex",
+  },
+  {
+    label: "Linux / macOS",
+    command:
+      "curl -fsSL https://raw.githubusercontent.com/alimtvnetwork/gitmap-v7/main/uninstall-quick.sh | bash",
   },
 ];
 
 const HomePage = () => {
-  const [mode, setMode] = useState<Mode>("install");
-
   return (
     <DocsLayout>
       <section className="py-14 text-center">
@@ -80,37 +61,20 @@ const HomePage = () => {
               </p>
             </div>
 
-            {/* Mode tabs (Install / Uninstall) — primary axis */}
-            <div
-              role="tablist"
-              aria-label="Install or uninstall"
-              className="mx-auto mb-5 inline-flex gap-1 rounded-md border border-border bg-secondary/70 p-1"
-            >
-              {MODES.map((m) => {
-                const active = m.key === mode;
-                return (
-                  <button
-                    key={m.key}
-                    role="tab"
-                    aria-selected={active}
-                    title={m.tooltip}
-                    onClick={() => setMode(m.key)}
-                    className={`btn-slide ${
-                      active ? "" : "btn-slide-ghost"
-                    } px-5 py-1.5 rounded-md text-sm font-heading font-semibold tracking-wide uppercase transition-all duration-300 ${
-                      active
-                        ? "bg-primary text-primary-foreground shadow-sm"
-                        : "bg-transparent text-muted-foreground hover:text-foreground"
-                    }`}
-                  >
-                    {m.label}
-                  </button>
-                );
-              })}
-            </div>
+            <div className="space-y-6">
+              <div>
+                <p className="mb-3 text-left text-xs font-heading font-semibold uppercase tracking-[0.18em] text-primary">
+                  Install
+                </p>
+                <InstallBlock tabs={INSTALL_TABS} />
+              </div>
 
-            <div className="mx-auto max-w-2xl">
-              <InstallBlock tabs={COMMAND_TABS[mode]} />
+              <div>
+                <p className="mb-3 text-left text-xs font-heading font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                  Uninstall
+                </p>
+                <InstallBlock tabs={UNINSTALL_TABS} />
+              </div>
             </div>
 
             <p className="mx-auto mt-6 max-w-2xl text-xs text-muted-foreground font-sans leading-relaxed">
