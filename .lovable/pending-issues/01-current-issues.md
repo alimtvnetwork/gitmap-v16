@@ -95,31 +95,63 @@
   4. Instead of cleanup running quietly, Windows Shell/`cmd` surfaces `Windows cannot find '\\'`.
 - **Root Cause**:
   1. The bug was **not** inside `runUpdateCleanup()` itself. The failure happened *before cleanup started*, in `gitmap/cmd/updatehandoff_phase3.go` during the Windows phase-3 launch.
-  2. `spawnDeployedCleanupWindows` built one flat shell command string and passed it to `cmd.exe /C`: `ping 127.0.0.1 -n 3 >nul & start "" /B "<deployed>" update-cleanup`.
-  3. That pattern depends on fragile `cmd.exe` quoting semantics (`start` has special handling for the first quoted token as a window title, and Go's Windows argument escaping adds another parsing layer). External reports for `exec.Command("cmd.exe", "/C", ...)` match this exact failure mode, including the literal popup `Windows cannot find '\\'`.
-  4. Because the handoff used `cmd.Start()` with `Stdout=nil`, `Stderr=nil`, and intentionally swallowed the returned error (`_ = cmd.Start()`), the CLI gave the user **no log output** even when the detached launch failed or mis-parsed.
-  5. Result: the update itself succeeded, but the final cleanup handoff failed noisily in a Windows popup while gitmap stayed silent.
-- **Why Logs Were Missing**:
-  1. The old Windows handoff explicitly discarded stdout/stderr.
-  2. It also ignored the `Start()` error instead of reporting it.
-  3. The popup came from Windows shell execution, outside gitmap's normal console output path, so the user saw an OS dialog but no corresponding CLI error.
+  2. `spawnDeployedCleanupWindows` originally built one flat shell command string and passed it to `cmd.exe /C`: `ping 127.0.0.1 -n 3 >nul & start "" /B "<deployed>" update-cleanup`.
+  3. That pattern depended on fragile `cmd.exe` quoting semantics (`start` treats the first quoted token as a window title, and Go's Windows argument escaping adds another parsing layer). External Go/Windows reports match this exact failure mode, including the popup `Windows cannot find '\\'`.
+  4. The handoff also discarded stdout/stderr and ignored the returned `Start()` error, so the CLI emitted **no useful diagnostics** even when the detached launch failed.
 - **Solution**:
   1. Removed the fragile `cmd.exe /C ... start ...` handoff from `gitmap/cmd/updatehandoff_phase3.go`.
-  2. Windows now launches the deployed binary **directly** with `exec.Command(deployed, constants.CmdUpdateCleanup)` instead of routing through `cmd/start`.
+  2. Windows now launches the deployed binary directly with `exec.Command(deployed, constants.CmdUpdateCleanup)` instead of routing through `cmd/start`.
   3. Added a Windows-only hidden-process helper (`gitmap/cmd/processattr_windows.go`) so the cleanup process stays unobtrusive without embedding Windows-only fields in shared code.
-  4. Added `GITMAP_UPDATE_CLEANUP_DELAY_MS=1500` env handoff plus `delayUpdateCleanupIfNeeded()` in `gitmap/cmd/updatecleanup.go`, so the cleanup process waits briefly before deleting temp `.exe` / `.old` files. This replaces the old `ping` sleep hack and avoids quoting problems entirely.
-  5. Cleanup handoff now prints the resolved target path and reports launch failures to `os.Stderr` using a dedicated constant (`ErrUpdatePhase3Handoff`) instead of failing silently.
-  6. Reused the same hidden-process helper in `selfuninstallhandoff.go` to keep process-launch behavior consistent.
+  4. Added `GITMAP_UPDATE_CLEANUP_DELAY_MS=1500` plus `delayUpdateCleanupIfNeeded()` so the cleanup process waits briefly before deleting temp `.exe` / `.old` files.
+  5. Cleanup handoff now prints the resolved target path and reports launch failures to `os.Stderr` instead of failing silently.
 - **Files Affected**:
-  - `gitmap/cmd/updatehandoff_phase3.go` — removed `cmd/start` shell-string handoff; direct process launch + visible diagnostics
-  - `gitmap/cmd/updatecleanup.go` — added startup delay hook via env var
-  - `gitmap/cmd/processattr_windows.go` — Windows-only `HideWindow` helper
-  - `gitmap/cmd/processattr_other.go` — no-op non-Windows helper
-  - `gitmap/cmd/selfuninstallhandoff.go` — reused hidden-process helper
-  - `gitmap/constants/constants_update.go` — new delay env var + handoff diagnostics messages/errors
-  - `gitmap/constants/constants.go` — version bumped to `3.82.0`
+  - `gitmap/cmd/updatehandoff_phase3.go`
+  - `gitmap/cmd/updatecleanup.go`
+  - `gitmap/cmd/processattr_windows.go`
+  - `gitmap/cmd/processattr_other.go`
+  - `gitmap/cmd/selfuninstallhandoff.go`
+  - `gitmap/constants/constants_update.go`
+  - `gitmap/constants/constants.go`
 - **Prevention**:
-  1. Avoid string-built `cmd.exe /C start ...` launchers for internal handoffs; directly exec the target binary whenever possible.
-  2. Never silence detached-launch failures in update-critical paths — best-effort cleanup may stay non-fatal, but launch errors must still be printed.
-  3. Keep Windows-only process attributes in `_windows.go` files so future fixes do not break non-Windows builds.
-  4. If cleanup still fails after launch, the failure should now be observable in the console instead of surfacing only as a Windows popup.
+  1. Avoid string-built `cmd.exe /C start ...` launchers for internal handoffs.
+  2. Never silence detached-launch failures in update-critical paths.
+  3. Keep Windows-only process attributes in `_windows.go` files so non-Windows builds stay clean.
+
+## 10 — Windows Update Cleanup Repeats After "Fix": PATH-First Handoff Targets Wrong Binary (FIXED v3.83.0)
+- **Status**: Fixed in v3.83.0
+- **Reported**: User kept seeing the update-cleanup failure repeatedly even after the earlier `cmd.exe` popup fix. The update appeared to complete, but cleanup still did not reliably run, and the console still lacked enough evidence to show *which binary* actually received `update-cleanup`.
+- **Root Cause**:
+  1. The earlier fix removed the fragile `cmd.exe /C start ...` launcher, but `resolveDeployedBinaryPath()` still resolved the cleanup target via `exec.LookPath("gitmap")` **before** checking the config-declared deployed location.
+  2. On Windows machines with duplicate or stale `gitmap.exe` installs on `PATH`, Phase 3 could hand `update-cleanup` to the **wrong binary** — not the freshly deployed one that had just been updated.
+  3. When the wrong binary was launched hidden/detached, the user saw the same cleanup problem repeat, but the terminal did not clearly reveal the resolution source (`PATH` vs config vs sibling) or the child PID, so the failure looked mysterious and "random".
+  4. The embedded PowerShell comment in `constants_update.go` had also become stale: it still described the old `cmd.exe`-based handoff, which made future debugging and reasoning about the real runtime path harder.
+- **Why Logs Still Felt Missing**:
+  1. The handoff printed the target path, but **not** how that target was chosen.
+  2. It did not print a started PID for the detached cleanup child.
+  3. Invalid cleanup delay values were silently ignored.
+  4. Without `--verbose`, there was no durable handoff trace explaining whether the cleanup ran inline, from config, from a sibling binary, or from a PATH fallback.
+- **Solution**:
+  1. Reordered deployed-binary resolution in `gitmap/cmd/updatehandoff_phase3.go` to prefer the config-declared deployed binary (`powershell.json` / deploy path) first, then sibling binary next to the handoff copy, and only use `PATH` as a last resort.
+  2. Added explicit console output for the **resolution source** and the resolved cleanup target path.
+  3. Added explicit console output for the detached cleanup child **PID** after a successful `Start()`.
+  4. Added verbose-log entries for target resolution, inline cleanup, child start success, start failure, and missing-target cases.
+  5. Added an explicit stderr error when no deployed cleanup target can be resolved at all.
+  6. Added an explicit stderr + verbose warning when `GITMAP_UPDATE_CLEANUP_DELAY_MS` contains an invalid value instead of silently ignoring it.
+  7. Corrected the stale embedded cleanup comment in `gitmap/constants/constants_update.go` so docs now match the real implementation.
+- **Files Affected**:
+  - `gitmap/cmd/updatehandoff_phase3.go` — prefer config/sibling over PATH; print source/path/pid; log handoff lifecycle
+  - `gitmap/cmd/updatecleanup.go` — log cleanup start/finish and invalid delay values
+  - `gitmap/constants/constants_update.go` — new handoff/log strings + corrected embedded update cleanup note
+  - `gitmap/constants/constants.go` — version bumped to `3.83.0`
+- **Console Evidence Added**:
+  1. `→ Cleanup target resolved via: config|sibling|PATH`
+  2. `→ Cleanup target path: ...`
+  3. `→ Cleanup process started (pid=...)`
+  4. `→ Cleanup binary: ...` inside `update-cleanup`
+  5. explicit stderr message when the handoff target cannot be resolved or the delay env is invalid
+- **Prevention**:
+  1. In self-update flows, never trust `PATH` first when a config-declared deployed binary exists.
+  2. Every detached handoff must log **which target** was selected and **why**.
+  3. Embedded script comments/docs must be updated together with orchestration changes so future debugging is based on reality, not stale notes.
+  4. Best-effort cleanup may stay non-fatal, but target-resolution failures must always be visible in the console and verbose log.
+
