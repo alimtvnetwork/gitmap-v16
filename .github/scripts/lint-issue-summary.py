@@ -336,6 +336,110 @@ def describe_linter(linter: str) -> str:
 
 
 # ---------------------------------------------------------------------------
+# Auto-resolve pass — flips Status of prior open entries whose fingerprint
+# is no longer present in the current NEW finding set.
+# ---------------------------------------------------------------------------
+
+def mark_resolved_entries(text: str, active_fingerprints: set[str],
+                          sha: str = "", run_url: str = "") -> tuple[str, int]:
+    """Walk every `## NN — ...` section, find the ci-lint fingerprint
+    marker (if any), and flip the Status line to FIXED when:
+      - the entry is currently `Open …`, AND
+      - its fingerprint is NOT in active_fingerprints (the set of
+        fingerprints produced by the current NEW findings).
+
+    Returns (new_text, resolved_count). When nothing changes, the
+    original text is returned unmodified."""
+    if not text:
+        return text, 0
+
+    sections = split_into_sections(text)
+    resolved = 0
+    rebuilt: list[str] = []
+
+    for section in sections:
+        body = section["body"]
+        if not section["is_entry"]:
+            rebuilt.append(body)
+            continue
+
+        marker_match = ENTRY_MARKER_RE.search(body)
+        if not marker_match:
+            rebuilt.append(body)
+            continue
+
+        fingerprint = marker_match.group(1).lower()
+        if fingerprint in {fp.lower() for fp in active_fingerprints}:
+            rebuilt.append(body)
+            continue
+
+        new_body, changed = flip_status_to_fixed(
+            body, fingerprint=fingerprint, sha=sha, run_url=run_url)
+        if changed:
+            resolved += 1
+        rebuilt.append(new_body)
+
+    return "".join(rebuilt), resolved
+
+
+def split_into_sections(text: str) -> list[dict]:
+    """Split file text into ordered chunks. Each chunk is either a
+    pre-amble (everything before the first `## NN — ...` heading) or
+    one full entry (heading through the line before the next heading
+    / EOF). Preserves all whitespace exactly."""
+    out: list[dict] = []
+    matches = list(SECTION_HEADER_RE.finditer(text))
+    if not matches:
+        return [{"is_entry": False, "body": text}]
+
+    first = matches[0].start()
+    if first > 0:
+        out.append({"is_entry": False, "body": text[:first]})
+
+    for idx, m in enumerate(matches):
+        start = m.start()
+        end = matches[idx + 1].start() if idx + 1 < len(matches) else len(text)
+        out.append({"is_entry": True, "body": text[start:end]})
+
+    return out
+
+
+def flip_status_to_fixed(body: str, fingerprint: str, sha: str,
+                         run_url: str) -> tuple[str, bool]:
+    """Rewrite the first `- **Status**:` line inside the entry body
+    when it is still Open. No-op for already-FIXED entries so re-runs
+    don't keep editing the same line."""
+    match = STATUS_LINE_RE.search(body)
+    if not match:
+        return body, False
+
+    current_status = match.group(2).strip()
+    if not OPEN_STATUS_RE.match(current_status):
+        return body, False
+
+    timestamp = dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+    suffix_parts = [f"fingerprint `{fingerprint}` cleared {timestamp}"]
+    if sha:
+        suffix_parts.append(f"commit `{sha[:12]}`")
+    if run_url:
+        suffix_parts.append(f"[run log]({run_url})")
+    note = "; ".join(suffix_parts)
+    replacement = (f"{match.group(1)}FIXED (auto-detected by "
+                   f"lint-issue-summary — {note})")
+    new_body = body[:match.start()] + replacement + body[match.end():]
+    return new_body, True
+
+
+def build_preview(resolved_text: str, new_entry: str) -> str:
+    """Compose what the file would look like after this run — the
+    auto-resolved file plus the new entry appended at the end."""
+    if not new_entry:
+        return resolved_text
+    return append_entry(resolved_text, new_entry)
+
+
+
+# ---------------------------------------------------------------------------
 # File I/O
 # ---------------------------------------------------------------------------
 
