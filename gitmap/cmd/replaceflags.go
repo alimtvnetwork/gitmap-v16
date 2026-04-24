@@ -3,6 +3,8 @@ package cmd
 import (
 	"errors"
 	"flag"
+	"fmt"
+	"os"
 	"strings"
 
 	"github.com/alimtvnetwork/gitmap-v7/gitmap/constants"
@@ -11,11 +13,12 @@ import (
 // replaceOpts holds parsed flags for `gitmap replace`. Kept tiny so
 // every handler can pass it by value.
 type replaceOpts struct {
-	yes    bool
-	dryRun bool
-	quiet  bool
-	audit  bool
-	exts   []string // normalized: lowercase, leading dot. Empty = no filter.
+	yes        bool
+	dryRun     bool
+	quiet      bool
+	audit      bool
+	exts       []string // pre-normalized extensions (with leading dot)
+	extCaseIns bool     // true = lowercase comparison, false = byte-exact
 }
 
 // parseReplaceFlags consumes flag tokens (in any position) and returns
@@ -26,25 +29,62 @@ type replaceOpts struct {
 func parseReplaceFlags(args []string) (replaceOpts, []string, error) {
 	opts, rest := stripAuditToken(args)
 
-	fs := flag.NewFlagSet(constants.CmdReplace, flag.ContinueOnError)
-	yes := fs.Bool(constants.ReplaceFlagYes, false, "Skip the confirmation prompt")
-	yesShort := fs.Bool(constants.ReplaceFlagYesS, false, "Alias for --yes")
-	dry := fs.Bool(constants.ReplaceFlagDryRun, false, constants.FlagDescDryRun)
-	quiet := fs.Bool(constants.ReplaceFlagQuiet, false, "Suppress per-file diff lines")
-	quietShort := fs.Bool(constants.ReplaceFlagQuietS, false, "Alias for --quiet")
-	ext := fs.String(constants.ReplaceFlagExt, "", constants.FlagDescReplaceExt)
-
+	fs, raw := defineReplaceFlags()
 	flags, positional := splitReplaceFlagsAndArgs(rest)
 	if err := fs.Parse(flags); err != nil {
 		return opts, nil, errors.New("replace: " + err.Error())
 	}
 
-	opts.yes = *yes || *yesShort
-	opts.dryRun = *dry
-	opts.quiet = *quiet || *quietShort
-	opts.exts = normalizeExtList(*ext)
+	opts.yes = *raw.yes || *raw.yesShort
+	opts.dryRun = *raw.dry
+	opts.quiet = *raw.quiet || *raw.quietShort
+	opts.extCaseIns = resolveExtCase(*raw.extCase)
+	opts.exts = normalizeExtList(*raw.ext, opts.extCaseIns)
 
 	return opts, positional, nil
+}
+
+// rawReplaceFlags holds pointers returned from FlagSet.* registrations
+// so parseReplaceFlags can stay under the 15-line ceiling.
+type rawReplaceFlags struct {
+	yes, yesShort, dry, quiet, quietShort *bool
+	ext, extCase                          *string
+}
+
+// defineReplaceFlags registers every flag on a fresh FlagSet.
+func defineReplaceFlags() (*flag.FlagSet, rawReplaceFlags) {
+	fs := flag.NewFlagSet(constants.CmdReplace, flag.ContinueOnError)
+	r := rawReplaceFlags{
+		yes:        fs.Bool(constants.ReplaceFlagYes, false, "Skip the confirmation prompt"),
+		yesShort:   fs.Bool(constants.ReplaceFlagYesS, false, "Alias for --yes"),
+		dry:        fs.Bool(constants.ReplaceFlagDryRun, false, constants.FlagDescDryRun),
+		quiet:      fs.Bool(constants.ReplaceFlagQuiet, false, "Suppress per-file diff lines"),
+		quietShort: fs.Bool(constants.ReplaceFlagQuietS, false, "Alias for --quiet"),
+		ext:        fs.String(constants.ReplaceFlagExt, "", constants.FlagDescReplaceExt),
+		extCase:    fs.String(constants.ReplaceFlagExtCase, "", constants.FlagDescReplaceExtCase),
+	}
+	return fs, r
+}
+
+// resolveExtCase maps the raw --ext-case string to the boolean the
+// walker uses. Empty (flag omitted) keeps the default behavior. An
+// unknown value is fatal — silent fallback would mask user typos.
+func resolveExtCase(raw string) bool {
+	v := strings.ToLower(strings.TrimSpace(raw))
+	switch v {
+	case "", constants.ReplaceExtCaseDefault:
+		return true
+	case constants.ReplaceExtCaseInsensitive:
+		return true
+	case constants.ReplaceExtCaseSensitive:
+		return false
+	default:
+		fmt.Fprintf(os.Stderr, constants.ErrReplaceBadExtCase,
+			constants.ReplaceExtCaseSensitive,
+			constants.ReplaceExtCaseInsensitive, raw)
+		os.Exit(1)
+		return true
+	}
 }
 
 // stripAuditToken pulls --audit out of args before flag.Parse sees it.
@@ -85,14 +125,14 @@ func splitReplaceFlagsAndArgs(args []string) (flags, positional []string) {
 }
 
 // needsValue reports whether a flag token consumes the next arg as its
-// value. Boolean replace flags do not; --ext does. We don't need to
-// handle `--ext=.go,.md` because flag.Parse splits that itself.
+// value. Boolean replace flags do not; --ext and --ext-case do. We
+// don't handle `--ext=x` because flag.Parse splits that itself.
 func needsValue(token string) bool {
 	if strings.Contains(token, "=") {
 		return false
 	}
 	name := strings.TrimLeft(token, "-")
-	return name == constants.ReplaceFlagExt
+	return name == constants.ReplaceFlagExt || name == constants.ReplaceFlagExtCase
 }
 
 // isReplaceFlag returns true for `--xxx`, `-y`, `-q`. It deliberately
@@ -108,17 +148,18 @@ func isReplaceFlag(s string) bool {
 	return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')
 }
 
-// normalizeExtList parses the --ext value into a deduplicated list of
-// lowercase extensions with leading dots. Empty input returns nil so
-// the walker can short-circuit the "no filter" case.
-func normalizeExtList(raw string) []string {
+// normalizeExtList parses --ext into a deduplicated list of extensions
+// with leading dots. When caseInsensitive is true the entries are
+// lowercased so matchesExtFilter can do a fast direct compare; when
+// false the user's casing is preserved byte-for-byte.
+func normalizeExtList(raw string, caseInsensitive bool) []string {
 	if raw == "" {
 		return nil
 	}
 	seen := make(map[string]struct{}, 4)
 	out := make([]string, 0, 4)
 	for _, piece := range strings.Split(raw, constants.ReplaceExtSep) {
-		ext := normalizeOneExt(piece)
+		ext := normalizeOneExt(piece, caseInsensitive)
 		if ext == "" {
 			continue
 		}
@@ -131,9 +172,14 @@ func normalizeExtList(raw string) []string {
 	return out
 }
 
-// normalizeOneExt trims spaces, lowercases, and ensures the leading dot.
-func normalizeOneExt(piece string) string {
-	piece = strings.ToLower(strings.TrimSpace(piece))
+// normalizeOneExt trims spaces, optionally lowercases, and ensures a
+// leading dot. Returns "" for inputs that should be dropped (empty
+// piece, or the lone string ".").
+func normalizeOneExt(piece string, caseInsensitive bool) string {
+	piece = strings.TrimSpace(piece)
+	if caseInsensitive {
+		piece = strings.ToLower(piece)
+	}
 	if piece == "" || piece == "." {
 		return ""
 	}

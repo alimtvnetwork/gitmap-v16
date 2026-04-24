@@ -20,7 +20,7 @@ func runReplaceAudit(opts replaceOpts) {
 		return
 	}
 	root := repoRoot()
-	files := loadRepoFiles(root, opts.exts)
+	files := loadRepoFiles(root, opts.exts, opts.extCaseIns)
 
 	needles := buildAuditNeedles(base, targets)
 	totalHits := scanAudit(files, needles)

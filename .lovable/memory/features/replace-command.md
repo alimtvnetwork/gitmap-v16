@@ -20,8 +20,10 @@ write.
 ## Flags
 
 `--yes`/`-y`, `--dry-run`, `--quiet`/`-q`, `--ext` (comma-separated
-extension allow-list, leading dot optional, case-insensitive,
-deduplicated; empty = no filter). v3.97.0+.
+extension allow-list, leading dot optional, deduplicated; empty = no
+filter), `--ext-case sensitive|insensitive` (default `insensitive`).
+Sensitive mode preserves user-supplied casing in `--ext` and matches
+filenames byte-exact. v3.98.0+.
 
 ## Exclusions
 

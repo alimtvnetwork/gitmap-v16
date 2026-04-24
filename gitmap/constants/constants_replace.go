@@ -8,15 +8,29 @@ const (
 	ReplaceFlagQuiet   = "quiet"
 	ReplaceFlagQuietS  = "q"
 	ReplaceFlagExt     = "ext"
+	ReplaceFlagExtCase = "ext-case"
 	ReplaceSubcmdAudit = "--audit"
 	ReplaceSubcmdAll   = "all"
 )
 
 // Replace --ext flag description and value separator.
 const (
-	FlagDescReplaceExt = "Comma-separated extension allow-list (e.g. \".go,.md\"). Leading dot optional."
-	ReplaceExtSep      = ","
+	FlagDescReplaceExt     = "Comma-separated extension allow-list (e.g. \".go,.md\"). Leading dot optional."
+	FlagDescReplaceExtCase = "Extension match casing: sensitive | insensitive (default insensitive)."
+	ReplaceExtSep          = ","
 )
+
+// Allowed values for --ext-case. The default is `insensitive` so the
+// historical behavior is preserved when the flag is omitted.
+const (
+	ReplaceExtCaseSensitive   = "sensitive"
+	ReplaceExtCaseInsensitive = "insensitive"
+	ReplaceExtCaseDefault     = ReplaceExtCaseInsensitive
+)
+
+// Error format for an unknown --ext-case value. Kept here so the
+// message stays in sync with the constants above.
+const ErrReplaceBadExtCase = "replace: --ext-case must be %q or %q (got %q)\n"
 
 // Replace command messages and errors. All user-facing text lives here
 // to honor the no-magic-strings rule.
