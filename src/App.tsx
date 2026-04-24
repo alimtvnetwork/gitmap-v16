@@ -45,6 +45,7 @@ import CdPage from "./pages/Cd";
 import SetupPage from "./pages/Setup";
 import DesignSystemPage from "./pages/DesignSystem";
 import InstallPage from "./pages/Install";
+import InstallGitmapPage from "./pages/InstallGitmap";
 import HelpDashboardPage from "./pages/HelpDashboard";
 import HelpIndexPage from "./pages/HelpIndex";
 import PostMortemsPage from "./pages/PostMortems";
@@ -119,6 +120,7 @@ const App = () => (
           <Route path="/setup" element={<SetupPage />} />
           <Route path="/design-system" element={<DesignSystemPage />} />
           <Route path="/install" element={<InstallPage />} />
+          <Route path="/install-gitmap" element={<InstallGitmapPage />} />
           <Route path="/help-dashboard" element={<HelpDashboardPage />} />
           <Route path="/help-index" element={<HelpIndexPage />} />
           <Route path="/post-mortems" element={<PostMortemsPage />} />

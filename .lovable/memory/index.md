@@ -18,8 +18,9 @@ Clone-next flattens by default (v2.75.0+): clones into base name folder, tracks 
 Clone-next `-f` / `--force` (v3.50.0+): chdir-to-parent before remove when cwd IS target folder; refuses versioned-folder fallback.
 Completion generator uses marker-comment opt-in (v3.0.0+): `// gitmap:cmd top-level` on const block, `// gitmap:cmd skip` per spec. CI `generate-check` enforces drift.
 VS Code Project Manager sync: resolve user-data root per OS first, then append `User/globalStorage/alefragnani.project-manager/projects.json` — never hardcode the full path.
-Current version: v3.99.0.
+Current version: v3.100.0.
 Clone audit (v3.99.0+): `gitmap clone --audit <manifest>` is read-only; never invokes git, refuses direct URLs, prints diff-style markers (+/~/=/?/!).
+Cross-platform install/update reference (v3.100.0+): canonical matrix at `spec/01-app/108-cross-platform-install-update.md`, mirrored on `/install-gitmap` page and linked from README top.
 
 ## Memories
 - [Code Constraints](mem://style/code-constraints) — Strict rules for code style, structure, and pull requests
@@ -33,6 +34,7 @@ Clone audit (v3.99.0+): `gitmap clone --audit <manifest>` is read-only; never in
 - [CN Find-Next Bridge](mem://features/cn-find-next-bridge) — PLANNED v3.55.0: `gitmap cn` no-args detects scope, auto-probes (spec 103, depth=5, parallel), interactive TUI picker, parallel updates. `find-next` stays read-only.
 - [Clone Direct URL](mem://features/clone-direct-url) — gitmap clone accepts direct HTTPS/SSH URLs with optional folder name, auto-flattens versioned URLs
 - [Clone Audit](mem://features/clone-audit) — `gitmap clone --audit <manifest>` plans+prints diff-style report (+/~/=/?/!) without invoking git (v3.99.0)
+- [Cross-Platform Install/Update](mem://features/cross-platform-install-update) — Canonical Win/macOS/Linux install · update · uninstall · verify matrix at spec/01-app/108-cross-platform-install-update.md, mirrored at /install-gitmap (v3.100.0)
 - [Move & Merge Commands](mem://features/movemerge) — gitmap mv / merge-both / merge-left / merge-right with L/R/S/A/B/Q prompt + --prefer-* bypass + URL-side commit/push (v2.96.0)
 - [Release Alias](mem://features/release-alias) — gitmap as / release-alias (ra) / release-alias-pull (rap) with auto-stash labeled by alias-version-unixts, label-match pop for concurrent safety (v3.0.0)
 - [Self Install Uninstall](mem://features/self-install-uninstall) — gitmap self-install / self-uninstall manage the binary itself (separate from third-party install/uninstall). Embedded scripts via go:embed, Windows handoff, marker-block PATH cleanup
