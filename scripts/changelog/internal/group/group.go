@@ -3,6 +3,7 @@
 package group
 
 import (
+	"sort"
 	"strings"
 
 	"github.com/alimtvnetwork/gitmap-v7/scripts/changelog/internal/gitlog"
@@ -89,6 +90,13 @@ func classify(subject string) (string, string, bool) {
 	return section, body, body != ""
 }
 
+// orderedSections renders sections in the fixed SectionOrder and sorts
+// items inside each section lexicographically. Section order is the
+// project's declared rendering priority (Added → Changed → Fixed → …);
+// item order within a section is alphabetical so two regenerations on
+// machines that received commits in different sequences still produce
+// byte-identical output. Combined with gitlog's (author-date, hash)
+// commit sort, this is the full deterministic ordering contract.
 func orderedSections(buckets map[string][]string) []Section {
 	out := make([]Section, 0, len(buckets))
 
@@ -98,7 +106,10 @@ func orderedSections(buckets map[string][]string) []Section {
 			continue
 		}
 
-		out = append(out, Section{Name: name, Items: items})
+		sorted := append([]string(nil), items...)
+		sort.Strings(sorted)
+
+		out = append(out, Section{Name: name, Items: sorted})
 	}
 
 	return out
