@@ -24,6 +24,12 @@ import (
 //                                        clone-next, chdir back. See
 //                                        `clonenextcrossdir.go`.
 func runCloneNext(args []string) {
+	// v3.117.0: folder-arg dispatch runs FIRST so path-shaped tokens
+	// win over the release-alias resolver. Order matters — see
+	// spec/01-app/111-cn-folder-arg.md §Disambiguation.
+	if tryFolderArgCloneNext(args) {
+		return
+	}
 	if tryCrossDirCloneNext(args) {
 		return
 	}

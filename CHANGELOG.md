@@ -1,5 +1,62 @@
 # Changelog
 
+## v3.117.0 — (2026-04-24) — `gitmap cn vX <folder>` + `gitmap cn <folder>` (defaults to v++); hero card UI polish
+
+### CLI: clone-next folder-arg dispatch
+
+Three new invocation forms (existing forms unchanged):
+
+- `gitmap cn vX <folder>` — explicit version, explicit folder.
+- `gitmap cn v+1 <folder>` / `cn v++ <folder>` — version-bump shortcuts.
+- `gitmap cn <folder>` — single positional, defaults to `v++`.
+
+`<folder>` accepts absolute, relative, `~`-prefixed, or bare-name paths.
+The dispatcher chdirs into the resolved folder, runs the existing
+in-place `runCloneNext` pipeline, then chdirs back — reusing
+`performCrossDirCloneNext` so version-history recording, shell
+handoff, desktop registration, and lock-check all behave identically
+to the in-place form.
+
+Disambiguation: `looksLikeVersion` regex extended to match `v++` and
+`v+N` in addition to `v?N.N.N`. `isFolderShaped` returns true when
+the token contains `/`, `\`, or starts with `~`, OR `os.Stat`
+succeeds as a directory. Bare alias names with no path-hint and no
+on-disk match keep falling through to the existing release-alias
+resolver, so back-compat is preserved.
+
+Files: `gitmap/cmd/clonenextfolderdispatch.go` (new),
+`gitmap/cmd/clonenextfolderdispatch_test.go` (new),
+`gitmap/cmd/releaserebase.go` (regex extension),
+`gitmap/cmd/clonenext.go` (dispatch wiring),
+`gitmap/constants/constants_v331.go` (new error/default messages).
+Spec: `spec/01-app/111-cn-folder-arg.md`.
+Plan: `.lovable/memory/plans/08-cn-folder-arg-plan.md`.
+
+### UI: hero terminal card polish
+
+- Centered the install code blocks (`max-w-2xl mx-auto`) so the cards
+  read as "the focal CTA" rather than "a left-aligned block on a
+  centered hero" — fixes the visual misalignment in the user
+  screenshot.
+- Removed the redundant outer pill background on the OS tab strip;
+  the strip now sits inline with the card content (no second
+  coloring section).
+- Bigger, more legible OS badges: `text-sm` + `px-4 py-1.5`
+  (was `text-xs` + `px-3 py-1`), font switched to `font-sans` so
+  they read as UI labels not code (mono is now reserved for the
+  command itself).
+- Green accent for active state via new semantic tokens
+  `--accent-success` / `--accent-success-bg` / `--accent-success-border`
+  (light + dark variants in `src/index.css`). No hardcoded color
+  classes — clears the design-token lint warnings.
+- Section labels ("Install — Quick", "Uninstall — Quick") switched
+  to `font-sans` (Ubuntu) per the user's font directive — mono is
+  now reserved exclusively for code blocks.
+
+### Misc
+
+- Bumped `constants.Version` to `3.117.0`.
+
 ## v3.116.0 — (2026-04-24) — README: canonical "Update Source Before Building" section with v3.92.0+ rename verification
 
 ### Why

@@ -48,6 +48,12 @@
     --terminal: 222 18% 12%;
     --terminal-foreground: 0 0% 92%;
     --code-bg: 220 16% 93%;
+
+    /* Semantic success accent — used for install CTAs in hero card.
+       Light mode is a slightly deeper emerald for contrast on white. */
+    --accent-success: 158 64% 38%;
+    --accent-success-bg: 158 64% 38% / 0.12;
+    --accent-success-border: 158 64% 38% / 0.5;
   }
 
   /* ───── VS Code Dark+ inspired palette ─────
@@ -100,6 +106,11 @@
     --terminal: 0 0% 10%;
     --terminal-foreground: 0 0% 88%;
     --code-bg: 0 0% 14%;
+
+    /* Semantic success accent — brighter emerald for dark surfaces. */
+    --accent-success: 152 76% 60%;
+    --accent-success-bg: 152 76% 60% / 0.12;
+    --accent-success-border: 152 76% 60% / 0.5;
   }
 }
 

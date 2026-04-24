@@ -56,6 +56,32 @@ const (
 	MsgCNXReturnedFmt = "  ↩ Returned to %s\n"
 )
 
+// Folder-arg clone-next (`cn vX <folder>` and `cn <folder>`) — v3.117.0.
+// See spec/01-app/111-cn-folder-arg.md for the full classification table.
+const (
+	// CloneNextDefaultVersionArg is what the single-positional folder
+	// form defaults to when the user omits a version. v++ is the
+	// established muscle-memory shortcut for "next sibling version".
+	CloneNextDefaultVersionArg = "v++"
+
+	// ErrCNFolderNotFound fires when a path-shaped token (slash, ~,
+	// or otherwise hint-bearing) does not resolve to an existing
+	// directory. Includes the original token (not the resolved abs)
+	// so the user sees what they typed verbatim.
+	ErrCNFolderNotFound = "  ✗ cn: folder not found or not a directory: %s\n"
+
+	// ErrCNAmbiguousBothVersions fires when both positional args
+	// match the version pattern (e.g. `cn v++ v15`). The user almost
+	// certainly meant one of them as a folder; refuse instead of
+	// silently picking one.
+	ErrCNAmbiguousBothVersions = "  ✗ cn: ambiguous arguments — both look like version strings (use 'cn vN' for in-place, 'cn vN <folder>' for cross-dir)"
+
+	// ErrCNAmbiguousBothFolders fires when neither positional arg
+	// matches the version pattern AND the second isn't folder-shaped.
+	// Most often a typo where the version was misspelled.
+	ErrCNAmbiguousBothFolders = "  ✗ cn: ambiguous arguments — neither looks like a version (use vN, v+N, or v++)"
+)
+
 // SSH existing-key-on-disk fix messages.
 const (
 	MsgSSHExistsOnDisk = "\n  ℹ SSH key already exists on disk: %s\n  Reusing existing key (no regeneration needed).\n\n"

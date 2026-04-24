@@ -17,12 +17,24 @@ import (
 	"github.com/alimtvnetwork/gitmap-v7/gitmap/constants"
 )
 
-// versionPattern matches "1.2.3", "v1.2.3", and pre-release suffixes.
-// Used to distinguish `r v3.31.0` (in-place) from `r gitmap v3.31.0` (cross-dir).
-var versionPattern = regexp.MustCompile(`^v?\d+\.\d+\.\d+([.\-+].+)?$`)
+// versionPattern matches the three version-shaped tokens any cross-dir
+// dispatcher in this package needs to recognize:
+//
+//   1. Full SemVer with optional pre-release: "1.2.3", "v1.2.3", "v1.2.3-rc1"
+//   2. clone-next bump shortcut:              "v++"
+//   3. clone-next explicit-bump shortcut:     "v+N" (N >= 1)
+//
+// The bump shortcuts (#2 and #3) are clone-next-specific but live here
+// because `looksLikeVersion` is shared with the release dispatcher
+// (releaserebase.go) and clonenextcrossdir.go. Keeping one regex
+// avoids the redeclaration footgun we hardened against in v3.113.0.
+//
+// Letters after `+` (e.g. "v+abc") deliberately do NOT match — those
+// fall through to the alias path.
+var versionPattern = regexp.MustCompile(`^(v?\d+\.\d+\.\d+([.\-+].+)?|v\+\+|v\+\d+)$`)
 
 // looksLikeVersion returns true if s is a version-shaped token, false if it's
-// more likely a repo alias (e.g. "gitmap", "my-app").
+// more likely a repo alias (e.g. "gitmap", "my-app") or a folder path.
 func looksLikeVersion(s string) bool {
 	return versionPattern.MatchString(s)
 }

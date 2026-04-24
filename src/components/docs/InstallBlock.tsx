@@ -42,18 +42,29 @@ const InstallBlock = ({ command, tabs }: InstallBlockProps) => {
 
   if (tabs && tabs.length > 0) {
     return (
-      <div className="space-y-2">
-        <div className="flex justify-center gap-1 rounded-sm border border-border bg-secondary/70 p-1">
+      <div className="space-y-3">
+        <div className="inline-flex justify-center gap-1 rounded-md border border-border bg-secondary/70 p-1 mx-auto">
           {tabs.map((tab, i) => (
             <button
               key={tab.label}
               onClick={() => setActive(i)}
               data-active={i === active}
-              className={`tab-underline px-3 py-1 rounded-md text-xs font-mono transition-all duration-300 ${
+              className={`px-4 py-1.5 rounded-md text-sm font-sans font-medium transition-all duration-300 ${
                 i === active
-                  ? "rounded-sm border border-primary/40 bg-card text-primary shadow-sm"
-                  : "rounded-sm border border-transparent bg-transparent text-muted-foreground hover:border-border hover:bg-card hover:text-foreground"
+                  ? "shadow-sm"
+                  : "border border-transparent bg-transparent text-muted-foreground hover:border-border hover:bg-card hover:text-foreground"
               }`}
+              style={
+                i === active
+                  ? {
+                      borderWidth: "1px",
+                      borderStyle: "solid",
+                      borderColor: "hsl(var(--accent-success-border))",
+                      backgroundColor: "hsl(var(--accent-success-bg))",
+                      color: "hsl(var(--accent-success))",
+                    }
+                  : undefined
+              }
             >
               {tab.label}
             </button>
