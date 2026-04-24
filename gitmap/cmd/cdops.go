@@ -128,6 +128,7 @@ func runCDRepos(args []string) {
 
 	path := promptCDReposPick(records)
 	fmt.Print(path)
+	WriteShellHandoff(path)
 }
 
 // parseCDReposFlags parses the --group flag for the repos subcommand.
