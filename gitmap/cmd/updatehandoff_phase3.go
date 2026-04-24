@@ -18,7 +18,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
-	"syscall"
 
 	"github.com/alimtvnetwork/gitmap-v7/gitmap/constants"
 )
@@ -107,7 +106,7 @@ func spawnDeployedCleanupWindows(deployed string) {
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	cmd.Stdin = nil
-	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
+	setHiddenProcessAttr(cmd)
 	cmd.Env = append(os.Environ(), constants.EnvUpdateCleanupDelayMS+"=1500")
 	if err := cmd.Start(); err != nil {
 		fmt.Fprintf(os.Stderr, constants.ErrUpdatePhase3Handoff, deployed, err)
