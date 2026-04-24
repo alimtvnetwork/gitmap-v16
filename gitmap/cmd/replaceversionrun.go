@@ -72,9 +72,10 @@ func scanVersionTargets(
 }
 
 // loadRepoFiles wraps walkRepoFiles with the standardized error exit.
-// The exts allow-list comes from --ext (nil = include every text file).
-func loadRepoFiles(root string, exts []string) []string {
-	files, err := walkRepoFiles(root, exts)
+// The exts allow-list comes from --ext (nil = include every text file)
+// and caseInsensitive comes from --ext-case (default insensitive).
+func loadRepoFiles(root string, exts []string, caseInsensitive bool) []string {
+	files, err := walkRepoFiles(root, exts, caseInsensitive)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, constants.ErrReplaceWalk, err)
 		os.Exit(2)

@@ -25,28 +25,33 @@ func repoRoot() string {
 
 // walkRepoFiles returns every text file under root, honoring directory
 // and prefix exclusions plus an optional extension allow-list. Pass
-// nil/empty exts to disable extension filtering (default behavior).
-func walkRepoFiles(root string, exts []string) ([]string, error) {
+// nil/empty exts to disable extension filtering. caseInsensitive
+// controls how the file's extension is compared against the list — see
+// matchesExtFilter for the exact contract.
+func walkRepoFiles(root string, exts []string, caseInsensitive bool) ([]string, error) {
 	out := make([]string, 0, 1024)
 	err := filepath.WalkDir(root, func(path string, d fs.DirEntry, walkErr error) error {
 		if walkErr != nil {
 			return walkErr
 		}
-		return visitReplaceEntry(root, path, d, exts, &out)
+		return visitReplaceEntry(root, path, d, exts, caseInsensitive, &out)
 	})
 	return out, err
 }
 
 // visitReplaceEntry implements one step of walkRepoFiles. Split out so
 // the closure stays under the 15-line ceiling.
-func visitReplaceEntry(root, path string, d fs.DirEntry, exts []string, out *[]string) error {
+func visitReplaceEntry(
+	root, path string, d fs.DirEntry,
+	exts []string, caseInsensitive bool, out *[]string,
+) error {
 	if d.IsDir() {
 		if isExcludedDir(d.Name()) || isExcludedPrefix(root, path) {
 			return filepath.SkipDir
 		}
 		return nil
 	}
-	if !matchesExtFilter(path, exts) {
+	if !matchesExtFilter(path, exts, caseInsensitive) {
 		return nil
 	}
 	if isBinaryFile(path) {
@@ -57,15 +62,20 @@ func visitReplaceEntry(root, path string, d fs.DirEntry, exts []string, out *[]s
 }
 
 // matchesExtFilter returns true when exts is empty (no filter) or when
-// the file's extension matches any allow-list entry. Comparison is
-// case-insensitive — exts are pre-normalized to lowercase.
-func matchesExtFilter(path string, exts []string) bool {
+// the file's extension matches any allow-list entry. When
+// caseInsensitive is true the file extension is lowercased to match the
+// pre-normalized list; otherwise the comparison is byte-exact and the
+// original filename casing is respected.
+func matchesExtFilter(path string, exts []string, caseInsensitive bool) bool {
 	if len(exts) == 0 {
 		return true
 	}
-	got := strings.ToLower(filepath.Ext(path))
+	got := filepath.Ext(path)
 	if got == "" {
 		return false
+	}
+	if caseInsensitive {
+		got = strings.ToLower(got)
 	}
 	for _, want := range exts {
 		if got == want {
