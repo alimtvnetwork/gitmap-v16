@@ -48,6 +48,16 @@ func runClone(args []string) {
 		os.Exit(1)
 	}
 	initCloneVerbose(cf.Verbose)
+
+	// Audit short-circuits all execution paths. It must run BEFORE
+	// requireOnline / SSH key application so users can audit a manifest
+	// while offline and without unlocking SSH agents.
+	if cf.Audit {
+		runCloneAudit(cf)
+
+		return
+	}
+
 	requireOnline()
 	applySSHKey(cf.SSHKeyName)
 
