@@ -32,17 +32,22 @@ Memory: `mem://features/templates-ignore-attributes`
 - `lfs/common.gitattributes` (binary patterns, NO `*.svg`)
 - Each file has `# source: ... # version: 1` header
 
-### Phase 2 — `add` router + `add ignore`
+### Phase 2 — `add` router + `add ignore` ✅ (v3.105.0)
 
-- `gitmap/cmd/rootadd.go` with `dispatchAdd`
-- `gitmap/cmd/addignore.go` + merge engine in `gitmap/templates/merge.go`
-- Marker-block aware, single-pass dedupe
-- Idempotence test: run twice → byte-identical
+- [x] `gitmap/cmd/rootadd.go` with `dispatchAdd`
+- [x] `gitmap/cmd/addignoreattrs.go` (shared engine for ignore + attributes)
+- [x] `gitmap/templates/merge.go` marker-block engine (already shipped)
+- [x] Single-pass dedupe with blank-line preservation
+- [x] Sorted-tag invariant: `go,node` and `node,go` share `ignore/go+node`
+- [x] Idempotence pinned by tests + by `templates.Merge`'s
+      `bytes.Equal(prior, next)` short-circuit
 
-### Phase 3 — `add attributes` + `add lfs-install`
+### Phase 3 — `add attributes` + `add lfs-install` ✅ (v3.105.0)
 
-- Mirror Phase 2 for attributes
-- `add lfs-install` runs `git lfs install --local` then merges `lfs/common.gitattributes`
+- [x] `add attributes` shares `executeAddTemplate` with `add ignore`,
+      parameterized via `addTemplateSpec` (kind / target / banner)
+- [x] `add lfs-install` already shipped (separate command — runs
+      `git lfs install --local` then merges `lfs/common.gitattributes`)
 
 ### Phase 4 — discovery commands
 

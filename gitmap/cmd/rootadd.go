@@ -6,16 +6,19 @@ import (
 )
 
 // addUsage is the umbrella usage block printed when `gitmap add` is
-// invoked with no subcommand or with an unknown one. New subcommands
-// (ignore, attributes) will slot in here as they land.
+// invoked with no subcommand or with an unknown one.
 const addUsage = `Usage: gitmap add <subcommand>
 
 Subcommands:
+  ignore        Merge curated .gitignore template block into ./.gitignore
+  attributes    Merge curated .gitattributes template block into ./.gitattributes
   lfs-install   Run 'git lfs install --local' and merge the lfs/common .gitattributes block
 
 Examples:
+  gitmap add ignore go node
+  gitmap add ignore go node --dry-run
+  gitmap add attributes go rust
   gitmap add lfs-install
-  gitmap add lfs-install --dry-run
 `
 
 // dispatchAdd routes `gitmap add <subcommand>` to its handler. Returns
@@ -33,6 +36,10 @@ func dispatchAdd(command string) bool {
 
 	sub, rest := os.Args[2], os.Args[3:]
 	switch sub {
+	case "ignore":
+		runAddIgnore(rest)
+	case "attributes":
+		runAddAttributes(rest)
 	case "lfs-install":
 		runAddLFSInstall(rest)
 	default:

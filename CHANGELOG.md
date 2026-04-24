@@ -1,5 +1,52 @@
 # Changelog
 
+## v3.105.0 — (2026-04-24) — `gitmap add ignore` / `add attributes`
+
+### Added
+
+- **`gitmap add ignore [langs...]`** merges the curated `common` +
+  per-language `.gitignore` templates into a marker block at the repo
+  root. Supports `go`, `node`, `python`, `rust`, `csharp`, `java`,
+  `kotlin`, `php`, `ruby`, `swift` out of the box, plus any user
+  overlay under `~/.gitmap/templates/ignore/`.
+- **`gitmap add attributes [langs...]`** is the `.gitattributes`
+  sibling. Same algorithm; same idempotency guarantees.
+- Both new commands accept `--dry-run` to preview the marker block
+  before writing.
+- **Stable, sorted marker tags**: `add ignore go node` and
+  `add ignore node go` share a single block (`ignore/go+node`), so the
+  block stays one block across collaborators who happen to type
+  arguments in different orders.
+- **Per-line dedupe** with blank-line preservation: merging
+  `common+go+node+python` collapses repeat rules across templates
+  without flattening the visual section spacers.
+
+### Changed
+
+- `dispatchAdd` now routes `ignore` and `attributes` in addition to the
+  pre-existing `lfs-install`. Usage banner updated accordingly.
+
+### Tests
+
+- `TestNormalizeLangs` pins arg-list normalization (case fold, dedupe,
+  strip implicit `common`, preserve order).
+- `TestBuildAddTagSorted` pins the sorted-tag invariant for stable
+  marker-block addressing across argument orders.
+- `TestDedupeLinesPreservesBlanks` pins blank-line semantics so the
+  merged body stays human-readable.
+- `TestConcatTemplateBodiesAddsLangBanners` pins the `# ── <lang> ──`
+  separator banners, exercised against real embedded templates.
+
+### Files
+
+- New: `gitmap/cmd/addignoreattrs.go` (12 helpers, all <15 lines)
+- New: `gitmap/cmd/addignoreattrs_test.go`, `addignoreattrs_testhelper_test.go`
+- New: `gitmap/helptext/add-ignore.md`, `gitmap/helptext/add-attributes.md`
+- Edited: `gitmap/cmd/rootadd.go` (router + usage banner),
+  `gitmap/constants/constants.go` (v3.105.0), `CHANGELOG.md`,
+  `.lovable/memory/{plans/04-templates-ignore-attributes-plan,index}.md`
+
+
 ## v3.104.0 — (2026-04-24) — commit-both --interleave (author-date variant)
 
 ### Added

@@ -18,7 +18,8 @@ Clone-next flattens by default (v2.75.0+): clones into base name folder, tracks 
 Clone-next `-f` / `--force` (v3.50.0+): chdir-to-parent before remove when cwd IS target folder; refuses versioned-folder fallback.
 Completion generator uses marker-comment opt-in (v3.0.0+): `// gitmap:cmd top-level` on const block, `// gitmap:cmd skip` per spec. CI `generate-check` enforces drift.
 VS Code Project Manager sync: resolve user-data root per OS first, then append `User/globalStorage/alefragnani.project-manager/projects.json` — never hardcode the full path.
-Current version: v3.104.0.
+Current version: v3.105.0.
+Templates Phase 2+3 complete (v3.105.0+): `gitmap add ignore` / `add attributes` ship via shared `executeAddTemplate` in `gitmap/cmd/addignoreattrs.go`. Sorted-tag marker blocks (`<kind>/<sorted-langs>`) keep arg-order-agnostic idempotency.
 Clone audit (v3.99.0+): `gitmap clone --audit <manifest>` is read-only; never invokes git, refuses direct URLs, prints diff-style markers (+/~/=/?/!).
 Cross-platform install/update reference (v3.100.0+): canonical matrix at `spec/01-app/108-cross-platform-install-update.md`, mirrored on `/install-gitmap` page and linked from README top.
 Clone parallel + hierarchy (v3.101.0+): `gitmap clone --max-concurrency N` opt-in parallel runner; default 1 = sequential. Hierarchy preserved at any N via filepath.Join(targetDir, rec.RelativePath).
