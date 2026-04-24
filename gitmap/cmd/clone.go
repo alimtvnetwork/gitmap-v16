@@ -199,6 +199,16 @@ func executeDirectClone(url, folderName string, ghDesktopFlag, noReplace bool) {
 		}
 	}
 
+	// Defensive guard: if the resolved folder name itself looks like a URL,
+	// the caller dispatched the wrong path — almost always because the user
+	// is running a stale binary that pre-dates v3.80.0's multi-URL routing.
+	// Refuse to build `D:\...\https:\github.com\...` paths that git can't
+	// possibly create, and tell the user exactly why.
+	if isDirectURL(folderName) {
+		fmt.Fprintf(os.Stderr, constants.ErrCloneStaleBinaryFolderURL, folderName, constants.Version)
+		os.Exit(1)
+	}
+
 	absPath, err := filepath.Abs(folderName)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "  Warning: could not resolve absolute path for %s: %v\n", folderName, err)
