@@ -1,5 +1,52 @@
 # Changelog
 
+## v3.89.0 — (2026-04-24) — Robust multi-URL clone parsing (PowerShell + bash)
+
+### Added
+
+- **Semicolon as a list separator.** `gitmap clone "url1;url2;url3"` now works alongside the existing comma form. Both can be mixed in one invocation. Bash users reach for `;` naturally; PowerShell users who quote the whole list (`'a;b;c'`) get the same behaviour.
+- **Sanitisation of paste artifacts on every URL token:**
+  - U+FEFF (BOM) — Windows clipboard frequently injects this when copying from PowerShell history or browser dev tools.
+  - U+200B / U+200C / U+200D (zero-width spaces) — copied from rich-text sources (Slack, Notion, web docs).
+  - Smart quotes (U+2018/U+2019/U+201C/U+201D) folded back to ASCII so wrapper-trim works in one pass.
+  - Matched outer `'`, `"`, or backtick pairs stripped (only matched pairs — a stray trailing quote stays so the user sees a recognisably broken URL).
+  - Leading/trailing list separators stripped (`,url2`, `url1;`, `;url2,` all collapse cleanly).
+
+### Changed
+
+- **`shouldUseMultiClone` now scans every positional, not just the first two.** Previously `gitmap clone https://x my-folder https://y` silently dropped the third URL because the heuristic only looked at indices 0 and 1. Three triggers now (any one is sufficient): (a) any positional contains `,` or `;`; (b) 2+ positionals AND any arg beyond the first parses as a URL; (c) the first positional flattens to 2+ valid URLs.
+- **`isDirectURL` accepts `git@host:owner/repo` SSH-shorthand.** Previously only `https://`, `http://`, and `ssh://` were recognised, which meant `clone git@github.com:foo/bar.git` was misclassified as a file path in some code paths and as a URL in others (`isLikelyURL` already accepted it). Now both helpers agree.
+- **`isLikelyURL` accepts `ssh://` for symmetry with `isDirectURL`.**
+- **Empty/whitespace/separator-only tokens are dropped silently** instead of producing a bogus "invalid URL" warning. A token that was nothing but punctuation was almost certainly a typo, not a URL the user wanted to clone.
+
+### Why
+
+Three real failure modes from issue #11 / #16 + user reports:
+1. `gitmap clone url1;url2` in bash produced a single ugly task and a "command not found" hint.
+2. Copy-pasting a URL from PowerShell history (`>> ` prompt + URL) carried a BOM and produced a phantom invalid-URL warning.
+3. `gitmap clone url1 url2 url3` (space-separated, no commas) cloned only the first two because `shouldUseMultiClone` only sampled `Positional[0]` and `Positional[1]`.
+
+### Implementation
+
+- `gitmap/cmd/clonemulti.go` — replaced `flattenURLArgs` body with a sanitising pipeline (`splitOnURLSeparators` → `sanitizeURLToken` → dedup). New helpers: `splitOnURLSeparators`, `sanitizeURLToken`, `stripInvisibleRunes`, `replaceSmartQuotes`, `trimMatchingWrappers`. New constant `urlListSeparators = ",;"`.
+- `gitmap/cmd/clone.go` — `shouldUseMultiClone` rewritten with three triggers; `isDirectURL` extended to accept `git@host:` shorthand.
+- `gitmap/cmd/rootflags.go` — `isLikelyURL` extended to accept `ssh://`. Doc-comment cross-reference added so future edits keep both helpers in lockstep.
+- `gitmap/constants/constants.go` — bumped `Version` to `3.89.0`.
+
+### Compatibility
+
+Pure superset. Every previously valid invocation still works identically:
+
+    gitmap clone url1 url2 url3                # space-only — now scans all positionals
+    gitmap clone url1,url2,url3                # comma — unchanged
+    gitmap clone "url1, url2 , url3"           # comma + spaces — unchanged
+    gitmap clone url1,url2 url3,url4           # mixed — unchanged
+    gitmap clone "url1;url2;url3"              # NEW: semicolon
+    gitmap clone "url1,url2;url3"              # NEW: mixed separators
+    gitmap clone git@github.com:foo/bar.git    # NEW: SSH shorthand recognised everywhere
+    gitmap clone https://x.com/y my-folder     # single URL + folder name — unchanged
+
+
 ## v3.88.0 — (2026-04-24) — `gitmap pending clear` to unblock stuck clones
 
 ### Added
