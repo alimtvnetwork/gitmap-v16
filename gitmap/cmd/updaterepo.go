@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/alimtvnetwork/gitmap-v7/gitmap/constants"
+	"github.com/alimtvnetwork/gitmap-v7/gitmap/fsutil"
 	"github.com/alimtvnetwork/gitmap-v7/gitmap/store"
 )
 
@@ -27,16 +28,6 @@ func resolveRepoPathFromEmbedded() string {
 // resolveRepoPathFromDB validates the saved repo path from SQLite.
 func resolveRepoPathFromDB() string {
 	return normalizeRepoPath(loadRepoPathFromDB())
-}
-
-// dirExists checks if a directory exists on disk.
-func dirExists(path string) bool {
-	info, err := os.Stat(path)
-	if err != nil {
-		return false
-	}
-
-	return info.IsDir()
 }
 
 // normalizeRepoPath resolves a candidate path to a valid gitmap source root.
@@ -102,26 +93,18 @@ func findRepoRoot(path string) string {
 }
 
 // isGitmapSourceRepo checks for the update script and source markers.
+// Uses fsutil predicates so the strict-file vs strict-dir distinction is
+// enforced by a single shared contract (see gitmap/fsutil/exists.go).
 func isGitmapSourceRepo(path string) bool {
-	if !dirExists(path) || !fileExists(filepath.Join(path, updateRunScript)) {
+	if !fsutil.DirExists(path) || !fsutil.FileExists(filepath.Join(path, updateRunScript)) {
 		return false
 	}
 
-	if fileExists(filepath.Join(path, "gitmap", "constants", "constants.go")) {
+	if fsutil.FileExists(filepath.Join(path, "gitmap", "constants", "constants.go")) {
 		return true
 	}
 
-	return fileExists(filepath.Join(path, "constants", "constants.go"))
-}
-
-// fileExists checks if a file exists on disk.
-func fileExists(path string) bool {
-	info, err := os.Stat(path)
-	if err != nil {
-		return false
-	}
-
-	return !info.IsDir()
+	return fsutil.FileExists(filepath.Join(path, "constants", "constants.go"))
 }
 
 // canPromptForRepoPath checks whether stdin is interactive.

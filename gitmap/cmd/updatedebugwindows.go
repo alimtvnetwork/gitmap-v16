@@ -25,6 +25,7 @@ import (
 	"runtime"
 
 	"github.com/alimtvnetwork/gitmap-v7/gitmap/constants"
+	"github.com/alimtvnetwork/gitmap-v7/gitmap/fsutil"
 )
 
 // isDebugWindowsRequested returns true when --debug-windows is on argv
@@ -91,12 +92,12 @@ func dumpDebugWindowsHandoff(source, target string, childArgv []string) {
 	}
 	fmt.Fprintf(os.Stderr, constants.MsgDebugWinSource, source)
 	fmt.Fprintf(os.Stderr, constants.MsgDebugWinTarget, target)
-	fmt.Fprintf(os.Stderr, constants.MsgDebugWinTargetExists, fileExistsLoose(target))
+	fmt.Fprintf(os.Stderr, constants.MsgDebugWinTargetExists, fsutil.FileOrDirExists(target))
 	fmt.Fprintf(os.Stderr, constants.MsgDebugWinChildArgv, childArgv)
 	dumpDebugWindowsRelevantEnv()
 	emitDebugWindowsJSON("handoff", map[string]any{
 		"source": source, "target": target,
-		"target_exists": fileExistsLoose(target),
+		"target_exists": fsutil.FileOrDirExists(target),
 		"child_argv":    childArgv,
 	})
 }
@@ -143,15 +144,9 @@ func dumpDebugWindowsNote(format string, args ...interface{}) {
 	emitDebugWindowsJSON("note", map[string]any{"message": msg})
 }
 
-// fileExistsLoose is a small wrapper used only by the debug dump. It
-// differs from the package-level fileExists by treating directories as
-// existing too and short-circuiting on empty input, which is what the
-// debug dump wants when the path may be unset.
-func fileExistsLoose(path string) bool {
-	if len(path) == 0 {
-		return false
-	}
-	_, err := os.Stat(path)
-
-	return err == nil
-}
+// (fileExistsLoose was removed in v3.113.0 — its contract now lives in
+// fsutil.FileOrDirExists, which provides the same empty-short-circuit +
+// directory-treated-as-existing semantics. Centralizing the predicate
+// removes the redeclaration footgun that bit this package twice; the
+// rename pin in updatedebugwindows_rename_test.go enforces the next
+// step of the migration.)
