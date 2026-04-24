@@ -8,6 +8,17 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: "v3.119.0",
+    date: "2026-04-24",
+    subtitle: "`gitmap inject` / `inj`: register an existing folder with Desktop + VS Code (+ DB)",
+    items: [
+      "New command for the 'I already have this repo on disk, just plug it into my tooling' workflow — no clone, no scan, just register. Forms: `gitmap inject` (cwd), `gitmap inject <folder>` (absolute, relative, or ~-prefixed), `gitmap inj <folder>` (short alias).",
+      "Pipeline (in order): DB upsert (conditional — only when `git remote get-url origin` succeeds; local-only folders silently skip), GitHub Desktop registration via `desktop.AddRepos`, VS Code open via `openInVSCode` (no-op + warning when VS Code isn't installed), shell handoff via `WriteShellHandoff(target)` so the wrapper chdirs the parent shell into the injected folder.",
+      "Folder validation: any directory is accepted. No `.git/` check — VS Code is happy to open anything, Desktop silently skips non-repos, and the DB upsert is the only step that requires a real remote (and it skips itself silently when one isn't there).",
+      "Files: `gitmap/cmd/inject.go` (new), `gitmap/helptext/inject.md` (new), `gitmap/constants/constants_cli.go` (CmdInject + CmdInjectAlias), `gitmap/constants/constants_v331.go` (Msg/Warn/Err constants), one dispatch entry in `gitmap/cmd/rootcore.go`. Reuses `resolveCloneNextFolder` for path resolution so error messages stay consistent with `cn <folder>`.",
+    ],
+  },
+  {
     version: "v3.118.0",
     date: "2026-04-24",
     subtitle: "`gitmap clone <url>` cds into the cloned folder",

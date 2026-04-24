@@ -1,5 +1,41 @@
 # Changelog
 
+## v3.119.0 — (2026-04-24) — `gitmap inject` / `inj`: register an existing folder with Desktop + VS Code (+ DB)
+
+New command for "I already have this repo on disk, just plug it into
+my tooling" — no clone, no scan, just register.
+
+**Forms:**
+
+    gitmap inject              # cwd
+    gitmap inject <folder>     # absolute, relative, or ~-prefixed
+    gitmap inj   <folder>      # short alias
+
+**What it does (in order):**
+
+1. **DB upsert** — only when `git remote get-url origin` succeeds.
+   Local-only folders silently skip this step (the user explicitly
+   asked for "yes, but only if remote detected" semantics).
+2. **GitHub Desktop** — registers via the same `desktop.AddRepos`
+   pipeline used by `clone` and `clone-next`.
+3. **VS Code** — opens via `openInVSCode` (no-op + warning when VS
+   Code isn't installed).
+4. **Shell handoff** — `WriteShellHandoff(target)` so the wrapper
+   chdirs the parent shell into the injected folder, mirroring the
+   `clone` / `cn` / `cd` UX added in v3.118.0.
+
+**Folder validation:** any directory is accepted. No `.git/` check —
+VS Code is happy to open anything, Desktop silently skips non-repos,
+and the DB upsert is the only step that requires a real remote (and
+it skips itself silently when one isn't there).
+
+**Files:** `gitmap/cmd/inject.go` (new), `gitmap/helptext/inject.md`
+(new), `gitmap/constants/constants_cli.go` (CmdInject + CmdInjectAlias),
+`gitmap/constants/constants_v331.go` (Msg/Warn/Err constants), one
+dispatch entry in `gitmap/cmd/rootcore.go`. Reuses
+`resolveCloneNextFolder` for path resolution so error messages stay
+consistent with `cn <folder>`.
+
 ## v3.118.0 — (2026-04-24) — `gitmap clone <url>` cds into the cloned folder
 
 Single-URL `gitmap clone <url>` now writes the cloned folder's absolute

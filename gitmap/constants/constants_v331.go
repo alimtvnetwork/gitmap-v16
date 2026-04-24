@@ -82,6 +82,20 @@ const (
 	ErrCNAmbiguousBothFolders = "  ✗ cn: ambiguous arguments — neither looks like a version (use vN, v+N, or v++)"
 )
 
+// gitmap inject (alias: inj) — v3.119.0. Registers an existing folder
+// with GitHub Desktop + VS Code, and (when a remote origin exists)
+// upserts into the SQLite database. See gitmap/cmd/inject.go and
+// gitmap/helptext/inject.md.
+const (
+	MsgInjectStart      = "→ injecting %s (%s)\n"
+	MsgInjectDone       = "✓ injected %s\n"
+	MsgInjectNoRemote   = "  ↳ no remote origin configured for %s — skipping database upsert\n"
+	MsgInjectDBOK       = "  ↳ database: upserted %s (%s)\n"
+	ErrInjectResolve    = "  ✗ inject: %v\n"
+	WarnInjectDBOpen    = "  ⚠ inject: could not open database: %v\n"
+	WarnInjectDBUpsert  = "  ⚠ inject: could not save repo to database: %v\n"
+)
+
 // SSH existing-key-on-disk fix messages.
 const (
 	MsgSSHExistsOnDisk = "\n  ℹ SSH key already exists on disk: %s\n  Reusing existing key (no regeneration needed).\n\n"
