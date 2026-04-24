@@ -29,7 +29,7 @@ func TestParseModuleLine_MultipleLines(t *testing.T) {
 }
 
 func TestMatchesExtFilter_EmptySlice(t *testing.T) {
-	if !matchesExtFilter("anything.xyz", []string{}) {
+	if !matchesExtFilter("anything.xyz", []string{}, true) {
 		t.Error("empty slice should match all files")
 	}
 }
