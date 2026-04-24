@@ -1,5 +1,54 @@
 # Changelog
 
+## v3.111.0 — (2026-04-24) — Surface `td` / `ti` aliases in shell tab-completion
+
+### Added
+
+- **Typed CLI constants** for templates subcommand aliases:
+  `CmdTemplatesDiff` (`"diff"`), `CmdTemplatesDiffAlias` (`"td"`),
+  `CmdTemplatesInit` (`"init"`), `CmdTemplatesInitAlias` (`"ti"`) in
+  `gitmap/constants/constants_templates_cli.go`. The block opts in via
+  `// gitmap:cmd top-level` so the completion generator picks the
+  alias values up automatically.
+- **Generator-aware skip markers** on the full subcommand strings:
+  `CmdTemplatesDiff` and `CmdTemplatesInit` carry `// gitmap:cmd skip`
+  line comments because:
+  - `"diff"` is already a top-level command (folder-tree diff via
+    `gitmap/cmd/diff.go`) — re-listing it here is a no-op for the
+    completion union, but the marker documents intent and prevents
+    a future audit from re-opening the question.
+  - `"init"` is not a top-level gitmap command at all; surfacing it
+    standalone would mislead users into typing `gitmap init`.
+
+### Changed
+
+- `gitmap/cmd/templatesdiff.go` and `gitmap/cmd/templatescli.go` now
+  alias the local `cmdTemplatesDiff*` / `cmdTemplatesInit*` package
+  identifiers to the shared `constants.CmdTemplates*` values, giving
+  the completion generator one source of truth and preventing string
+  drift between the dispatcher switch and the completion table.
+
+### Generated
+
+- `gitmap/completion/allcommands_generated.go` — added `"td"` and
+  `"ti"` in sorted positions. The full `templates diff` invocation
+  remains discoverable because both the parent (`templates` / `tpl`)
+  and the alias (`td`) are now in completion; users who tab-complete
+  `gitmap td<TAB>` get the alias suggested directly. Re-run
+  `go generate ./completion/...` locally to confirm byte-equality
+  before tagging — the manual edit follows the deterministic sort
+  the generator produces.
+
+### Plan status
+
+- Plan 05 Phase 4 — completion-generator note revised: `td` and `ti`
+  ARE now wired (overriding the prior "subcommand precedent" decision
+  documented at v3.108).
+
+### Bumped
+
+- `constants.Version` → `3.111.0`.
+
 ## v3.110.0 — (2026-04-24) — Plan 05 Phase 2 closeout: `gitmap templates init` (alias `ti`)
 
 ### Verified

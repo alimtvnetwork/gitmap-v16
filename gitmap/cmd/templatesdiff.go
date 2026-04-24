@@ -14,8 +14,8 @@ import (
 )
 
 const (
-	cmdTemplatesDiff      = "diff"
-	cmdTemplatesDiffAlias = "td"
+	cmdTemplatesDiff      = constants.CmdTemplatesDiff
+	cmdTemplatesDiffAlias = constants.CmdTemplatesDiffAlias
 
 	flagDiffLang = "lang"
 	flagDescDiffLang = "Language to diff (e.g. go, node). Required."

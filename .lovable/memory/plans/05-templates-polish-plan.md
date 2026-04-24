@@ -77,7 +77,7 @@ All three pieces share the existing resolver / merge / marker-block primitives. 
 - [x] Add `templates diff` entry to `src/data/commands.ts` so the docs site command browser surfaces it. (v3.108)
 - [x] Add the `init` entry to `src/data/commands.ts`. (v3.110)
 - [ ] README: short snippet under "Templates" section showing `gitmap templates init go --lfs` + `gitmap templates diff --lang go` lifecycle.
-- [ ] Completion generator: `td` / `ti` are templates subcommands, not top-level — matches the existing `group create` precedent (subcommand IDs are intentionally excluded from `generatedCommands`). No marker change needed; documented here so future audits don't re-open this.
+- [x] Completion generator: `td` and `ti` aliases now surfaced via typed `CmdTemplatesDiffAlias` / `CmdTemplatesInitAlias` constants in `constants_templates_cli.go` (v3.111). The full subcommand strings (`diff`, `init`) carry `// gitmap:cmd skip` so they don't double-register. Decision reversed from v3.108's "subcommand precedent" stance per user request.
 - [ ] Manual smoke matrix:
   - Empty repo → `templates init --lang go,node --lfs` → expect 3 files.
   - Existing `.gitignore` → refuse without `--force`.

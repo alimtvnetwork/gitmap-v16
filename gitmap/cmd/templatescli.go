@@ -17,8 +17,8 @@ const (
 	cmdTemplatesListAlias = "tl"
 	cmdTemplatesShow      = "show"
 	cmdTemplatesShowAlias = "ts"
-	cmdTemplatesInit      = "init"
-	cmdTemplatesInitAlias = "ti"
+	cmdTemplatesInit      = constants.CmdTemplatesInit
+	cmdTemplatesInitAlias = constants.CmdTemplatesInitAlias
 	usageTemplatesRoot    = `Usage: gitmap templates <subcommand>
 
 Subcommands:
