@@ -8,6 +8,18 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: "v3.112.0",
+    date: "2026-04-24",
+    subtitle: "Pin the `fileExists` / `fileExistsLoose` rename so the v3.92.0 redeclaration cannot regress",
+    items: [
+      "Diagnosis: user's CI reported `cmd/updaterepo.go:118:6: fileExists redeclared in this block` + `cmd/updatedebugwindows.go:148:6: other declaration of fileExists`. In the current source tree this is impossible — `updatedebugwindows.go:150` already declares the renamed loose variant `fileExistsLoose` (the v3.92.0 fix), and `:148` is a comment line. A redeclaration error CANNOT originate from a comment.",
+      "Conclusion: the user's CI is building from a stale snapshot that pre-dates v3.92.0. Same failure mode as v3.95.0's stale-binary guard, just on the build-host side instead of the deployed-binary side. Other `fileExists` symbols in `gitmap/detector`, `gitmap/localdirs`, `gitmap/lockfile`, and `gitmap/release` are in DIFFERENT packages — Go allows duplicates across packages, so they're not the cause.",
+      "Added `gitmap/cmd/updatedebugwindows_rename_test.go` — two paired tests that compile only if the v3.92.0 rename is preserved: `TestFileExistsLooseSymbolPinned` references `fileExistsLoose` directly, and `TestFileExistsStrictSymbolPinned` asserts the strict package-level `fileExists` still rejects directories. If a future contributor reverts the rename, the test fails to compile alongside the duplicate-declaration error, making the cause unambiguous.",
+      "Action required for the user: `git pull` on the build host so the v3.92.0 rename is present, then re-run the build. If the failure persists, run `git log -- gitmap/cmd/updatedebugwindows.go` and confirm the v3.92.0 commit is in the checked-out history. If it isn't, the CI is on a branch that diverged before v3.92.0 and needs to be rebased.",
+      "Bumped `constants.Version` to `3.112.0`.",
+    ],
+  },
+  {
     version: "v3.111.0",
     date: "2026-04-24",
     subtitle: "Surface `td` / `ti` aliases in shell tab-completion via typed CLI constants",

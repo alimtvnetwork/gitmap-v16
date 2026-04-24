@@ -1,5 +1,59 @@
 # Changelog
 
+## v3.112.0 — (2026-04-24) — Pin the `fileExists` / `fileExistsLoose` rename so the v3.92.0 redeclaration cannot regress
+
+### Diagnosis
+
+User's CI reported:
+
+    cmd/updaterepo.go:118:6: fileExists redeclared in this block
+    cmd/updatedebugwindows.go:148:6: other declaration of fileExists
+
+In the current source tree this is impossible:
+
+- `gitmap/cmd/updaterepo.go:118` declares the strict, file-only
+  `fileExists` (already there since before v3.92.0).
+- `gitmap/cmd/updatedebugwindows.go:150` declares the renamed loose
+  variant `fileExistsLoose` (the v3.92.0 fix).
+- `updatedebugwindows.go:148` is a comment line, not a `func`
+  declaration. A redeclaration error CANNOT originate from a comment.
+- Other `fileExists` symbols live in DIFFERENT packages
+  (`gitmap/detector`, `gitmap/localdirs`, `gitmap/lockfile`,
+  `gitmap/release`) and Go allows duplicates across packages.
+
+Conclusion: **the user's CI is building from a stale snapshot that
+pre-dates v3.92.0.** This is the same failure mode covered by
+v3.95.0's stale-binary guard, just on the build-host side instead of
+the deployed-binary side.
+
+### Added
+
+- `gitmap/cmd/updatedebugwindows_rename_test.go` — two paired tests
+  that compile only if the v3.92.0 rename is preserved:
+  - `TestFileExistsLooseSymbolPinned` references `fileExistsLoose`
+    directly. If a future contributor reverts the rename, the test
+    fails to compile alongside the duplicate-declaration error,
+    making the cause unambiguous.
+  - `TestFileExistsStrictSymbolPinned` references the strict
+    package-level `fileExists` and asserts it still rejects
+    directories. Pairs the two helpers as an explicit, tested
+    contract instead of a drifting implementation detail.
+
+### Action required for the user
+
+The source is correct. To clear CI:
+
+1. `git pull` on the build host so the v3.92.0 rename is present.
+2. Re-run the build.
+3. If the failure persists, run `git log -- gitmap/cmd/updatedebugwindows.go`
+   and confirm the v3.92.0 commit is in the checked-out history. If
+   it isn't, the CI is on a branch that diverged before v3.92.0 and
+   needs to be rebased.
+
+### Bumped
+
+- `constants.Version` → `3.112.0`.
+
 ## v3.111.0 — (2026-04-24) — Surface `td` / `ti` aliases in shell tab-completion
 
 ### Added
