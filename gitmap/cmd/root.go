@@ -24,6 +24,14 @@ func Run() {
 		migrateLegacyDirs()
 	}
 
+	// URL shortcut: `gitmap <git-url> [<url2> ...]` is rewritten to
+	// `gitmap clone <url> ...` so users don't have to remember the
+	// subcommand for the most common operation. Triggered when the
+	// first positional looks like an HTTPS / SSH git URL.
+	if isLikelyURL(os.Args[1]) {
+		os.Args = append([]string{os.Args[0], constants.CmdClone}, os.Args[1:]...)
+	}
+
 	aliasName, cleaned := extractAliasFlag(os.Args[2:])
 	if len(aliasName) > 0 {
 		resolveAliasContext(aliasName)
