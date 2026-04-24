@@ -19,36 +19,62 @@ type commitTransferSpec struct {
 // runCommitTransfer is the single entry point for commit-left,
 // commit-right, and commit-both.
 //
-// Phase 1 (v3.76.0): commit-right is fully implemented via the
-// committransfer package. commit-left and commit-both still print the
-// "not yet implemented — see spec 106" message.
+// Phase 1 (v3.76.0): commit-right.
+// Phase 2 (v3.102.0): commit-left wired through committransfer.RunLeft.
+// Phase 3 (v3.102.0): commit-both wired through committransfer.RunBoth.
 func runCommitTransfer(spec commitTransferSpec, args []string) {
 	checkHelp(spec.Name, args)
-	if spec.Name != constants.CmdCommitRight {
-		fmt.Fprintf(os.Stderr, constants.ErrCTNotImplementedFmt, spec.Name)
-		os.Exit(2)
-	}
-	runCommitRight(spec, args)
+	executeCommitTransfer(spec, args)
 }
 
-// runCommitRight wires the CLI flags into committransfer.RunRight.
-func runCommitRight(spec commitTransferSpec, args []string) {
+// executeCommitTransfer parses flags, resolves endpoints, and dispatches
+// to the directional runner that matches spec.Name. Kept separate from
+// runCommitTransfer so the help-check stays a one-liner and the dispatch
+// table reads top-to-bottom without nested branching.
+func executeCommitTransfer(spec commitTransferSpec, args []string) {
 	opts, positional := parseCommitTransferArgs(spec, args)
 	if len(positional) != 2 {
 		fmt.Fprintf(os.Stderr, constants.ErrCTArgCountFmt, spec.Name, len(positional))
 		fmt.Fprintf(os.Stderr, constants.MsgCTUsageFmt, spec.Name, spec.Name)
 		os.Exit(1)
 	}
-	source, target, resolveErr := resolveCommitEndpoints(positional[0], positional[1], opts)
+	left, right, resolveErr := resolveCommitEndpoints(positional[0], positional[1], opts)
 	if resolveErr != nil {
 		fmt.Fprintf(os.Stderr, "%s endpoint resolve failed: %v\n", opts.LogPrefix, resolveErr)
 		os.Exit(1)
 	}
-	opts.Message.SourceDisplayName = source.DisplayName
-	if err := committransfer.RunRight(source.WorkingDir, target.WorkingDir, opts); err != nil {
+	opts.Message.SourceDisplayName = pickSourceDisplayName(spec.Name, left, right)
+	if err := dispatchDirection(spec.Name, left.WorkingDir, right.WorkingDir, opts); err != nil {
 		fmt.Fprintf(os.Stderr, "%s replay failed: %v\n", opts.LogPrefix, err)
 		os.Exit(1)
 	}
+}
+
+// dispatchDirection routes to the right RunX function. LEFT/RIGHT
+// positional ordering matches the spec — `commit-left LEFT RIGHT`
+// writes commits onto LEFT (using RIGHT as source).
+func dispatchDirection(name, leftDir, rightDir string, opts committransfer.Options) error {
+	switch name {
+	case constants.CmdCommitLeft:
+		return committransfer.RunLeft(leftDir, rightDir, opts)
+	case constants.CmdCommitBoth:
+		return committransfer.RunBoth(leftDir, rightDir, opts)
+	default:
+		// commit-right (and any future direction defaulting to L→R).
+		return committransfer.RunRight(leftDir, rightDir, opts)
+	}
+}
+
+// pickSourceDisplayName labels the provenance footer with the side
+// that's being read from. commit-left reads from RIGHT; commit-right
+// reads from LEFT; commit-both reads from both — we pick LEFT as the
+// canonical label because the RunBoth implementation uses (L→R) first.
+func pickSourceDisplayName(name string, left, right movemerge.Endpoint) string {
+	if name == constants.CmdCommitLeft {
+		return right.DisplayName
+	}
+
+	return left.DisplayName
 }
 
 // resolveCommitEndpoints reuses the merge-* endpoint resolver. LEFT is
