@@ -51,11 +51,17 @@ clean:
 
 ## Changelog — regenerate CHANGELOG.md and src/data/changelog.ts from
 ## Conventional Commits since the latest annotated git tag.
-## Usage: make changelog VERSION=v3.92.0
+## Usage:
+##   make changelog VERSION=v3.92.0
+##   make changelog VERSION=v3.92.0 SINCE=v3.90.0          # partial backfill
+##   make changelog RELEASE_TAG=v3.91.0 SINCE=v3.90.0      # rebuild a past release
+SINCE       ?=
+RELEASE_TAG ?=
 changelog:
-	@cd scripts/changelog && $(GO) run . -mode=write -version=$(VERSION) -repo=../..
+	@cd scripts/changelog && $(GO) run . -mode=write -version=$(VERSION) -repo=../.. -since=$(SINCE) -release-tag=$(RELEASE_TAG)
 
 ## Changelog-check — fail (exit 3) when the on-disk changelogs drift
-## from the regenerated output. Wire into CI.
+## from the regenerated output. Wire into CI. Forwards SINCE / RELEASE_TAG
+## so partial-update PRs can verify only their slice.
 changelog-check:
-	@cd scripts/changelog && $(GO) run . -mode=check -version=$(VERSION) -repo=../..
+	@cd scripts/changelog && $(GO) run . -mode=check -version=$(VERSION) -repo=../.. -since=$(SINCE) -release-tag=$(RELEASE_TAG)
