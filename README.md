@@ -21,6 +21,8 @@ _Scan, catalog, clone, and manage all your Git repositories from a single CLI._
 
 ---
 
+> **One-stop install/update reference**: [`spec/01-app/108-cross-platform-install-update.md`](spec/01-app/108-cross-platform-install-update.md) — the full Windows / macOS / Linux install · update · uninstall · verify matrix is also rendered in the docs at `/install-gitmap`.
+
 ## Quick Start
 
 ### Install — Quick (pick your install folder)
@@ -947,11 +949,6 @@ gitmap clone gitmap.json --target-dir D:\wp-work --github-desktop --safe-pull
 ```
 
 → Detailed help: [scan](gitmap/helptext/scan.md) · [rescan](gitmap/helptext/rescan.md) · [clone](gitmap/helptext/clone.md) · [clone-next](gitmap/helptext/clone-next.md)
-
----
-
-> **One-stop reference**: see [`spec/01-app/108-cross-platform-install-update.md`](spec/01-app/108-cross-platform-install-update.md) (or the [`/install-gitmap`](https://github.com/alimtvnetwork/gitmap-v7) docs page) for the full Windows / macOS / Linux install + update + uninstall + verify matrix. The snippets below are the same ones the spec lists.
-
 
 <div align="center">
 
