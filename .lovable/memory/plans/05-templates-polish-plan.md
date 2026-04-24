@@ -43,15 +43,17 @@ All three pieces share the existing resolver / merge / marker-block primitives. 
 - [x] `corpus_parity_test.go` already enumerates all five new langs (lines 23-30) and asserts the ignore-vs-attributes parity batch (line 97). No `corpus_test.go` extension required.
 - [x] `templates list` output picks up new langs automatically via the resolver — no `list_test.go` change needed.
 
-### Phase 2 — `templates init`
+### Phase 2 — `templates init` ✅ (v3.110.0)
 
-- [ ] `gitmap/cmd/templatesinit.go` — flags: `--lang <csv>`, `--lfs`, `--force`, `--dry-run`, `--cwd <path>`.
-- [ ] Reuse `templates.Resolve` + `templates.Merge` from Plan 04 (no new merge logic).
-- [ ] Order: common → each lang in CSV order → optional LFS attributes block.
-- [ ] Refuse on existing non-empty `.gitignore`/`.gitattributes` unless `--force`.
-- [ ] Idempotent: `init` then `add ignore <lang>` → no further changes.
-- [ ] Helptext: `gitmap/helptext/templatesinit.md` (markdown, picked up by pretty renderer).
-- [ ] Register alias `ti`.
+- [x] `gitmap/cmd/templatesinit.go` — flags: `--lfs`, `--force`, `--dry-run`. Uses positional `<lang> [<lang>...]` instead of `--lang <csv>` and reads CWD via `os.Getwd()` instead of an explicit `--cwd` (final UX call: positional langs feel more natural for a scaffolder; `--cwd` deferred — `cd && gitmap templates init …` covers it).
+- [x] Reuses `templates.Resolve` + `templates.Merge` — zero new merge logic.
+- [x] Order: per lang `[ignore, attributes]` then optional single `lfs/common` step. Common is implicit since the embedded `common.gitignore` lives outside the per-lang loop and is merged separately by `add ignore` users; `init` keeps the lang focus tight.
+- [x] Behavior: ignore template REQUIRED per lang (hard-fail with hint), attributes template OPTIONAL (soft-skip with dim notice — matches embed corpus reality where some langs lack an attributes file).
+- [x] `--force` removes the target file before merge so the resulting block is the only content. Without `--force`, `templates.Merge` preserves non-marker content and updates-in-place or appends.
+- [x] Idempotent: re-running `init <lang>` produces "unchanged" lines; running `add ignore <lang>` afterward is also a no-op (same marker tag `ignore/<lang>`).
+- [x] Helptext: `gitmap/helptext/templates-init.md` (133 lines, markdown, picked up by pretty renderer).
+- [x] Alias `ti` registered alongside `init` in `templatescli.go` dispatcher.
+- [x] `templatesinit_test.go` — 9 unit tests covering flag parsing, dry-run simulation, soft-skip on missing attributes, and `--force` + idempotency paths.
 
 ### Phase 3 — `templates diff` ✅ (v3.108.0)
 
@@ -73,8 +75,8 @@ All three pieces share the existing resolver / merge / marker-block primitives. 
 - [x] Update `gitmap/helptext/templates.md` usage banner with the new subcommand. (v3.108)
 - [x] Update `src/data/changelog.ts` with v3.107 (renderer corpus) + v3.108 (`templates diff`).
 - [x] Add `templates diff` entry to `src/data/commands.ts` so the docs site command browser surfaces it. (v3.108)
-- [ ] Add the `init` entry to `src/data/commands.ts` once Phase 2 ships.
-- [ ] README: short snippet under "Templates" section (defer until `init` lands so the snippet shows the full lifecycle).
+- [x] Add the `init` entry to `src/data/commands.ts`. (v3.110)
+- [ ] README: short snippet under "Templates" section showing `gitmap templates init go --lfs` + `gitmap templates diff --lang go` lifecycle.
 - [ ] Completion generator: `td` / `ti` are templates subcommands, not top-level — matches the existing `group create` precedent (subcommand IDs are intentionally excluded from `generatedCommands`). No marker change needed; documented here so future audits don't re-open this.
 - [ ] Manual smoke matrix:
   - Empty repo → `templates init --lang go,node --lfs` → expect 3 files.
