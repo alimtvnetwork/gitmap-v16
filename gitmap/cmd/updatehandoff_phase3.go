@@ -37,10 +37,14 @@ import (
 // Best-effort cleanup remains non-fatal, but launch failures are printed
 // to stderr and verbose logs so the user can see what went wrong.
 func scheduleDeployedCleanupHandoff() {
+	dumpDebugWindowsHeader("phase-3 handoff (update-runner)")
+	defer dumpDebugWindowsFooter()
+
 	deployed, source := resolveDeployedBinaryPath()
 	if len(deployed) == 0 {
 		fmt.Fprint(os.Stderr, constants.ErrUpdatePhase3TargetMissing)
 		logUpdatePhase3(constants.UpdatePhase3LogTargetMissing)
+		dumpDebugWindowsNote("target missing — no cleanup child will be spawned")
 
 		return
 	}
@@ -50,6 +54,7 @@ func scheduleDeployedCleanupHandoff() {
 		// We *are* the deployed binary (Unix in-place update). Just
 		// run cleanup directly — no handoff needed.
 		logUpdatePhase3(constants.UpdatePhase3LogInline, deployed)
+		dumpDebugWindowsNote("inline cleanup — self == deployed (%s)", deployed)
 		runUpdateCleanup()
 
 		return
