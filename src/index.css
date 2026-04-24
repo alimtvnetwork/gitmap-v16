@@ -175,8 +175,23 @@
   .hover-scale,
   .btn-hover-lift:hover,
   .docs-blockquote:hover,
-  .docs-inline-code:hover {
+  .docs-inline-code:hover,
+  .card-lift:hover,
+  .reveal > * {
     transform: none !important;
+  }
+
+  /* Disable decorative motion-only effects entirely */
+  .aurora-bg::before,
+  .text-shimmer,
+  .badge-pulse::before,
+  .card-sheen::after,
+  .cta-glow::before {
+    animation: none !important;
+    transition: none !important;
+  }
+  .reveal > * {
+    opacity: 1 !important;
   }
 
   /* docs-h3 padding shift on hover */
