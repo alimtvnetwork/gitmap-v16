@@ -571,6 +571,23 @@
     );
   }
 
+  /* Reduced-motion fallback — honor users who request fewer animations.
+     Disables the slide-shine sweep and lift entirely so hover state is
+     instant and visually static. */
+  @media (prefers-reduced-motion: reduce) {
+    .btn-slide,
+    .btn-slide::before {
+      transition: none !important;
+    }
+    .btn-slide:hover {
+      transform: none !important;
+    }
+    .btn-slide::before,
+    .btn-slide:hover::before {
+      display: none !important;
+    }
+  }
+
   /* Primary CTA glow — animated conic ring on hover. */
   .cta-glow {
     position: relative;
