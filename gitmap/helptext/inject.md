@@ -53,15 +53,49 @@ effects run.
 
 ## Examples
 
+### cwd default (no argument)
+
     cd ~/dev/some-repo
     gitmap inject
       → registers cwd, opens in VS Code, cds you back in.
 
+    cd /c/work/api-service
+    gitmap inj
+      → short alias, same behavior on the cwd.
+
+### Positional with `~` (home-relative)
+
     gitmap inject ~/dev/macro-ahk-v11
-      → resolves the ~ path, registers, opens.
+      → expands ~ to $HOME, registers, opens.
+
+    gitmap inj ~/projects/api
+      → short alias + ~ path, resolved against $HOME (or USERPROFILE).
+
+    gitmap inject ~
+      → injects your home directory itself (DB step skipped, no origin).
+
+### Positional with relative paths
+
+    cd ~/dev
+    gitmap inject ./macro-ahk-v11
+      → explicit ./ relative to cwd.
 
     gitmap inj ../sibling-repo
-      → relative path resolved against cwd.
+      → parent-relative path resolved against cwd.
+
+    gitmap inject some-repo
+      → bare name resolved as ./some-repo next to cwd.
+
+    gitmap inj ../../monorepo/packages/ui
+      → deep relative path, fully resolved before any side effects.
+
+### Positional with absolute paths
+
+    gitmap inject /home/me/dev/some-repo
+      → absolute POSIX path.
+
+    gitmap inject C:\dev\macro-ahk-v11
+      → absolute Windows path.
 
     gitmap inject C:\sandbox\plain-folder
       → no .git/, no origin → DB step is skipped, but Desktop +
