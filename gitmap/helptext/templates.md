@@ -12,8 +12,19 @@ tpl
 
 | Subcommand | Alias | Purpose |
 |------------|-------|---------|
-| `templates list` | `tl` | Print every available template with its KIND, LANG, SOURCE, and PATH |
+| `templates list [--kind] [--lang]` | `tl` | Print every available template with KIND, LANG, SOURCE, PATH |
 | `templates show <kind> <lang>` | `ts` | Write a single resolved template (overlay > embed) to stdout |
+| `templates init <lang>...` | `ti` | Scaffold `.gitignore` / `.gitattributes` for one or more languages |
+
+## Flags (list)
+
+| Flag | Description |
+|------|-------------|
+| `--kind <ignore\|attributes\|lfs>` | Narrow output to one kind. Unknown values exit 1. |
+| `--lang <name>` | Narrow output to one language across every kind. Case-insensitive. |
+
+Flags AND together — `--kind ignore --lang go` returns at most one row
+(`ignore/go`), not the union of every ignore row and every go row.
 
 ## Kinds
 
@@ -104,6 +115,18 @@ re-syncing.
 
 Both `tpl` (the umbrella alias) and `tl` / `ts` (the per-subcommand
 aliases) round-trip identically with their long forms.
+
+### Example 5: Filter the listing
+
+    gitmap templates list --kind ignore
+    gitmap tpl tl --lang go
+    gitmap templates list --kind attributes --lang node
+
+Filters are case-insensitive and AND together. An unknown `--kind` value
+exits 1 with `templates list: unknown --kind "foo" (want ignore | attributes | lfs)`
+so typos surface immediately instead of silently emptying the table.
+A valid filter that simply matches no rows prints
+`(no templates match the requested filter)`.
 
 ## How forking works
 
