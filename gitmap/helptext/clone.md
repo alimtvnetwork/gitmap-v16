@@ -18,7 +18,29 @@ c
 | --target-dir \<dir\> | current directory | Base directory for clones |
 | --safe-pull | false | Pull existing repos with retry + diagnostics |
 | --github-desktop | false | Auto-register with GitHub Desktop (no prompt) |
+| --audit | false | Validate planned git clone commands and print a diff-style summary; never executes |
 | --verbose | false | Write detailed debug log |
+
+## Audit mode
+
+`gitmap clone --audit <source>` parses the manifest, computes the exact
+`git clone` / `git pull` command that would run for every record, and
+prints a diff-style report. It never invokes git, never writes outside
+stdout, and works offline. Useful for reviewing a manifest before a
+batch clone or for CI dry-runs against a generated `.gitmap/output/`.
+
+Markers:
+
+| Marker | Action   | Meaning                                          |
+|--------|----------|--------------------------------------------------|
+| `+`    | clone    | target missing — would run `git clone ...`       |
+| `~`    | pull     | target is an existing git repo — would safe-pull |
+| `=`    | cached   | clone-cache fingerprint matches local HEAD       |
+| `?`    | conflict | target exists but is not a git repository        |
+| `!`    | invalid  | record has no clone URL                          |
+
+Audit requires a manifest source (`json`, `csv`, `text`, or a path) —
+it cannot run against a single direct URL.
 
 ## Prerequisites
 
