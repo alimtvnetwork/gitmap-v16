@@ -1,5 +1,32 @@
 # Changelog
 
+## v3.84.0 — (2026-04-24) — Fix self-update deploying to the wrong Windows install
+
+### Fixed
+
+- **`gitmap update` on Windows now deploys to the configured install first** instead of letting the current `PATH` location win. This fixes the repeated stale-binary loop where self-update appeared to run, but the old `gitmap.exe` stayed active because `run.ps1` kept refreshing the wrong install root.
+- **Generated update handoff scripts now match the runtime fix.** The temporary PowerShell script emitted by `gitmap update` now resolves the deployed binary from `powershell.json` first and only falls back to the active `PATH` binary when the configured target is missing, keeping post-update verification and cleanup aligned with the real deploy location.
+
+### Changed
+
+- **Deploy target resolution order** is now consistent across the update flow:
+  1. explicit `-DeployPath`
+  2. configured `powershell.json deployPath`
+  3. `PATH` fallback only when config is missing
+- **Version bump** — `gitmap/constants/constants.go` now reports `3.84.0`.
+
+### Implementation
+
+- `run.ps1` — `Resolve-DeployTarget` now prefers `powershell.json` over the current `PATH` binary, with log text updated to make the fallback explicit.
+- `gitmap/constants/constants_update.go` — updated `UpdatePSDeployDetect` so generated self-update scripts resolve the deployed binary from config first, then use `PATH` only as a missing-target fallback.
+- `gitmap/constants/constants.go` — bumped `Version` to `3.84.0`.
+
+### Compatibility
+
+- Safe behavior change: explicit `-DeployPath` still wins, and `PATH` is still used when no configured deploy root exists. The only removed behavior is the incorrect PATH-first preference that caused duplicate installs to hijack self-update.
+
+---
+
 ## v3.53.0 — (2026-04-21) — `gitmap lfs-common`: one-shot Git LFS tracking for common binary types
 
 ### Added
