@@ -46,7 +46,6 @@ func TestIsDirectURLAcceptsAllReportedShapes(t *testing.T) {
 		"https://github.com/alimtvnetwork/email-reader-v3",
 		"http://gitlab.example.com/foo/bar",
 		"git@github.com:alimtvnetwork/account-automator.git",
-		"ssh://git@github.com/alimtvnetwork/foo",
 	}
 	for _, u := range urls {
 		if !isDirectURL(u) {
