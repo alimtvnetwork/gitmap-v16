@@ -54,6 +54,15 @@ const (
 	ErrDesktopReadFailed  = "Error reading %s: %v\n"
 	ErrDesktopParseFailed = "Error parsing JSON from %s: %v\n"
 	ErrNoAbsPath          = "no absolute path"
+	ErrCloneFolderIsURL   = "  [clone] refusing folder name %q — this looks like a git URL.\n" +
+		"  This usually means PowerShell silently split a comma-joined URL\n" +
+		"  list into separate arguments and gitmap mistook the second URL\n" +
+		"  for a destination folder. To clone all of them, use one of:\n" +
+		"\n" +
+		"    gitmap clone %s,%s\n" +
+		"\n" +
+		"  (quote the whole thing if your shell still mangles commas:\n" +
+		"    gitmap clone \"<url1>,<url2>,<url3>\")\n\n"
 )
 
 // Command dispatch errors.
