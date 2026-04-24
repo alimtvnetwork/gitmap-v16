@@ -22,12 +22,16 @@ const (
 	usageTemplatesRoot    = `Usage: gitmap templates <subcommand>
 
 Subcommands:
-  list                       List every available template (alias: tl)
+  list [flags]               List every available template (alias: tl)
   show <kind> <lang>         Print a single template to stdout (alias: ts)
   init <lang> [<lang>...]    Scaffold .gitignore / .gitattributes for languages (alias: ti)
 
 Kinds:
   ignore | attributes | lfs
+
+Flags (list):
+  --kind <ignore|attributes|lfs>   Filter rows to one kind
+  --lang <name>                    Filter rows to one language (matches across kinds)
 
 Flags (show):
   --raw                      Disable pretty markdown rendering even on a TTY
@@ -39,7 +43,9 @@ Flags (init):
 
 Examples:
   gitmap templates list
-  gitmap tpl tl
+  gitmap templates list --kind ignore
+  gitmap templates list --lang go
+  gitmap tpl tl --kind attributes
   gitmap templates show ignore go
   gitmap tpl ts attributes node
   gitmap templates show ignore go --raw   # bypass pretty renderer
@@ -52,12 +58,18 @@ Examples:
 	labelTemplatesUser     = "user"
 	labelTemplatesEmbed    = "embed"
 	msgTemplatesEmpty      = "(no templates registered — embedded corpus is empty)\n"
+	msgTemplatesFiltered   = "(no templates match the requested filter)\n"
 	errTemplatesShowArgs   = "templates show requires <kind> <lang>; e.g. 'templates show ignore go'\n"
 	errTemplatesShowFail   = "templates show: %v\n"
 	errTemplatesListFail   = "templates list: %v\n"
+	errTemplatesListKind   = "templates list: unknown --kind %q (want ignore | attributes | lfs)\n"
 	errUnknownTemplatesSub = "unknown 'templates' subcommand: %s\n"
 	flagTemplatesShowRaw   = "raw"
 	flagDescTemplatesRaw   = "Deprecated alias for --no-pretty (kept for v3.23.x back-compat)"
+	flagTemplatesListKind  = "kind"
+	flagDescListKind       = "Filter to one kind (ignore | attributes | lfs)"
+	flagTemplatesListLang  = "lang"
+	flagDescListLang       = "Filter to one language (matches across kinds)"
 )
 
 // dispatchTemplates routes `gitmap templates <subcommand>` calls.
@@ -73,7 +85,7 @@ func dispatchTemplates(command string) bool {
 	sub, rest := os.Args[2], os.Args[3:]
 	switch sub {
 	case cmdTemplatesList, cmdTemplatesListAlias:
-		runTemplatesList()
+		runTemplatesList(rest)
 	case cmdTemplatesShow, cmdTemplatesShowAlias:
 		runTemplatesShow(rest)
 	case cmdTemplatesInit, cmdTemplatesInitAlias:
@@ -88,7 +100,16 @@ func dispatchTemplates(command string) bool {
 }
 
 // runTemplatesList prints every available template grouped by kind.
-func runTemplatesList() {
+// Optional `--kind <k>` and `--lang <l>` filters narrow the output.
+// Unknown --kind values exit 1 with a clear error so typos surface
+// instead of silently emptying the table.
+func runTemplatesList(args []string) {
+	kindFilter, langFilter := parseTemplatesListFlags(args)
+	if !isValidKindFilter(kindFilter) {
+		fmt.Fprintf(os.Stderr, errTemplatesListKind, kindFilter)
+		os.Exit(1)
+	}
+
 	entries, err := templates.List()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, errTemplatesListFail, err)
@@ -100,10 +121,62 @@ func runTemplatesList() {
 		return
 	}
 
+	filtered := filterTemplates(entries, kindFilter, langFilter)
+	if len(filtered) == 0 {
+		fmt.Print(msgTemplatesFiltered)
+
+		return
+	}
+
 	fmt.Print(headerTemplatesList)
-	for _, e := range entries {
+	for _, e := range filtered {
 		fmt.Printf(fmtTemplatesListRow, e.Kind, e.Lang, sourceLabel(e.Source), e.Path)
 	}
+}
+
+// parseTemplatesListFlags pulls --kind/--lang out of args. Both are
+// optional and case-insensitive on value. Unknown positional args are
+// silently ignored — list takes no positional input.
+func parseTemplatesListFlags(args []string) (string, string) {
+	fs := flag.NewFlagSet(cmdTemplatesList, flag.ExitOnError)
+	kind := fs.String(flagTemplatesListKind, "", flagDescListKind)
+	lang := fs.String(flagTemplatesListLang, "", flagDescListLang)
+	reordered := reorderFlagsBeforeArgs(args)
+	_ = fs.Parse(reordered)
+
+	return strings.ToLower(strings.TrimSpace(*kind)),
+		strings.ToLower(strings.TrimSpace(*lang))
+}
+
+// isValidKindFilter accepts the empty string (no filter) and the three
+// canonical kinds. Anything else trips the errTemplatesListKind exit.
+func isValidKindFilter(kind string) bool {
+	switch kind {
+	case "", "ignore", "attributes", "lfs":
+		return true
+	}
+
+	return false
+}
+
+// filterTemplates is a pure helper so tests can pin filter semantics
+// without spinning up the full templates.List() embed-walk.
+func filterTemplates(in []templates.Entry, kindFilter, langFilter string) []templates.Entry {
+	if kindFilter == "" && langFilter == "" {
+		return in
+	}
+	out := make([]templates.Entry, 0, len(in))
+	for _, e := range in {
+		if kindFilter != "" && e.Kind != kindFilter {
+			continue
+		}
+		if langFilter != "" && strings.ToLower(e.Lang) != langFilter {
+			continue
+		}
+		out = append(out, e)
+	}
+
+	return out
 }
 
 // runTemplatesShow prints one template to stdout. Markdown templates
