@@ -38,6 +38,12 @@ func executeCommitTransfer(spec commitTransferSpec, args []string) {
 		fmt.Fprintf(os.Stderr, constants.MsgCTUsageFmt, spec.Name, spec.Name)
 		os.Exit(1)
 	}
+	if opts.Interleave && spec.Name != constants.CmdCommitBoth {
+		fmt.Fprintf(os.Stderr,
+			"%s --interleave is only valid for commit-both (got %s)\n",
+			opts.LogPrefix, spec.Name)
+		os.Exit(2)
+	}
 	left, right, resolveErr := resolveCommitEndpoints(positional[0], positional[1], opts)
 	if resolveErr != nil {
 		fmt.Fprintf(os.Stderr, "%s endpoint resolve failed: %v\n", opts.LogPrefix, resolveErr)
