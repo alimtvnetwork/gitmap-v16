@@ -83,6 +83,7 @@ type Options struct {
 	IncludeNodeMod bool          // copy node_modules/* during snapshot
 	Mirror         bool          // delete target-only files (true mirror)
 	ForceReplay    bool          // replay even commits with provenance footer
+	Interleave     bool          // commit-both only: author-date interleave
 	Limit          int           // 0 = no limit; replay at most N (oldest first)
 	Since          string        // override divergence base (sha or date)
 	Prefer         PreferPolicy  // file-conflict policy

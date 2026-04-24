@@ -56,6 +56,7 @@ const (
 	FlagCTYes             = "yes"
 	FlagCTNoPush          = "no-push"
 	FlagCTNoCommit        = "no-commit"
+	FlagCTInterleave      = "interleave"
 )
 
 // Commit-transfer flag descriptions.
@@ -79,6 +80,7 @@ const (
 	FlagDescCTYes            = "Skip the confirmation prompt"
 	FlagDescCTNoPush         = "Stop after the local commit (skip git push)"
 	FlagDescCTNoCommit       = "Copy files but skip both commit and push"
+	FlagDescCTInterleave     = "commit-both only: replay both sides in author-date order (instead of sequential L→R then R→L)"
 )
 
 // Commit-transfer messages and errors.
@@ -102,6 +104,6 @@ const (
 // parens — matches the merge-* convention.
 const (
 	HelpCommitRight = "  commit-right (cmr)  Replay LEFT's commits onto RIGHT (cleaned, idempotent)  [LIVE]"
-	HelpCommitLeft  = "  commit-left  (cml)  Replay RIGHT's commits onto LEFT                       [scaffold]"
-	HelpCommitBoth  = "  commit-both  (cmb)  Bidirectional replay, interleaved by author date       [scaffold]"
+	HelpCommitLeft  = "  commit-left  (cml)  Replay RIGHT's commits onto LEFT (cleaned, idempotent)  [LIVE]"
+	HelpCommitBoth  = "  commit-both  (cmb)  Bidirectional replay (sequential by default; --interleave for author-date) [LIVE]"
 )
