@@ -262,7 +262,16 @@ const TabOrderMap = () => {
             <div className="mt-4 rounded-lg border border-border bg-muted/20 p-5">
               <p className="mb-4 font-sans text-xs text-muted-foreground">
                 Derived live from the DOM ({entries.length} focusable element
-                {entries.length === 1 ? "" : "s"}). Use{" "}
+                {entries.length === 1 ? "" : "s"}
+                {focusedStep !== null && (
+                  <>
+                    {" · currently focused: "}
+                    <span className="font-mono font-semibold text-primary">
+                      #{focusedStep}
+                    </span>
+                  </>
+                )}
+                ). Use{" "}
                 <kbd className="rounded border border-border bg-card px-1.5 py-0.5 font-mono text-[10px]">Tab</kbd>{" "}
                 /{" "}
                 <kbd className="rounded border border-border bg-card px-1.5 py-0.5 font-mono text-[10px]">Shift+Tab</kbd>{" "}
