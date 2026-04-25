@@ -567,6 +567,29 @@
     opacity: 0;
     transition: none;
   }
+
+  /* High-contrast (prefers-contrast: more) focus rings.
+     Replaces themed --ring with system `Highlight` / `CanvasText` so the
+     ring stays visible in forced-colors / high-contrast environments on
+     both light and dark surfaces. Covers .btn-slide, Tailwind ring-*
+     utilities, and bare focusable elements. */
+  @media (prefers-contrast: more) {
+    .btn-slide:focus-visible {
+      outline: 3px solid Highlight;
+      outline-offset: 3px;
+      box-shadow: 0 0 0 2px CanvasText;
+    }
+    *:focus-visible {
+      --tw-ring-color: Highlight;
+      --tw-ring-offset-color: Canvas;
+      --tw-ring-offset-width: 2px;
+    }
+    a:focus-visible:not(.btn-slide):not([class*="ring-"]),
+    button:focus-visible:not(.btn-slide):not([class*="ring-"]) {
+      outline: 3px solid Highlight;
+      outline-offset: 2px;
+    }
+  }
   .btn-slide::before {
     content: "";
     position: absolute;
