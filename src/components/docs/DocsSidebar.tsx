@@ -35,7 +35,6 @@ import {
   Download,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
-import { useEffect, useState } from "react";
 
 import {
   Sidebar,
@@ -49,7 +48,7 @@ import {
   SidebarFooter,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { getCurrentTheme, setTheme } from "@/lib/theme";
+import { useTheme } from "@/hooks/useTheme";
 
 const navItems = [
   { title: "Home", url: "/", icon: Home },
@@ -118,11 +117,7 @@ const navItems = [
 export function DocsSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
-  const [dark, setDark] = useState(() => getCurrentTheme() === "dark");
-
-  useEffect(() => {
-    setTheme(dark ? "dark" : "light");
-  }, [dark]);
+  const { isDark: dark, toggleTheme } = useTheme();
 
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border bg-sidebar">
@@ -170,7 +165,7 @@ export function DocsSidebar() {
       </SidebarContent>
       <SidebarFooter>
         <button
-          onClick={() => setDark(!dark)}
+          onClick={toggleTheme}
           className="flex w-full items-center gap-2 rounded-sm border border-sidebar-border px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
         >
           {dark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
