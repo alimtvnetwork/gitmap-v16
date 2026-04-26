@@ -48,9 +48,10 @@ const (
 )
 
 // Remove deletes the named gitmap-managed autostart entry. `name`
-// is the basename WITHOUT the .desktop extension (the same form
-// `List` returns); a trailing `.desktop` is tolerated so users who
-// copy/paste from `ls` get the same behavior.
+// is the basename WITHOUT the platform extension (the same form
+// `List` returns); a trailing platform extension is tolerated so
+// users who copy/paste from `ls` get the same behavior. The
+// extension is `.desktop` on Linux/Unix and `.plist` on macOS.
 func Remove(name string) (RemoveResult, error) {
 	clean := normalizeName(name)
 	if !isValidName(clean) {
@@ -62,18 +63,18 @@ func Remove(name string) (RemoveResult, error) {
 
 		return RemoveResult{}, err
 	}
-	full := joinPath(dir, clean+constants.StartupDesktopExt)
+	full := joinPath(dir, clean+platformExt())
 
 	return removeIfManaged(full)
 }
 
-// normalizeName strips an optional .desktop suffix and surrounding
-// whitespace so `Remove("foo")`, `Remove("foo.desktop")`, and
-// `Remove(" foo ")` all resolve to the same target file.
+// normalizeName strips an optional platform extension and surrounding
+// whitespace so `Remove("foo")`, `Remove("foo.desktop")`/`("foo.plist")`,
+// and `Remove(" foo ")` all resolve to the same target file.
 func normalizeName(name string) string {
 	clean := strings.TrimSpace(name)
 
-	return strings.TrimSuffix(clean, constants.StartupDesktopExt)
+	return strings.TrimSuffix(clean, platformExt())
 }
 
 // isValidName rejects empty strings and any input containing a path
