@@ -69,6 +69,7 @@ func executeScan(dir string, cfg model.Config, outFile string, ghDesktop, openFo
 		repos, err = scanner.ScanDirWithOptions(absDir, scanner.ScanOptions{
 			ExcludeDirs: cfg.ExcludeDirs,
 			Workers:     workers,
+			MaxDepth:    maxDepth,
 			Progress:    progress.Callback(),
 		})
 	})
