@@ -54,7 +54,7 @@ func installProbeFailureHook(runner *probe.BackgroundRunner, c *errreport.Collec
 	runner.SetFailureHook(func(rec model.ScanRecord, res probe.Result) {
 		c.Add(errreport.PhaseScan, errreport.Entry{
 			RepoPath:  rec.RelativePath,
-			RemoteURL: rec.CloneURL,
+			RemoteURL: rec.HTTPSUrl,
 			Step:      "probe-" + res.Method,
 			Error:     res.Error,
 		})
