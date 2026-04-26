@@ -69,17 +69,23 @@ func loadBatchRepos(csvPath string, walkAll bool) ([]string, error) {
 // processBatchRepos runs cn-equivalent steps for each repo and collects
 // per-repo results without aborting on individual failures. Dispatches
 // to the sequential or concurrent runner based on `maxConcurrency`.
-func processBatchRepos(repos []string, maxConcurrency int) []batchRowResult {
+//
+// `onResult` fires once per finished repo (regardless of pool size) so
+// the caller can print real-time progress lines. Pass a no-op closure
+// to disable.
+func processBatchRepos(repos []string, maxConcurrency int, onResult func(batchRowResult)) []batchRowResult {
 	workers := normalizeBatchWorkers(maxConcurrency, len(repos))
 	if workers > 1 {
 		fmt.Fprintf(os.Stderr, constants.MsgCloneConcurrencyEnabledFmt, workers)
 
-		return processBatchReposConcurrent(repos, workers)
+		return processBatchReposConcurrent(repos, workers, onResult)
 	}
 
 	out := make([]batchRowResult, 0, len(repos))
 	for _, repo := range repos {
-		out = append(out, processOneBatchRepo(repo))
+		row := processOneBatchRepo(repo)
+		onResult(row)
+		out = append(out, row)
 	}
 
 	return out
