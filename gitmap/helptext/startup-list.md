@@ -32,9 +32,14 @@ have to open every unrelated file in the directory.
 | Flag | Default | Description |
 |------|---------|-------------|
 | `--format` | `table` | Output format: `table`, `json`, `jsonl`, or `csv` |
+| `--json-indent` | `2` | Spaces per indent level for `--format=json`. `0` = minified single line. Range: 0..8. Ignored for non-json formats. |
 
 `table` (alias: `terminal`) is the legacy human-readable rendering.
-Unknown values exit with code 2 so scripts catch typos immediately.
+Unknown `--format` values and out-of-range `--json-indent` values
+both exit with code 2 so scripts catch typos immediately. The
+`--json-indent` value is parsed and validated even when the format
+ignores it, so a typo like `--json-indent=99` fails fast regardless
+of which format you pair it with.
 
 ## Output formats
 
@@ -68,6 +73,16 @@ the `exec` field is the space-joined `ProgramArguments` array (or
   }
 ]
 ```
+
+With `--json-indent=0` the same output collapses to one line:
+
+```
+[{"name":"gitmap-sync-watcher","path":"/home/user/.config/autostart/gitmap-sync-watcher.desktop","exec":"/usr/local/bin/gitmap watch ~/projects"}]
+```
+
+Key order is identical at every indent — `--json-indent` controls
+whitespace ONLY. The empty-list `[]\n` contract holds regardless
+of indent, so `jq length` keeps working across all settings.
 
 ### `--format=jsonl`
 
