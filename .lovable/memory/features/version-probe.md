@@ -42,11 +42,13 @@ The shallow-clone fallback is **treeless** (`--filter=blob:none`) and **checkout
 ## CLI surface
 
 ```
-gitmap probe                   # probe every repo in the database (2 workers)
-gitmap probe --all             # explicit form of the above
-gitmap probe E:\src\my-repo    # probe a single repo by path
-gitmap probe --all --json      # JSON array, input order preserved
-gitmap probe --all --workers 3 # raise the worker pool (cap = 3)
+gitmap probe                                   # default: 2 workers, depth 1
+gitmap probe --all                             # explicit "all"
+gitmap probe E:\src\my-repo                    # single repo by path
+gitmap probe --all --json                      # JSON, input order preserved
+gitmap probe --all --probe-workers 3           # raise foreground pool (cap = 3)
+gitmap probe --all --probe-depth 25            # deeper shallow-clone fallback
+gitmap scan . --probe-workers 3 --probe-depth 5
 ```
 
 Per-repo line format:
@@ -60,7 +62,7 @@ Final summary: `✓ Probe complete: <available> available, <unchanged> unchanged
 
 `gitmap probe` runs through a capped worker pool:
 
-- Default `--workers 2` — sweet spot for residential bandwidth.
+- Default `--probe-workers 2` — sweet spot for residential bandwidth.
 - Hard cap of 3 (`constants.ProbeMaxWorkers`); higher values clamp with a
   one-line stderr notice.
 - Values < 1 are rejected at parse time.
@@ -70,18 +72,33 @@ Final summary: `✓ Probe complete: <available> available, <unchanged> unchanged
 - Counter updates and the per-line print share a single `counterMu` so
   totals stay coherent and stdout lines never interleave mid-print.
 
-The background runner used by `scan` (`probe.BackgroundRunner`) is
-unchanged and still defaults to 3 workers — its job pattern (long-lived,
-fire-and-forget) tolerates more parallelism than the foreground command.
+## Unified probe flags (v3.135.0)
+
+Both `gitmap probe` and `gitmap scan` now accept the same two value
+flags. Naming is intentional — muscle memory carries between commands:
+
+| Flag | Default | Applies to | Notes |
+|---|---|---|---|
+| `--probe-workers N` | 2 (probe) / 3 (scan) | probe + scan | Pool size. Probe caps at 3; scan keeps its existing default. |
+| `--probe-depth N` | 1 | probe + scan | `git clone --depth N` for the shallow-clone fallback only. No effect on the `ls-remote` fast path. Coerced to `>=1` inside `tryShallowClone`. |
+| `--workers N` | — | probe (deprecated) | Alias for `--probe-workers`; emits `MsgProbeWorkersAlias` once. |
+| `--probe-concurrency N` | — | scan (deprecated) | Alias for `--probe-workers`; emits `MsgScanProbeConcurrencyAlias`. New flag wins when both are set. |
+
+Depth is plumbed through `BackgroundRunner.SetCloneDepth` (called
+BEFORE the first `Start` so workers observe the value race-free) and
+`probe.RunOneWithDepth` for the foreground path. The legacy
+`probe.RunOne(url)` shim still exists and forwards to depth=1 so any
+external integration keeps working.
 
 ## Files
 
-- `gitmap/probe/probe.go` — `RunOne`, `tryLsRemote`, `parseFirstTag`, `parseSemverInt`, `Result.AsModel`
-- `gitmap/probe/clone.go` — `tryShallowClone`, `summarize`
-- `gitmap/probe/background.go` — `BackgroundRunner` used by `scan` (independent of foreground pool)
+- `gitmap/probe/probe.go` — `RunOne` (legacy shim), `RunOneWithDepth`, `tryLsRemote`, `parseFirstTag`, `parseSemverInt`, `Result.AsModel`
+- `gitmap/probe/clone.go` — `tryShallowClone(url, depth)`, `summarize`
+- `gitmap/probe/background.go` — `BackgroundRunner` + `SetCloneDepth`, `SetFailureHook`
 - `gitmap/store/version_probe.go` — DB methods
 - `gitmap/cmd/probe.go` — dispatcher + `runProbePool` / `probeWorker`
-- `gitmap/cmd/probeflags.go` — `parseProbeArgs`, `--workers` parsing + clamp
-- `gitmap/cmd/probereport.go` — `executeOneProbe`, JSON shaping, `tallyProbe`
-- `gitmap/cmd/scan.go` — `tagReposWithScanFolder` helper
-- `gitmap/constants/constants_probe.go` — SQL, error messages, CLI tokens, `ProbeDefaultWorkers=2`, `ProbeMaxWorkers=3`
+- `gitmap/cmd/probeflags.go` — `parseProbeArgs`, `--probe-workers` / `--workers` (deprecated) / `--probe-depth`
+- `gitmap/cmd/probereport.go` — `executeOneProbe(db, repo, depth)`, JSON shaping, `tallyProbe`
+- `gitmap/cmd/rootflags.go` — `parseScanFlags` + `resolveScanProbeOptions` reconciles deprecated alias
+- `gitmap/cmd/scanbackgroundprobe.go` — calls `runner.SetCloneDepth(opts.Depth)` before enqueue
+- `gitmap/constants/constants_probe.go` — `ProbeDefaultWorkers=2`, `ProbeMaxWorkers=3`, `ProbeDefaultDepth=1`, all flag tokens + deprecation messages
