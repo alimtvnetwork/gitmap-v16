@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strconv"
 	"sync"
 
 	"github.com/alimtvnetwork/gitmap-v7/gitmap/constants"
@@ -27,17 +26,9 @@ type probeJSONEntry struct {
 	Error          string `json:"error,omitempty"`
 }
 
-// probeOptions captures the parsed CLI flags for `gitmap probe`.
-// Workers is already clamped into [1, ProbeMaxWorkers] by parseProbeArgs.
-type probeOptions struct {
-	jsonOut bool
-	workers int
-	rest    []string
-}
-
 // runProbe dispatches `gitmap probe [<repo-path>|--all] [--json] [--workers N]`.
 // The probe pool is capped at constants.ProbeMaxWorkers (default 2) to stay
-// under provider rate limits.
+// under provider rate limits. Flag parsing lives in probeflags.go.
 func runProbe(args []string) {
 	checkHelp("probe", args)
 
@@ -61,61 +52,6 @@ func runProbe(args []string) {
 	}
 
 	probeAndReport(db, targets, opts)
-}
-
-// parseProbeArgs walks the arg list, peeling off recognised flags and
-// returning everything else as positional args. Order-agnostic; supports
-// both `--workers N` and `--workers=N`.
-func parseProbeArgs(args []string) (probeOptions, error) {
-	opts := probeOptions{workers: constants.ProbeDefaultWorkers, rest: make([]string, 0, len(args))}
-	for i := 0; i < len(args); i++ {
-		a := args[i]
-		switch {
-		case a == constants.ProbeFlagJSON:
-			opts.jsonOut = true
-		case a == constants.ProbeFlagWorkers:
-			if i+1 >= len(args) {
-				return opts, fmt.Errorf(constants.ErrProbeWorkersMissing)
-			}
-			n, err := parseWorkersValue(args[i+1])
-			if err != nil {
-				return opts, err
-			}
-			opts.workers = clampProbeWorkers(n)
-			i++
-		case len(a) > len(constants.ProbeFlagWorkers)+1 && a[:len(constants.ProbeFlagWorkers)+1] == constants.ProbeFlagWorkers+"=":
-			n, err := parseWorkersValue(a[len(constants.ProbeFlagWorkers)+1:])
-			if err != nil {
-				return opts, err
-			}
-			opts.workers = clampProbeWorkers(n)
-		default:
-			opts.rest = append(opts.rest, a)
-		}
-	}
-
-	return opts, nil
-}
-
-// parseWorkersValue validates the `--workers` argument as a positive int.
-func parseWorkersValue(s string) (int, error) {
-	n, err := strconv.Atoi(s)
-	if err != nil || n < 1 {
-		return 0, fmt.Errorf(constants.ErrProbeWorkersValue, s)
-	}
-
-	return n, nil
-}
-
-// clampProbeWorkers enforces the [1, ProbeMaxWorkers] cap, printing a
-// notice to stderr when the user asked for more than we'll grant.
-func clampProbeWorkers(n int) int {
-	if n > constants.ProbeMaxWorkers {
-		fmt.Fprintf(os.Stderr, constants.MsgProbeWorkersClamped, n, constants.ProbeMaxWorkers)
-		return constants.ProbeMaxWorkers
-	}
-
-	return n
 }
 
 // emitProbeEmpty handles the "no targets" case in either output mode.
@@ -166,17 +102,19 @@ func probeAndReport(db *store.DB, targets []model.ScanRecord, opts probeOptions)
 	fmt.Printf(constants.MsgProbeDoneFmt, available, unchanged, failed)
 }
 
+// probeJob is a single unit of work for the probe pool.
+type probeJob struct {
+	idx  int
+	repo model.ScanRecord
+}
+
 // runProbePool fans the targets across opts.workers goroutines. Entries
 // are slotted back into input order so the JSON output is deterministic
 // regardless of completion order. Per-repo human progress lines print
 // as workers finish (matches the cloner pattern); only the trailing
-// summary depends on the totals.
+// summary depends on the totals, which are guarded by a mutex.
 func runProbePool(db *store.DB, targets []model.ScanRecord, opts probeOptions) ([]probeJSONEntry, int, int, int) {
-	type job struct {
-		idx  int
-		repo model.ScanRecord
-	}
-	jobs := make(chan job, len(targets))
+	jobs := make(chan probeJob, len(targets))
 	entries := make([]probeJSONEntry, len(targets))
 	var counterMu sync.Mutex
 	available, unchanged, failed := 0, 0, 0
@@ -184,19 +122,10 @@ func runProbePool(db *store.DB, targets []model.ScanRecord, opts probeOptions) (
 	var wg sync.WaitGroup
 	for w := 0; w < opts.workers; w++ {
 		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			for j := range jobs {
-				result := executeOneProbe(db, j.repo)
-				entries[j.idx] = makeProbeEntry(j.repo, result)
-				counterMu.Lock()
-				available, unchanged, failed = tallyProbe(j.repo, result, available, unchanged, failed, opts.jsonOut)
-				counterMu.Unlock()
-			}
-		}()
+		go probeWorker(db, jobs, entries, &counterMu, &available, &unchanged, &failed, opts.jsonOut, &wg)
 	}
 	for i, repo := range targets {
-		jobs <- job{idx: i, repo: repo}
+		jobs <- probeJob{idx: i, repo: repo}
 	}
 	close(jobs)
 	wg.Wait()
@@ -204,9 +133,23 @@ func runProbePool(db *store.DB, targets []model.ScanRecord, opts probeOptions) (
 	return entries, available, unchanged, failed
 }
 
+// probeWorker drains the job channel, updates the entries slot at its
+// own index (no contention — each index is owned by exactly one job),
+// and serialises counter/print updates through counterMu.
+func probeWorker(db *store.DB, jobs <-chan probeJob, entries []probeJSONEntry,
+	counterMu *sync.Mutex, available, unchanged, failed *int, jsonOut bool, wg *sync.WaitGroup) {
+	defer wg.Done()
+	for j := range jobs {
+		result := executeOneProbe(db, j.repo)
+		entries[j.idx] = makeProbeEntry(j.repo, result)
+		counterMu.Lock()
+		*available, *unchanged, *failed = tallyProbe(j.repo, result, *available, *unchanged, *failed, jsonOut)
+		counterMu.Unlock()
+	}
+}
+
 // executeOneProbe runs a single probe and persists it, mirroring the
-// missing-URL handling that the sequential loop used. Lives outside
-// the worker closure so it stays under the 15-line function limit.
+// missing-URL handling that the sequential loop used.
 func executeOneProbe(db *store.DB, repo model.ScanRecord) probe.Result {
 	url := pickProbeURL(repo)
 	if url == "" {
