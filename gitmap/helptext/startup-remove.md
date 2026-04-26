@@ -8,6 +8,7 @@ their name.
 
 ```
 gitmap startup-remove <name>
+gitmap startup-remove --dry-run <name>
 gitmap sr <name>
 ```
 
@@ -18,29 +19,65 @@ extension is tolerated for convenience:
 - Linux/Unix: `gitmap-foo` or `gitmap-foo.desktop`
 - macOS: `gitmap.foo` or `gitmap.foo.plist`
 
+## Flags
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--dry-run` | `false` | Show what would be deleted (or refused/no-op) without touching the filesystem |
+
+`--dry-run` runs the full classification (existence + marker check)
+but skips the actual unlink. The same four outcomes are reported,
+each prefixed with `(dry-run)` so log scrapers can distinguish a
+preview from a real action.
+
 ## Outcomes
 
-| Status   | Meaning                                              | Exit |
-|----------|------------------------------------------------------|------|
-| Removed  | File existed, carried the gitmap marker, was deleted | 0    |
-| No-op    | No file by that name in the autostart dir            | 0    |
-| Refused  | File exists but lacks the gitmap marker              | 0    |
-| Bad name | Name is empty or contains a path separator           | 0    |
+### Live (default)
 
-All four outcomes exit 0 — the command is idempotent and safe to
-script. A real I/O error (permission denied, etc.) exits 1.
+| Status   | Message prefix | Meaning                                              | Exit |
+|----------|----------------|------------------------------------------------------|------|
+| Removed  | `✓ Removed`    | File existed, carried the gitmap marker, was deleted | 0    |
+| No-op    | `(no-op)`      | No file by that name in the autostart dir            | 0    |
+| Refused  | `(refused)`    | File exists but lacks the gitmap marker              | 0    |
+| Bad name | `(refused)`    | Name is empty or contains a path separator           | 0    |
+
+### Dry-run (`--dry-run`)
+
+| Status   | Message prefix       | Meaning                                                       | Exit |
+|----------|----------------------|---------------------------------------------------------------|------|
+| Removed  | `(dry-run) would`    | File would be deleted on a live run                           | 0    |
+| No-op    | `(dry-run) no...`    | No file by that name — nothing to remove                      | 0    |
+| Refused  | `(dry-run) ... NOT`  | File exists but lacks the gitmap marker — would refuse        | 0    |
+| Bad name | `(dry-run) name ...` | Name is empty or contains a path separator — would refuse     | 0    |
+
+All eight outcomes exit 0 — the command is idempotent and safe to
+script under both modes. A real I/O error (permission denied, etc.)
+exits 1.
 
 ## Safety
 
 - The marker is re-checked at remove time (not trusted from a stale
   `startup-list` snapshot), so a race between listing and removing
   cannot trick the command into deleting a third-party file that
-  appeared after the listing.
+  appeared after the listing. `--dry-run` runs the SAME re-check —
+  preview accuracy is identical to a live run.
 - The marker grammar is OS-specific:
   - Linux/Unix: `X-Gitmap-Managed=true` line in the `.desktop` body.
   - macOS: `<key>XGitmapManaged</key><true/>` in the `.plist` dict.
 - Names containing `/`, `\`, or NUL bytes are rejected up-front to
-  prevent path traversal.
+  prevent path traversal — including under `--dry-run`.
+
+## Examples
+
+```sh
+# Preview what a removal would do, without touching the file:
+gitmap startup-remove --dry-run gitmap-sync-watcher
+#   (dry-run) would remove gitmap-managed autostart entry: /home/me/.config/autostart/gitmap-sync-watcher.desktop
+
+# Then commit:
+gitmap startup-remove gitmap-sync-watcher
+#   ✓ Removed gitmap-managed autostart entry: /home/me/.config/autostart/gitmap-sync-watcher.desktop
+```
 
 ## Platform notes
 
@@ -53,4 +90,5 @@ with a clear "unsupported OS" message.
 `launchctl unload`. A removed agent takes effect at the next login
 or after a manual `launchctl unload <path>` while the user's GUI
 session is active. This keeps automated uninstall scripts working in
-CI / SSH sessions where `launchctl` is unavailable.
+CI / SSH sessions where `launchctl` is unavailable. `--dry-run` does
+not call `launchctl` either.
