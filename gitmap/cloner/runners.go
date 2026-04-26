@@ -28,6 +28,12 @@ import (
 // scan` is reproduced exactly under targetDir — even at MaxConcurrency
 // > 1, where ordering of progress lines is no longer sequential.
 func cloneAll(records []model.ScanRecord, targetDir string, opts CloneOptions) model.CloneSummary {
+	// Apply --default-branch fallback BEFORE existing-repo / safe-pull
+	// detection so audit, cache, and progress all see the same patched
+	// records the actual `git clone` will receive. No-op when
+	// opts.DefaultBranch is empty.
+	records = applyDefaultBranchFallback(records, opts.DefaultBranch)
+
 	safePull := opts.SafePull
 	if !safePull && hasExistingRepos(records, targetDir) {
 		safePull = true
