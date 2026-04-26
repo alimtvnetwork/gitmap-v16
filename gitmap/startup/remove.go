@@ -19,6 +19,7 @@ package startup
 import (
 	"fmt"
 	"os"
+	"runtime"
 	"strings"
 
 	"github.com/alimtvnetwork/gitmap-v7/gitmap/constants"
