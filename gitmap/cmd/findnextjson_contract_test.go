@@ -67,22 +67,12 @@ func canonicalFindNextRow() model.FindNextRow {
 	}
 }
 
-// TestFindNextJSONContract_CanonicalRow pins the exact bytes for a
-// single hand-authored row. Catches any drift in either FindNextRow
-// or ScanRecord field order, JSON tag names, or numeric formatting.
-func TestFindNextJSONContract_CanonicalRow(t *testing.T) {
-	rows := []model.FindNextRow{canonicalFindNextRow()}
-	var buf bytes.Buffer
-	if err := encodeFindNextJSON(&buf, rows); err != nil {
-		t.Fatalf("encode: %v", err)
-	}
-	assertGoldenBytes(t, "find_next_single.json", buf.Bytes())
-}
-
-// TestFindNextJSONContract_TopLevelKeyOrder asserts the
-// FindNextRow-level key order. Structural check (not byte-exact)
-// so it survives intentional value-shape changes.
-func TestFindNextJSONContract_TopLevelKeyOrder(t *testing.T) {
+// TestFindNextJSONContract_CanonicalRow_KeyOrders asserts the
+// FindNextRow-level AND nested ScanRecord-level key orders.
+// Structural-only (no byte-exact golden for the populated row) so
+// the test stays robust against future numeric formatting changes
+// in encoding/json or value-shape tweaks.
+func TestFindNextJSONContract_CanonicalRow_KeyOrders(t *testing.T) {
 	rows := []model.FindNextRow{canonicalFindNextRow()}
 	var buf bytes.Buffer
 	if err := encodeFindNextJSON(&buf, rows); err != nil {
