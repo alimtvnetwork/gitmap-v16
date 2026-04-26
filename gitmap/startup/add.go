@@ -25,6 +25,7 @@ package startup
 import (
 	"fmt"
 	"os"
+	"runtime"
 	"strings"
 
 	"github.com/alimtvnetwork/gitmap-v7/gitmap/constants"
@@ -87,7 +88,16 @@ type AddResult struct {
 
 // Add is the public entry point. Returns (result, nil) for every
 // "soft" outcome; only real I/O failures produce a non-nil error.
+//
+// macOS NOTE: Add intentionally errors on darwin even though
+// AutostartDir() now resolves the LaunchAgents path. macOS plist
+// authoring (with ProgramArguments + RunAtLoad + Label) lives on the
+// roadmap as a separate step so this function can keep its tight
+// .desktop-only contract until then.
 func Add(opts AddOptions) (AddResult, error) {
+	if runtime.GOOS == "darwin" {
+		return AddResult{}, fmt.Errorf(constants.ErrStartupAddDarwinTODO)
+	}
 	clean := normalizeName(opts.Name)
 	if !isValidName(clean) {
 		return AddResult{Status: AddBadName}, nil
