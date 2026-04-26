@@ -4,6 +4,7 @@ Updated: now
 # Project Memory
 
 ## Core
+NO-QUESTIONS MODE ACTIVE (40-task budget): never ask user clarifying questions. Log every ambiguity to `.lovable/question-and-ambiguity/xx-brief-title.md` (sequential numbering, update `00-index.md` table). Each entry: original task + spec ref, ambiguity, all options w/ pros/cons, recommendation, decision taken. Proceed with best inference. Resume questions only when user says "ask question".
 Strict code style: <200 lines/file, <15 lines/func, positive logic, pascal case constants, 'is/has' boolean prefixes.
 Organize constants by owning package/domain; do not force artificial prefix-only naming rules.
 Zero-swallow error policy. Explicitly log errors to os.Stderr using standardized format. Use `errors.Is`.
