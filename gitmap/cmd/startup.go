@@ -15,6 +15,7 @@ package cmd
 //     package enforces this; this layer just renders the result.
 
 import (
+	"flag"
 	"fmt"
 	"os"
 
@@ -23,36 +24,52 @@ import (
 )
 
 // runStartupList enumerates gitmap-managed XDG autostart entries and
-// prints them as a header / row / footer triple. Empty lists print
-// the friendly "(none)" message and still exit 0.
-func runStartupList(_ []string) {
+// renders them in the chosen format. The default `table` format
+// matches the legacy human-readable output; `json` and `csv` exist
+// for piping into other tools (jq, spreadsheet imports, etc).
+func runStartupList(args []string) {
+	format, err := parseStartupListFlags(args)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "%v\n", err)
+		os.Exit(2)
+	}
 	entries, err := startup.List()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%v\n", err)
 		os.Exit(1)
 	}
 	dir, _ := startup.AutostartDir()
-	fmt.Printf(constants.MsgStartupListHeader, dir)
-	if len(entries) == 0 {
-		fmt.Print(constants.MsgStartupListEmpty)
-
-		return
+	if err := renderStartupList(format, dir, entries); err != nil {
+		fmt.Fprintf(os.Stderr, "%v\n", err)
+		os.Exit(1)
 	}
-	for _, e := range entries {
-		fmt.Printf(constants.MsgStartupListRow, e.Name, renderExec(e.Exec))
-	}
-	fmt.Printf(constants.MsgStartupListFooter, len(entries))
 }
 
-// renderExec keeps long Exec lines from making the list table noisy
-// — falls back to a placeholder when the .desktop file omits Exec.
-func renderExec(exec string) string {
-	if len(exec) == 0 {
+// parseStartupListFlags extracts the --format value and validates it
+// against the accepted set. Unknown values fail fast with exit 2 so
+// scripts can detect a typo immediately rather than getting silent
+// fall-through to a default rendering.
+func parseStartupListFlags(args []string) (string, error) {
+	fs := flag.NewFlagSet("startup-list", flag.ContinueOnError)
+	fs.SetOutput(os.Stderr)
+	format := fs.String(
+		constants.FlagStartupListFormat,
+		constants.StartupListFormatTable,
+		constants.FlagDescStartupListFormat,
+	)
+	if err := fs.Parse(args); err != nil {
 
-		return "(no Exec line)"
+		return "", err
 	}
+	switch *format {
+	case constants.StartupListFormatTable, constants.OutputTerminal,
+		constants.OutputJSON, constants.OutputCSV:
 
-	return exec
+		return *format, nil
+	default:
+
+		return "", fmt.Errorf(constants.ErrStartupListBadFormat, *format)
+	}
 }
 
 // runStartupRemove deletes a single managed entry. The argument list
