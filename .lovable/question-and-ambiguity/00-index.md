@@ -22,4 +22,4 @@ Each `xx-brief-title.md` file contains:
 
 ## Counter
 
-Tasks consumed: 1 / 40
+Tasks consumed: 1 / 40 (entry 02 was discovered during entry 01, not a separate user task)
