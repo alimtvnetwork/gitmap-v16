@@ -106,8 +106,7 @@ func executeScan(dir string, cfg model.Config, outFile string, ghDesktop, openFo
 	// Background probe: kicked off here so it runs concurrently with
 	// the project-detection / desktop-sync phases below. Drained
 	// before the "Done" banner unless --no-probe-wait was passed.
-	probeRunner := startBackgroundProbe(records, probeOpts, quiet)
-	installProbeFailureHook(probeRunner, errCollector)
+	probeRunner := startBackgroundProbe(records, probeOpts, quiet, errCollector)
 	fmt.Print(constants.MsgSectionProjects)
 	var detected []detector.DetectionResult
 	bench.Phase("scan.detectProjects", func() {
