@@ -101,10 +101,11 @@ type AddResult struct {
 //     X-Gitmap-Managed=true marker into AutostartDir().
 //   - darwin     → writes a LaunchAgent `.plist` with the
 //     XGitmapManaged <true/> marker into ~/Library/LaunchAgents/.
-//   - windows    → AutostartDir() returns the unsupported-OS error
-//     and we propagate it (the cmd runner ALSO short-circuits on
-//     windows; this is defense-in-depth so direct callers of the
-//     startup package can't accidentally land here either).
+//   - windows    → routes via opts.Backend (Registry by default,
+//     or Startup-folder .lnk shortcut). Both backends share the
+//     same managed-marker contract enforced by HKCU\Software\Gitmap
+//     tracking subkeys + a sibling marker value next to Run-key
+//     entries. See addWindows / winbackend.go for details.
 //
 // Both OS paths share the same five-status outcome model
 // (Created/Overwritten/Refused/BadName/Exists) and the same
