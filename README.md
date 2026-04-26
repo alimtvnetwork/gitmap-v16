@@ -556,6 +556,126 @@ unbounded):
 # `gitmap scan` stays fast and bounded by default.
 ```
 
+#### Copy-paste scan commands per scenario
+
+Every example above used the minimal `gitmap scan <root> --output csv`
+form so the marker / depth / rule-2 logic stayed in focus. In real
+projects you almost always want the full triple — `--config` to pin
+your exclude list, `--mode` to fix the URL column, and `--output csv`
+to land on a spreadsheet-friendly artifact at a known path. The
+blocks below reproduce each scenario above with that full triple,
+copy-paste ready.
+
+All blocks assume a project-local `gitmap.config.json` similar to
+the one in [`data/config.json` exclude list](#dataconfigjson-exclude-list--sample-and-interaction-with-the-depth-cap)
+below; substitute your own `--config` path freely. Output lands in
+`./.gitmap/output/gitmap.csv` by default — pass `--output-path
+<dir>` to redirect.
+
+**Reproduce Example A — marker detection (`.git/` dir vs `.git` worktree file vs stray text file):**
+
+```bash
+# HTTPS clone URLs, project-local config, CSV to ./.gitmap/output/gitmap.csv
+gitmap scan ~/code \
+  --config ./gitmap.config.json \
+  --mode https \
+  --output csv
+
+# SSH variant — same repos, sshUrl column populated, httpsUrl empty/secondary
+gitmap scan ~/code \
+  --config ./gitmap.config.json \
+  --mode ssh \
+  --output csv \
+  --output-path ./reports/markers
+```
+
+The CSV header and row contract are identical between `--mode https`
+and `--mode ssh`; only the `httpsUrl` / `sshUrl` column emphasis
+shifts (both columns are always emitted; `--mode` selects which one
+is used to build the `cloneInstruction` column).
+
+**Reproduce Example B — worktrees and absorbed submodules:**
+
+```bash
+# Standard run — main-repo and main-repo-feature-x get rows;
+# vendor/lib and modules/auth are hidden by rule 2.
+gitmap scan ~/work \
+  --config ./gitmap.config.json \
+  --mode https \
+  --output csv
+
+# To also catalog the absorbed submodules / nested vendor checkouts,
+# re-aim at their parent (rule 2 only stops descent under a recorded
+# repo — these subdirs become depth-1 in their own scan):
+gitmap scan ~/work/main-repo/modules \
+  --config ./gitmap.config.json \
+  --mode https \
+  --output csv \
+  --output-path ./reports/submodules
+
+gitmap scan ~/work/main-repo/vendor \
+  --config ./gitmap.config.json \
+  --mode https \
+  --output csv \
+  --output-path ./reports/vendor
+```
+
+**Reproduce Example C — the 4-level depth cap:**
+
+```bash
+# Standard run — service-x (depth 2) and team-b/proj/svc/mod (depth 4)
+# are emitted; team-c/area/group/proj/svc (depth 5) is skipped.
+gitmap scan ~/mono \
+  --config ./gitmap.config.json \
+  --mode https \
+  --output csv
+
+# To catch the depth-5 repo, re-root at the at-cap directory:
+gitmap scan ~/mono/team-c \
+  --config ./gitmap.config.json \
+  --mode https \
+  --output csv \
+  --output-path ./reports/team-c
+```
+
+The two scans compose additively in the database (upsert by
+`AbsolutePath`) — running both produces one row per repo, never
+duplicates. See [Reading at-cap CSV rows and rescanning a deeper
+subfolder](#reading-at-cap-csv-rows-and-rescanning-a-deeper-subfolder)
+for the full recipe and rationale.
+
+**Reproduce the edge-case layout — skipped non-repos and marker-like cases:**
+
+```bash
+# All 7 negative cases are silently dropped; only real-repo,
+# nested-under-real/inner, and worktree-link appear in the CSV.
+gitmap scan ~/edge \
+  --config ./gitmap.config.json \
+  --mode https \
+  --output csv \
+  --output-path ./reports/edge-cases
+```
+
+To verify the silence, list every directory under `~/edge` that has
+a `.git` child of any kind, then diff against the CSV's
+`absolutePath` column:
+
+```bash
+# All candidate directories (anything with a .git child).
+find ~/edge -maxdepth 2 -name .git -printf '%h\n' | sort > /tmp/candidates.txt
+
+# What the scanner actually catalogued.
+awk -F, 'NR>1 {print $7}' ./reports/edge-cases/gitmap.csv | sort > /tmp/found.txt
+
+# The lines unique to /tmp/candidates.txt are the silent skips.
+comm -23 /tmp/candidates.txt /tmp/found.txt
+```
+
+This is the canonical way to audit scan coverage in CI: the
+`comm -23` output should be empty for healthy trees and equal to
+the expected skip set for trees that intentionally include
+edge-case fixtures (e.g. test repos for gitmap itself).
+
 #### Reading at-cap CSV rows and rescanning a deeper subfolder
 
 A `depth` value equal to the cap (`4` under defaults) is the
