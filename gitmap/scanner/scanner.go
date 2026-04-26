@@ -224,10 +224,13 @@ type scanState struct {
 	repos    []RepoInfo
 	firstErr error
 
-	// Atomic counters fuel the live progress callback. They are
-	// updated on the hot path (one increment per processed dir / one
-	// per recorded repo) and read by the throttled emitter goroutine
-	// — so atomic.LoadInt64 is the only safe access pattern.
+	// onDirError, when non-nil, is invoked from recordErr with the
+	// failing directory path and its error. Set from ScanOptions —
+	// see the field doc there for the contract. Stored on the state
+	// (rather than passed through every helper) because the callback
+	// is invoked from the deepest leaf of the call graph.
+	onDirError func(path string, err error)
+
 	dirsWalked atomic.Int64
 	reposFound atomic.Int64
 }
@@ -247,11 +250,12 @@ func (st *scanState) snapshot(final bool) ScanProgress {
 // from an unbounded-capacity FIFO and enqueues child directories back.
 // The queue is closed when wg drops to zero — i.e. every dispatched
 // directory has been fully processed and produced no new work.
-func walkParallel(root string, exclude map[string]bool, workers, maxDepth int, progress func(ScanProgress)) ([]RepoInfo, error) {
+func walkParallel(root string, exclude map[string]bool, workers, maxDepth int, progress func(ScanProgress), onDirError func(string, error)) ([]RepoInfo, error) {
 	st := &scanState{
-		root:     root,
-		exclude:  exclude,
-		maxDepth: maxDepth,
+		root:       root,
+		exclude:    exclude,
+		maxDepth:   maxDepth,
+		onDirError: onDirError,
 		// Buffer sized generously so workers rarely block on enqueue.
 		// A bounded buffer is fine — if it fills, workers backpressure
 		// each other, which is acceptable; deadlock is impossible
