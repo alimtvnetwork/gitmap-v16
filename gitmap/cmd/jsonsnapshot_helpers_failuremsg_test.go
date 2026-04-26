@@ -1,27 +1,17 @@
 package cmd
 
-// Failure-message contract for the JSON schema assertion helpers in
-// jsonsnapshot_helpers_test.go. The whole point of those helpers is
-// to point a developer at the EXACT point of schema drift (which
-// delimiter was wrong, which object index broke). This test pins
-// that diagnostic value so a future refactor that simplifies the
-// error messages into a generic "parse failed" string fails fast.
+// Failure-message contract for the JSON schema assertion helpers
+// in jsonsnapshot_helpers_test.go. The helpers exist to point a
+// developer at the EXACT point of schema drift (which delimiter,
+// which object index). This test pins that diagnostic value so a
+// future refactor cannot silently degrade messages to a generic
+// "parse failed" string.
 //
-// Why a parallel pure variant (scanEveryObjectKeysPure) instead of
-// substituting *testing.T:
-//
-//   The production helpers call t.Fatalf directly because that's
-//   the natural shape for a happy-path assertion. Mocking *testing.T
-//   would require an interface seam in code that is otherwise
-//   straight-line and easy to read. Instead, we reproduce the
-//   error-message contract in a pure error-returning form here,
-//   then exercise that form with the same malformed inputs the
-//   original would see. A drift in the production helper's message
-//   wording fails this test because the production helper would
-//   have to deviate from the contract documented here.
-//
-// expectDelim is tested directly because it already returns an
-// error — no parallel form needed.
+// expectDelim is tested directly (it already returns an error).
+// readEveryObjectKeys uses *testing.T directly, so we test its
+// message contract via a pure error-returning twin
+// (scanEveryObjectKeysPure) below — any wording change in the
+// production helper must be mirrored here, which is the guard rail.
 
 import (
 	"bytes"
