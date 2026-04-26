@@ -7,6 +7,7 @@ require (
 	github.com/charmbracelet/lipgloss v1.1.0
 	github.com/mholt/archives v0.1.5
 	github.com/sahilm/fuzzy v0.1.1
+	golang.org/x/sys v0.36.0
 	modernc.org/sqlite v1.34.5
 )
 
