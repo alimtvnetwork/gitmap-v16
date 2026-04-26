@@ -446,6 +446,110 @@ value) keeps `DefaultMaxDepth = 4`.
 — see the per-scan `--config` exclude list and the project defaults
 documented in [`gitmap/helptext/scan.md`](gitmap/helptext/scan.md).
 
+#### Scan examples — markers, worktrees, and the depth cap in action
+
+The three scenarios below show the rules above as concrete commands
+and the rows you would (or would not) see. CSV output is shown
+because v3.150.0 added a trailing `depth` column that makes the
+4-level cap auditable at a glance.
+
+**Example A — marker detection (`.git/` dir vs `.git` worktree file vs stray text file).**
+
+Layout:
+
+```text
+~/code/
+├── alpha/         .git/                     ← standard checkout
+├── beta/          .git  (file: "gitdir: …") ← worktree-style marker
+└── gamma/         .git  (file: "hello")     ← stray text, NOT a repo
+```
+
+```bash
+gitmap scan ~/code --output csv
+```
+
+```csv
+repoName,httpsUrl,sshUrl,branch,branchSource,relativePath,absolutePath,cloneInstruction,notes,depth
+alpha,…,…,main,remote-head,alpha,/home/u/code/alpha,git clone …,,1
+beta,…,…,main,remote-head,beta,/home/u/code/beta,git clone …,,1
+```
+
+`gamma/` is silently dropped: its `.git` file lacks the `gitdir:`
+prefix, so rule 1 rejects it. Only the two valid markers produce
+rows, both at depth 1 (immediate children of the scan root).
+
+**Example B — worktrees and absorbed submodules don't double-count and don't hide siblings.**
+
+Layout:
+
+```text
+~/work/
+├── main-repo/                       .git/      ← superproject
+│   ├── vendor/lib/                  .git/      ← nested repo: HIDDEN by rule 2
+│   └── modules/auth/                .git file  ← absorbed submodule
+└── main-repo-feature-x/             .git file  ← `git worktree add` checkout
+```
+
+```bash
+gitmap scan ~/work --output csv
+```
+
+```csv
+repoName,httpsUrl,sshUrl,branch,branchSource,relativePath,absolutePath,cloneInstruction,notes,depth
+main-repo,…,…,main,remote-head,main-repo,/home/u/work/main-repo,git clone …,,1
+main-repo-feature-x,…,…,feature-x,head,main-repo-feature-x,/home/u/work/main-repo-feature-x,git clone …,,1
+```
+
+The worktree checkout is its own row (rule 1, gitdir-prefixed file).
+The absorbed submodule under `main-repo/modules/auth` and the
+`vendor/lib` checkout are **both hidden** because rule 2 stops descent
+the moment `main-repo/.git/` is recorded. To catalog them, scan
+`~/work/main-repo/modules/` or `~/work/main-repo/vendor/` directly.
+
+**Example C — what the default 4-level cap skips.**
+
+Layout (depths annotated):
+
+```text
+~/mono/                                                       depth 0
+├── team-a/                                                   depth 1
+│   └── service-x/                          .git/             depth 2  ← FOUND
+├── team-b/proj/svc/mod/                    .git/             depth 4  ← FOUND (at cap)
+└── team-c/area/group/proj/svc/             .git/             depth 5  ← SKIPPED
+```
+
+```bash
+gitmap scan ~/mono --output csv
+```
+
+```csv
+repoName,httpsUrl,sshUrl,branch,branchSource,relativePath,absolutePath,cloneInstruction,notes,depth
+service-x,…,…,main,remote-head,team-a/service-x,/home/u/mono/team-a/service-x,git clone …,,2
+mod,…,…,main,remote-head,team-b/proj/svc/mod,/home/u/mono/team-b/proj/svc/mod,git clone …,,4
+```
+
+The depth-5 repo under `team-c/` is **not** in the output: the walker
+read `team-c/area/group/proj/svc/` (depth 4) and saw no `.git` marker
+on the path, so it refused to enqueue depth-5 children. To catch it,
+either scan deeper into the subtree:
+
+```bash
+gitmap scan ~/mono/team-c --output csv      # new root → depth resets to 0
+```
+
+…or override the cap globally (positive = custom, negative =
+unbounded):
+
+```bash
+# library callers only — set ScanOptions.MaxDepth = -1 for legacy
+# unbounded walks; this is intentionally not a CLI flag so casual
+# `gitmap scan` stays fast and bounded by default.
+```
+
+A `depth` value equal to the cap (`4` under defaults) in your CSV is
+the diagnostic signal: those rows sit on the boundary and are the
+candidates to investigate when something seems missing.
+
 ---
 
 <div align="center">
