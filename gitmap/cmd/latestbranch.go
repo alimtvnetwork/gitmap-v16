@@ -136,7 +136,7 @@ func readAndSortBranches(refs []string, sortBy string) []gitutil.RemoteBranchInf
 func parseLatestBranchFlags(args []string) latestBranchConfig {
 	fs := flag.NewFlagSet(constants.CmdLatestBranch, flag.ExitOnError)
 	var cfg latestBranchConfig
-	var allRemotes, noFetch, jsonOut bool
+	var allRemotes, noFetch, jsonOut, switchLong, switchShort bool
 	fs.StringVar(&cfg.remote, "remote", "origin", constants.FlagDescLBRemote)
 	fs.BoolVar(&allRemotes, "all-remotes", false, constants.FlagDescLBAllRemotes)
 	fs.BoolVar(&cfg.containsFallback, "contains-fallback", false, constants.FlagDescLBContains)
@@ -146,7 +146,13 @@ func parseLatestBranchFlags(args []string) latestBranchConfig {
 	fs.BoolVar(&noFetch, "no-fetch", false, constants.FlagDescLBNoFetch)
 	fs.StringVar(&cfg.sortBy, "sort", constants.SortByDate, constants.FlagDescLBSort)
 	fs.StringVar(&cfg.filter, "filter", "", constants.FlagDescLBFilter)
+	// --switch / -s. Both registered against the same effect; either
+	// being true flips cfg.shouldSwitch on. Go's flag package doesn't
+	// natively support aliases so we OR them in resolveLatestBranchConfig.
+	fs.BoolVar(&switchLong, "switch", false, constants.FlagDescLBSwitch)
+	fs.BoolVar(&switchShort, "s", false, constants.FlagDescLBSwitchShort)
 	fs.Parse(args)
+	cfg.shouldSwitch = switchLong || switchShort
 
 	return resolveLatestBranchConfig(fs, cfg, allRemotes, noFetch, jsonOut)
 }
