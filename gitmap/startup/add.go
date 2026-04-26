@@ -56,6 +56,12 @@ type AddOptions struct {
 	// with the same name. Has NO effect on third-party files; those
 	// always refuse.
 	Force bool
+	// Backend selects the Windows autostart target (Registry vs
+	// Startup-folder shortcut). Ignored on Linux/macOS, which each
+	// have one canonical backend. Zero value (BackendUnspecified)
+	// means "use the OS default" which is BackendRegistry on
+	// Windows.
+	Backend Backend
 }
 
 // AddStatus tags the four mutually-exclusive Add outcomes. Kept
