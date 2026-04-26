@@ -55,7 +55,16 @@ func CurrentBranch(repoPath string) (string, error) {
 }
 
 // DetectBranch returns the branch name and a label describing how it was
-// detected. Resolution order (each step falls through to the next on miss):
+// detected, using constants.DefaultBranch as the last-resort fallback.
+// Equivalent to DetectBranchWithDefault(repoPath, constants.DefaultBranch).
+// Kept as the legacy entry point so existing callers compile unchanged.
+func DetectBranch(repoPath string) (branch, source string) {
+	return DetectBranchWithDefault(repoPath, constants.DefaultBranch)
+}
+
+// DetectBranchWithDefault is DetectBranch with a caller-supplied
+// fallback branch name. Resolution order (each step falls through to the
+// next on miss):
 //
 //  1. HEAD via `git rev-parse --abbrev-ref HEAD` → "HEAD" when on a named
 //     branch. NOTE: a detached HEAD or empty result no longer terminates
@@ -67,14 +76,17 @@ func CurrentBranch(repoPath string) (string, error) {
 //  3. Live remote query via `git ls-remote --symref origin HEAD` →
 //     "remote-tracking". Covers single-branch clones and shallow mirrors
 //     where step 2's local ref is absent.
-//  4. Built-in `constants.DefaultBranch` → "default". Last-resort guess so
-//     callers always have SOMETHING to attempt.
+//  4. Caller-supplied `fallback` → "default". Last-resort guess so
+//     callers always have SOMETHING to attempt. When fallback is the
+//     empty string, this step is skipped — the function continues to
+//     the detached-HEAD / unknown sentinels below so callers that want
+//     to *see* "we have nothing" can pass "" instead of a placeholder.
 //
 // Only when every step fails does the function return ("HEAD", "detached")
 // for an actual detached HEAD or ("", "unknown") for a totally opaque repo —
 // preserving the original sentinels for downstream consumers (cloner/strategy.go)
 // that branch on BranchSource.
-func DetectBranch(repoPath string) (branch, source string) {
+func DetectBranchWithDefault(repoPath, fallback string) (branch, source string) {
 	if name, ok := detectFromLocalHEAD(repoPath); ok {
 		return name, BranchSourceHEAD
 	}
@@ -84,8 +96,8 @@ func DetectBranch(repoPath string) (branch, source string) {
 	if name, ok := detectFromLiveRemote(repoPath); ok {
 		return name, BranchSourceRemoteTracking
 	}
-	if len(constants.DefaultBranch) > 0 {
-		return constants.DefaultBranch, BranchSourceDefault
+	if len(fallback) > 0 {
+		return fallback, BranchSourceDefault
 	}
 	if isDetachedHEAD(repoPath) {
 
