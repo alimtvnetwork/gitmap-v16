@@ -945,6 +945,90 @@ v3.149.0 will reject malformed enums or missing required keys before
 the walker starts, so a typo here fails fast rather than silently
 expanding the walk.
 
+#### Worktree markers under excluded directories — confirmed skipped
+
+The exclude check runs **before** any repo-marker check, so any kind
+of `.git` marker — directory, `gitdir:` worktree file, or stray text
+file — buried inside an excluded basename is **never inspected and
+never reported.** The walker prunes the parent and moves on; nothing
+inside is enqueued, opened, or stat'd beyond the `os.ReadDir` entry
+that proved the basename matches.
+
+This matters in practice because tools love to drop real worktrees
+into directories you almost certainly want to skip:
+
+- `pnpm` / `yarn` workspaces sometimes link sibling packages into
+  `node_modules/<scope>/<pkg>` via a `.git` file pointing at the
+  source repo's `.git/worktrees/<name>`.
+- Vendored dependency mirrors (`vendor/<dep>/.git/`) — full clones
+  kept for offline builds, especially in Go monorepos pre-modules.
+- Build outputs (`dist/`, `target/`, `.next/`) that a release
+  pipeline accidentally `git init`'d while debugging.
+- IDE caches (`.cache/`, `.terraform/`) where a plugin checked out
+  a helper repo.
+
+Consider this layout with the default `excludeDirs` from above:
+
+```text
+~/mono/                                              depth 0
+├── app/                                             depth 1
+│   ├── .git/                                        ← REPO (discovered)
+│   ├── node_modules/                                depth 2  ← excluded
+│   │   ├── @scope/linked-pkg/
+│   │   │   └── .git              ← gitdir: …/main/.git/worktrees/linked
+│   │   └── legit-dep/
+│   │       └── .git/             ← full nested clone
+│   ├── vendor/                                      depth 2  ← excluded
+│   │   └── upstream-fork/
+│   │       └── .git/             ← real repo, mirrored offline
+│   └── dist/                                        depth 2  ← excluded
+│       └── .git/                 ← stray init from a CI experiment
+└── tools/helper/                                    depth 2
+    └── .git                      ← gitdir: …/tools/.git/worktrees/helper
+```
+
+What `gitmap scan ~/mono` reports:
+
+| Path | Marker kind | In CSV? | Reason |
+|---|---|---|---|
+| `app/` | `.git/` directory | ✅ yes | Discovered at depth 1, before any exclude check applies to its children. |
+| `app/node_modules/@scope/linked-pkg/.git` | `gitdir:` worktree file | ❌ no | `node_modules` pruned at depth 2 — the worktree file is never opened. |
+| `app/node_modules/legit-dep/.git/` | `.git/` directory | ❌ no | Same prune; the directory entry is never read. |
+| `app/vendor/upstream-fork/.git/` | `.git/` directory | ❌ no | `vendor` is excluded; the mirror is invisible to the scan. |
+| `app/dist/.git/` | `.git/` directory | ❌ no | `dist` is excluded; the stray init is invisible. |
+| `tools/helper/.git` | `gitdir:` worktree file | ✅ yes | `tools` is **not** excluded; the worktree file is read, the `gitdir:` prefix matches, and it is treated as a repo root. |
+
+Two consequences worth internalizing:
+
+1. **No silent diagnostic for excluded hits.** Because the prune
+   happens before marker inspection, gitmap cannot tell you "I saw a
+   `.git` inside `node_modules/` and skipped it" — the file was
+   never even classified. If you suspect a real repo lives under an
+   excluded basename, the only way to confirm is to scan it
+   directly: `gitmap scan ~/mono/app/node_modules` (which still
+   honors the exclude list at *its* depth-1 children, so for the
+   most direct check, point the CLI deeper, e.g. `gitmap scan
+   ~/mono/app/node_modules/@scope`).
+2. **Worktrees vs nested clones are treated identically by the
+   exclude rule.** The `gitdir:` prefix detection only happens
+   *after* a directory is enqueued. Excluding a basename short-
+   circuits both kinds of markers in the same step — there is no
+   "prefer worktree" or "prefer real .git" preference to configure.
+
+Quick verification recipe — confirms the survivors-only contract:
+
+```bash
+gitmap scan ~/mono --output csv --output-path ./reports/mono
+awk -F, 'NR>1 {print $7}' ./reports/mono.csv | sort
+# expected output (relative paths):
+#   app
+#   tools/helper
+```
+
+The two excluded-directory worktrees and the two excluded-directory
+nested clones never appear — neither in the CSV, nor in the JSON,
+nor in any error or warning channel. Silence is the contract.
+
 ---
 
 <div align="center">
