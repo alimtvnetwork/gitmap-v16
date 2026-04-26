@@ -24,6 +24,7 @@ func toolingDispatchEntries() []dispatchEntry {
 		{[]string{constants.CmdSetup}, func() { runSetup(argsTail()) }},
 		{[]string{constants.CmdDoctor}, func() { checkHelp("doctor", argsTail()); runDoctor() }},
 		{[]string{constants.CmdLatestBranch, constants.CmdLatestBranchAlias}, func() { runLatestBranch(argsTail()) }},
+		{[]string{constants.CmdBranch, constants.CmdBranchAlias}, func() { runBranch(argsTail()) }},
 		{[]string{constants.CmdListVersions, constants.CmdListVersionsAlias}, func() { runListVersions(argsTail()) }},
 		{
 			[]string{constants.CmdListReleases, constants.CmdListReleasesAlias, constants.CmdReleases},

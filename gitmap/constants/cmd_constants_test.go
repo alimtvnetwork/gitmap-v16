@@ -45,6 +45,8 @@ func topLevelCmds() map[string]string {
 		"CmdDoctor":                CmdDoctor,
 		"CmdLatestBranch":          CmdLatestBranch,
 		"CmdLatestBranchAlias":     CmdLatestBranchAlias,
+		"CmdBranch":                CmdBranch,
+		"CmdBranchAlias":           CmdBranchAlias,
 		"CmdList":                  CmdList,
 		"CmdListAlias":             CmdListAlias,
 		"CmdGroup":                 CmdGroup,

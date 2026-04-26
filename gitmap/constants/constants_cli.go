@@ -40,6 +40,17 @@ const (
 	CmdDoctor                = "doctor"
 	CmdLatestBranch          = "latest-branch"
 	CmdLatestBranchAlias     = "lb"
+	// `gitmap branch <subcommand>` namespaces general branch-management
+	// helpers. First subcommand: `default` / `def` — checkout the repo's
+	// default branch (origin/HEAD or constants.DefaultBranch fallback).
+	// Designed for muscle-memory parity with `gitmap lb -s` (latest) so
+	// users can flip between "freshest" and "canonical" with a single
+	// short word. Subcommand strings live in constants_messages.go to
+	// keep all `branch`-specific tokens together.
+	CmdBranch                = "branch"
+	CmdBranchAlias           = "b"
+	CmdBranchSubDefault      = "default" // gitmap:cmd skip
+	CmdBranchSubDefaultAlias = "def"     // gitmap:cmd skip
 	CmdList                  = "list"
 	CmdListAlias             = "ls"
 	CmdGroup                 = "group"
@@ -214,6 +225,13 @@ const (
 	FlagDescLBNoFetch     = "Skip git fetch (use existing remote refs)"
 	FlagDescLBSort        = "Sort order: date (default, descending) or name (alphabetical)"
 	FlagDescLBFilter      = "Filter branches by glob or substring pattern"
+	// FlagDescLBSwitch / FlagDescLBSwitchShort document `gitmap lb
+	// --switch` / `gitmap lb -s`. Both register the SAME effect: after
+	// printing the latest-branch report, run `git checkout` against the
+	// resolved branch name. Useful as a single-keystroke "jump to whatever
+	// is freshest" workflow when reviewing PR work across many branches.
+	FlagDescLBSwitch      = "Checkout the resolved latest branch after printing the report"
+	FlagDescLBSwitchShort = "Short alias for --switch"
 	FlagDescGroup         = "Filter by group name"
 	FlagDescAll           = "Run against all tracked repos from database"
 	FlagDescListVerbose   = "Show full paths and URLs"

@@ -26,6 +26,15 @@ const (
 	MsgLatestBranchFetching     = "  Fetching remotes..."
 	MsgLatestBranchFetchWarning = "  Warning: fetch failed: %v\n"
 	LBUnknownBranch             = "<unknown>"
+	// `lb --switch` / `-s` and `branch default` post-report messages.
+	MsgLatestBranchSwitching      = "  ▶ Switching to %s...\n"
+	ErrLatestBranchSwitchNoTarget = "  ✗ No usable branch name to switch to (try --contains-fallback)"
+	ErrLatestBranchSwitchFailed   = "  ✗ Failed to checkout %s: %v\n"
+	MsgBranchDefaultSwitching     = "  ▶ Switching to default branch %s...\n"
+	ErrBranchDefaultFailed        = "  ✗ Failed to checkout default branch %s: %v\n"
+	ErrBranchUnknownSubcommand    = "  ✗ Unknown branch subcommand: %q (expected: default | def)\n"
+	ErrBranchMissingSubcommand    = "  ✗ Missing subcommand for `gitmap branch` (expected: default | def)\n"
+	ErrBranchNotRepo              = "  ✗ Not inside a git work tree\n"
 )
 
 // Generic error formats.

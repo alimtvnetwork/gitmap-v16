@@ -18,6 +18,7 @@ lb
 | --format json\|csv\|terminal | terminal | Output format |
 | --no-fetch | false | Skip git fetch before query |
 | --sort date\|name | date | Sort order |
+| --switch, -s | false | Checkout the resolved latest branch after printing the report |
 
 ## Prerequisites
 
@@ -73,8 +74,19 @@ lb
       "commit_sha": "abc1234"
     }
 
+### Example 5: Jump to the latest branch
+
+    gitmap lb -s
+
+**Output:**
+
+      ▶ Switching to feature/auth-redesign...
+    Switched to branch 'feature/auth-redesign'
+    Your branch is up to date with 'origin/feature/auth-redesign'.
+
 ## See Also
 
+- [branch](branch.md) — `gitmap b def` jumps to the default branch
 - [status](status.md) — View repo branch and status info
 - [release-branch](release-branch.md) — Create a release branch
 - [watch](watch.md) — Live-refresh status dashboard
