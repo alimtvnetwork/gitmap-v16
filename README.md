@@ -550,6 +550,31 @@ A `depth` value equal to the cap (`4` under defaults) in your CSV is
 the diagnostic signal: those rows sit on the boundary and are the
 candidates to investigate when something seems missing.
 
+#### `rescan` and the depth cap — what survives, what disappears, what's newly found
+
+`gitmap rescan` is **not** an incremental diff against the database.
+It reads the cached `last-scan.json` and replays the original
+`gitmap scan` command verbatim — same root, same `--config`, same
+`--mode`, and the same `DefaultMaxDepth = 4`. The output is whatever
+a fresh walk produces today, period. Concretely:
+
+| Repo state at rescan time | Was previously discovered? | Result |
+|---|---|---|
+| Still at depth ≤ 4 with a valid `.git` marker | yes | Re-emitted, same row, possibly with refreshed branch / clone-instruction. |
+| Still at depth ≤ 4, but its `.git` marker is gone (deleted, broken worktree) | yes | **Dropped from the new output**. The DB row is reconciled away on the next scan-cycle commit — `rescan` does not "remember" it just because it was there last time. |
+| Moved deeper than depth 4 since the last scan | yes | **Silently disappears** from the rescan output. The cap fires before the marker is reached; the previous discovery grants no special exemption. |
+| Newly added at depth ≤ 4 (e.g. a fresh `git worktree add` checkout placed beside the superproject) | no | **Picked up** as a new row, depth filled in from the walker. Worktree-style `.git` files are recognized via the `gitdir:` prefix exactly as on the first scan (rule 1). |
+| Newly added worktree **inside** a discovered repo's subtree | no | **Not picked up.** Rule 2 (no descent into a discovered repo) still wins — the worktree lives under the superproject's stopped subtree. Move it outside, or scan its parent directly. |
+| Newly added at depth ≥ 5 | no | **Not picked up** for the same reason fresh `scan` would miss it: the cap fires before depth 5 is enqueued. |
+
+The takeaway: `rescan` is a *replay*, not a *delta*. To widen what it
+sees, edit the cached scan parameters (re-run `gitmap scan <root>`
+with a different `--config` or a shallower starting root, which
+overwrites `last-scan.json`). The library-level `ScanOptions.MaxDepth`
+override applies to both `scan` and `rescan` since they share the
+same walker — set it negative for unbounded walks when you really
+need to catch a depth-5+ repo without restructuring directories.
+
 ---
 
 <div align="center">
