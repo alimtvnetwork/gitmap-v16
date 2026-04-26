@@ -137,3 +137,11 @@ const (
 	// order is centralized and tests can reference it.
 	StartupListCSVHeader = "name,path,exec"
 )
+
+// startup-remove CLI flag. Single boolean for now; kept in its own
+// const block so future flags (e.g. --trash, --backup-to) can land
+// alongside without disturbing the list-format block above.
+const (
+	FlagStartupRemoveDryRun     = "dry-run"
+	FlagDescStartupRemoveDryRun = "Show what would be deleted (or refused/no-op) without touching the filesystem"
+)
