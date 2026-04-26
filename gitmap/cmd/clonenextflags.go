@@ -71,7 +71,8 @@ func parseCloneNextFlags(args []string) CloneNextFlags {
 		Verbose:      *verboseFlag,
 		CSVPath:      *csvPath,
 		All:          *allFlag,
-		Force:        *forceFlag,
+		Force:          *forceFlag,
+		MaxConcurrency: *maxConcFlag,
 	}
 	if fs.NArg() > 0 {
 		out.VersionArg = fs.Arg(0)
