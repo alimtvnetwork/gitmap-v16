@@ -21,7 +21,7 @@ import (
 // runScan handles the "scan" subcommand.
 func runScan(args []string) {
 	checkHelp("scan", args)
-	dir, cfgPath, mode, output, outFile, outputPath, relativeRoot, ghDesktop, openFolder, quiet, noVSCodeSync, noAutoTags, workers, maxDepth, probeOpts := parseScanFlags(args)
+	dir, cfgPath, mode, output, outFile, outputPath, relativeRoot, ghDesktop, openFolder, quiet, noVSCodeSync, noAutoTags, reportErrors, workers, maxDepth, probeOpts := parseScanFlags(args)
 	cfg, err := config.LoadFromFile(cfgPath)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, constants.ErrConfigLoad, cfgPath, err)
@@ -33,7 +33,7 @@ func runScan(args []string) {
 		OutFile: outFile, OutputPath: outputPath,
 		GithubDesktop: ghDesktop, OpenFolder: openFolder, Quiet: quiet,
 	}
-	executeScan(dir, cfg, outFile, ghDesktop, openFolder, quiet, noVSCodeSync, noAutoTags, workers, maxDepth, cache, probeOpts, relativeRoot)
+	executeScan(dir, cfg, outFile, ghDesktop, openFolder, quiet, noVSCodeSync, noAutoTags, reportErrors, workers, maxDepth, cache, probeOpts, relativeRoot)
 }
 
 // executeScan performs the directory scan and outputs results.
@@ -43,7 +43,7 @@ func runScan(args []string) {
 // stage. This is the file users should attach when reporting "scan is
 // slow" — it pinpoints which phase (walk, DB upsert, project detection,
 // release import, desktop sync, …) actually consumed the time.
-func executeScan(dir string, cfg model.Config, outFile string, ghDesktop, openFolder, quiet, noVSCodeSync, noAutoTags bool, workers, maxDepth int, cache model.ScanCache, probeOpts ScanProbeOptions, relativeRoot string) {
+func executeScan(dir string, cfg model.Config, outFile string, ghDesktop, openFolder, quiet, noVSCodeSync, noAutoTags, reportErrors bool, workers, maxDepth int, cache model.ScanCache, probeOpts ScanProbeOptions, relativeRoot string) {
 	absDir := resolveScanTarget(dir)
 
 	bench := newScanBenchmark(absDir)
