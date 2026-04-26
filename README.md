@@ -395,6 +395,16 @@ These rules are stable across releases and are enforced by
 recorded as a repo when it contains a child entry literally named
 `.git` matching either of these forms:
 
+- **`.git/` is a directory** → ✅ counted as a repo, **always**. This is the standard `git init` / `git clone` layout. The directory's own contents are not inspected — its mere presence is the marker.
+- **`.git` is a regular file whose first bytes are exactly `gitdir:`** → ✅ counted as a repo. This is the `git worktree add` linked-checkout layout, and the layout submodules use when their `.git` was absorbed into the superproject. Only the first **256 bytes** are read; the prefix match is literal (lowercase `gitdir:`, no leading whitespace tolerated).
+- **`.git` is a regular file but its contents do *not* start with `gitdir:`** → ❌ **ignored**. A stray `.git` text file (committed by accident, dropped by an editor, left over from a failed `git init`) does not create a false positive.
+- **`.git` is a symlink** → ✅/❌ resolved as whichever target form above it points to (directory → counted; file → counted only if `gitdir:`-prefixed). A broken symlink is ignored.
+- **`.git` is missing or unreadable** → ❌ ignored. Permission errors are treated as "not a marker" so one unreadable subtree does not abort the whole scan.
+- **A directory ends in `.git` (e.g. `myrepo.git/`)** → ❌ ignored. Bare repos and `*.git` mirror folders are not catalogued by `gitmap scan`. Only a child entry named **exactly** `.git` qualifies.
+- **Any other hand-rolled hint** (loose `HEAD` files, a `refs/` folder, a `config` with `[core]`) → ❌ ignored. The two forms above are the only positive signals.
+
+The same rules in table form (kept for backwards-compatible cross-references):
+
 | Marker form | Matches | Notes |
 |---|---|---|
 | `.git/` directory | Standard `git init` / `git clone` checkout | Counted unconditionally. |
