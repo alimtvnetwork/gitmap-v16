@@ -34,7 +34,7 @@ type ScanProbeOptions struct {
 }
 
 // parseScanFlags parses flags for the scan command.
-func parseScanFlags(args []string) (dir, configPath, mode, output, outFile, outputPath, relativeRoot string, ghDesktop, openFolder, quiet, noVSCodeSync, noAutoTags, reportErrors bool, workers, maxDepth int, probeOpts ScanProbeOptions) {
+func parseScanFlags(args []string) (dir, configPath, mode, output, outFile, outputPath, relativeRoot, defaultBranch string, ghDesktop, openFolder, quiet, noVSCodeSync, noAutoTags, reportErrors bool, workers, maxDepth int, probeOpts ScanProbeOptions) {
 	fs := flag.NewFlagSet(constants.CmdScan, flag.ExitOnError)
 	cfgFlag := fs.String("config", constants.DefaultConfigPath, constants.FlagDescConfig)
 	modeFlag := fs.String("mode", "", constants.FlagDescMode)
@@ -42,6 +42,12 @@ func parseScanFlags(args []string) (dir, configPath, mode, output, outFile, outp
 	outFileFlag := fs.String("out-file", "", constants.FlagDescOutFile)
 	outputPathFlag := fs.String("output-path", "", constants.FlagDescOutputPath)
 	relRootFlag := fs.String(constants.FlagScanRelativeRoot, "", constants.FlagDescScanRelativeRoot)
+	// Empty default → mapper.resolveDefaultBranch falls back to
+	// constants.DefaultBranch. We DON'T put "main" here because doing
+	// so would make wasFlagPassed-style introspection impossible:
+	// the user passing `--default-branch main` would look identical
+	// to omitting the flag entirely.
+	defaultBranchFlag := fs.String(constants.FlagScanDefaultBranch, "", constants.FlagDescScanDefaultBranch)
 	ghDesktopFlag, openFlag, quietFlag := registerScanBoolFlags(fs)
 	noVSCodeSyncFlag := fs.Bool(constants.FlagNoVSCodeSync, false, constants.FlagDescNoVSCodeSync)
 	noAutoTagsFlag := fs.Bool(constants.FlagNoAutoTags, false, constants.FlagDescNoAutoTags)
@@ -62,7 +68,7 @@ func parseScanFlags(args []string) (dir, configPath, mode, output, outFile, outp
 	probeOpts = resolveScanProbeOptions(fs, noProbeFlag, noProbeWaitFlag,
 		probeConcFlag, probeWorkersFlag, probeDepthFlag)
 
-	return dir, *cfgFlag, *modeFlag, *outputFlag, *outFileFlag, *outputPathFlag, *relRootFlag, *ghDesktopFlag, *openFlag, *quietFlag, *noVSCodeSyncFlag, *noAutoTagsFlag, *reportErrFlag, *workersFlag, *maxDepthFlag, probeOpts
+	return dir, *cfgFlag, *modeFlag, *outputFlag, *outFileFlag, *outputPathFlag, *relRootFlag, *defaultBranchFlag, *ghDesktopFlag, *openFlag, *quietFlag, *noVSCodeSyncFlag, *noAutoTagsFlag, *reportErrFlag, *workersFlag, *maxDepthFlag, probeOpts
 }
 
 // resolveScanProbeOptions reconciles the deprecated --probe-concurrency

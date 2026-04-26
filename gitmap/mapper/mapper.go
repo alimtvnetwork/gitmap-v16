@@ -13,12 +13,16 @@ import (
 	"github.com/alimtvnetwork/gitmap-v7/gitmap/scanner"
 )
 
+// BuildOptions and resolveDefaultBranch live in mapper_options.go to
+// keep this file under the project's 200-line per-file budget.
+
+
 // BuildRecords converts a list of RepoInfo into ScanRecords using the
 // per-repo RelativePath the scanner already computed (against the scan
 // dir). Kept as a thin wrapper so legacy callers (cmd/as.go,
 // cmd/releaseautoregister.go) don't need to thread an unused root.
 func BuildRecords(repos []scanner.RepoInfo, mode, defaultNote string) []model.ScanRecord {
-	return BuildRecordsWithRoot(repos, mode, defaultNote, "")
+	return BuildRecordsWithOptions(repos, BuildOptions{Mode: mode, DefaultNote: defaultNote})
 }
 
 // BuildRecordsWithRoot is like BuildRecords but rewrites every
@@ -32,10 +36,19 @@ func BuildRecords(repos []scanner.RepoInfo, mode, defaultNote string) []model.Sc
 // repo, falling back to the scanner-computed RelativePath for THAT row so
 // one bad ancestor doesn't drop the entire record.
 func BuildRecordsWithRoot(repos []scanner.RepoInfo, mode, defaultNote, relRoot string) []model.ScanRecord {
+	return BuildRecordsWithOptions(repos, BuildOptions{
+		Mode: mode, DefaultNote: defaultNote, RelRoot: relRoot,
+	})
+}
+
+// BuildRecordsWithOptions is the full-fat entry point. New options
+// (e.g. DefaultBranch) ride on the BuildOptions struct so the helper
+// signatures don't keep growing. The two wrappers above just forward.
+func BuildRecordsWithOptions(repos []scanner.RepoInfo, opts BuildOptions) []model.ScanRecord {
 	records := make([]model.ScanRecord, 0, len(repos))
 	for _, repo := range repos {
-		repo.RelativePath = relativePathFor(repo, relRoot)
-		rec := buildOneRecord(repo, mode, defaultNote)
+		repo.RelativePath = relativePathFor(repo, opts.RelRoot)
+		rec := buildOneRecord(repo, opts)
 		records = append(records, rec)
 	}
 
@@ -66,15 +79,18 @@ func relativePathFor(repo scanner.RepoInfo, relRoot string) string {
 	return rel
 }
 
-// buildOneRecord creates a single ScanRecord from a RepoInfo.
-func buildOneRecord(repo scanner.RepoInfo, mode, note string) model.ScanRecord {
+// buildOneRecord creates a single ScanRecord from a RepoInfo. The
+// fallback branch name is taken from opts.DefaultBranch when set and
+// from constants.DefaultBranch otherwise — see resolveDefaultBranch.
+func buildOneRecord(repo scanner.RepoInfo, opts BuildOptions) model.ScanRecord {
 	remoteURL, _ := gitutil.RemoteURL(repo.AbsolutePath)
-	branch, branchSource := gitutil.DetectBranch(repo.AbsolutePath)
+	branch, branchSource := gitutil.DetectBranchWithDefault(
+		repo.AbsolutePath, resolveDefaultBranch(opts.DefaultBranch))
 	httpsURL := toHTTPS(remoteURL)
 	sshURL := toSSH(remoteURL)
-	cloneURL := selectCloneURL(httpsURL, sshURL, mode)
+	cloneURL := selectCloneURL(httpsURL, sshURL, opts.Mode)
 	repoName := extractRepoName(remoteURL)
-	noteText := buildNote(remoteURL, note)
+	noteText := buildNote(remoteURL, opts.DefaultNote)
 	instruction := buildInstruction(cloneURL, branch, repo.RelativePath)
 
 	return model.ScanRecord{
@@ -85,6 +101,7 @@ func buildOneRecord(repo scanner.RepoInfo, mode, note string) model.ScanRecord {
 		CloneInstruction: instruction, Notes: noteText,
 	}
 }
+
 
 // toHTTPS converts a remote URL to HTTPS format.
 func toHTTPS(raw string) string {

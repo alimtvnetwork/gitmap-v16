@@ -172,6 +172,15 @@ const (
 	FlagScanMaxDepth     = "max-depth"
 	FlagDescScanMaxDepth = "Max directory levels to descend below scan root (0 = default 4, negative = unlimited)"
 	DefaultScanMaxDepth  = 0
+	// FlagScanDefaultBranch overrides the fallback branch name written
+	// to ScanRecord.Branch when none of the live detection steps in
+	// gitutil.DetectBranchWithDefault returned a usable name. Without
+	// the flag, the fallback is the package-default constants.DefaultBranch
+	// ("main"). Useful for catalogs that target legacy infra still on
+	// "master", or for forcing a project-specific convention without
+	// touching the binary's compiled-in default.
+	FlagScanDefaultBranch     = "default-branch"
+	FlagDescScanDefaultBranch = "Fallback branch name when HEAD/remote-tracking detection finds nothing (default: main)"
 	// FlagScanReportErrors enables a JSON failure report at command
 	// exit for `gitmap scan` and `gitmap cn --all/--csv`. Bare boolean
 	// — output path is fixed at `<binaryDir>/.gitmap/reports/errors-
