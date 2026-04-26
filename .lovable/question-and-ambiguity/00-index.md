@@ -25,4 +25,4 @@ Each `xx-brief-title.md` file contains:
 
 ## Counter
 
-Tasks consumed: 4 / 40 (entry 02 was discovered during entry 01 and is not counted; entry 04's discovered duplicate-symbol issue is similarly noted in-line, not counted)
+Tasks consumed: 5 / 40 (entry 02 was discovered during entry 01 and is not counted; entry 04's discovered duplicate-symbol issue is similarly noted in-line, not counted; task 06 = "depth-cap interpretation + deeper rescan note" had no ambiguity worth logging — verified upsert-by-AbsolutePath against `gitmap/store/repo.go` and `constants_store.go` line 110 before claiming additive composition)
