@@ -102,17 +102,6 @@ func buildOneRecord(repo scanner.RepoInfo, opts BuildOptions) model.ScanRecord {
 	}
 }
 
-// resolveDefaultBranch picks the fallback branch name passed to
-// gitutil.DetectBranchWithDefault. An empty opts value (the zero
-// value) resolves to constants.DefaultBranch so legacy callers see
-// identical behavior to the pre-flag implementation.
-func resolveDefaultBranch(override string) string {
-	if override == "" {
-		return constants.DefaultBranch
-	}
-
-	return override
-}
 
 // toHTTPS converts a remote URL to HTTPS format.
 func toHTTPS(raw string) string {
