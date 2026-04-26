@@ -3,6 +3,7 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 
 	"github.com/alimtvnetwork/gitmap-v7/gitmap/constants"
@@ -54,15 +55,28 @@ func emitFindNext(rows []model.FindNextRow, jsonOut bool) {
 
 // emitFindNextJSON dumps the result array as indented JSON to stdout.
 func emitFindNextJSON(rows []model.FindNextRow) {
-	if rows == nil {
-		rows = []model.FindNextRow{}
-	}
-	enc := json.NewEncoder(os.Stdout)
-	enc.SetIndent("", "  ")
-	if err := enc.Encode(rows); err != nil {
+	if err := encodeFindNextJSON(os.Stdout, rows); err != nil {
 		fmt.Fprintf(os.Stderr, constants.ErrFindNextJSONEncodeFmt, err)
 		os.Exit(1)
 	}
+}
+
+// encodeFindNextJSON writes rows as indented JSON to w. Empty input
+// renders as `[]` (NOT `null`) so jq pipelines never need a special
+// case. Split out from emitFindNextJSON so contract tests can
+// capture the bytes into a buffer instead of stdout.
+//
+// CONTRACT: the field set, JSON tag names, and field DECLARATION
+// order of model.FindNextRow are pinned by
+// gitmap/cmd/findnextjson_contract_test.go.
+func encodeFindNextJSON(w io.Writer, rows []model.FindNextRow) error {
+	if rows == nil {
+		rows = []model.FindNextRow{}
+	}
+	enc := json.NewEncoder(w)
+	enc.SetIndent("", "  ")
+
+	return enc.Encode(rows)
 }
 
 // emitFindNextText prints the human summary (header + per-repo rows + hint).
