@@ -86,6 +86,8 @@ func parseStartupAddFlags(args []string) startupAddFlags {
 		constants.FlagDescStartupAddNoDisplay)
 	fs.BoolVar(&cfg.force, constants.FlagStartupAddForce, false,
 		constants.FlagDescStartupAddForce)
+	fs.StringVar(&cfg.backend, constants.FlagStartupAddBackend, "",
+		constants.FlagDescStartupAddBackend)
 	fs.Parse(args)
 	if cfg.name == "" {
 		fmt.Fprintln(os.Stderr,
