@@ -172,6 +172,14 @@ const (
 	FlagScanMaxDepth     = "max-depth"
 	FlagDescScanMaxDepth = "Max directory levels to descend below scan root (0 = default 4, negative = unlimited)"
 	DefaultScanMaxDepth  = 0
+	// FlagReportErrors enables a JSON failure report at command exit.
+	// Bare boolean — output path is fixed at `<binaryDir>/.gitmap/
+	// reports/errors-<unixts>.json`. Honored by both `gitmap scan`
+	// (captures scanner ReadDir + background ls-remote / shallow-clone
+	// failures) and `gitmap cn --all/--csv` (captures per-repo clone
+	// failures). Clean runs leave NO file on disk.
+	FlagReportErrors     = "report-errors"
+	FlagDescReportErrors = "Write per-repo failures to .gitmap/reports/errors-<unixts>.json (only emitted when failures occur)"
 	FlagDescSetupConfig   = "Path to git-setup.json config file"
 	FlagDescDryRun        = "Preview changes without applying them"
 	FlagDescAssets        = "Directory or file to attach to the release"
