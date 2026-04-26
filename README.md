@@ -582,7 +582,7 @@ repoName,httpsUrl,sshUrl,branch,branchSource,relativePath,absolutePath,cloneInst
 | 5 | `branchSource` | enum | How column 4 was determined: `remote-head` (preferred), `head` (fallback to local `HEAD`), or empty when neither resolved. |
 | 6 | `relativePath` | string | Path from the scan root to the repo. `team-a/service-x` for a repo at depth 2. |
 | 7 | `absolutePath` | string | OS-absolute path. On Windows, drive-letter form (`C:\…`); separators are the host's native form. |
-| 8 | `cloneInstruction` | string | The exact `git clone …` command a user can paste to reproduce the checkout, including `--branch <name>` when columns 4–5 resolved. |
+| 8 | `cloneInstruction` | string | Ready-to-paste `git clone -b <branch> <url> <relativePath>` command. The `-b <branch>` segment is included when columns 4–5 resolved a branch; the URL form follows the scan's `--mode` (`https` by default, `ssh` with `--mode ssh`). |
 | 9 | `notes` | string | Free-text diagnostics. Empty for clean rows. May contain commas → will be quoted. |
 | 10 | `depth` | integer | Directory level relative to the scan root: `0` = root, `1` = immediate child, capped at `DefaultMaxDepth = 4` unless `ScanOptions.MaxDepth` was overridden. |
 
