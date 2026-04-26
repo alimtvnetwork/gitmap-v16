@@ -18,7 +18,6 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"runtime"
 
 	"github.com/alimtvnetwork/gitmap-v7/gitmap/constants"
 	"github.com/alimtvnetwork/gitmap-v7/gitmap/startup"
@@ -34,25 +33,31 @@ type startupAddFlags struct {
 	comment     string
 	noDisplay   bool
 	force       bool
+	backend     string
 }
 
-// runStartupAdd is the dispatcher entry point.
+// runStartupAdd is the dispatcher entry point. Windows is now
+// supported via the Registry / Startup-folder backends — no early
+// short-circuit needed here. The startup package's runtime guards
+// surface ErrStartupUnsupportedOS for any remaining unsupported OS.
 func runStartupAdd(args []string) {
 	checkHelp("startup-add", args)
-	if runtime.GOOS == "windows" {
-		fmt.Fprintln(os.Stderr, constants.ErrStartupUnsupportedOS)
-		os.Exit(1)
-	}
 	cfg := parseStartupAddFlags(args)
 	exec, ok := resolveStartupAddExec(cfg.exec)
 	if !ok {
 		fmt.Fprintln(os.Stderr, constants.ErrStartupAddMissingExec)
 		os.Exit(2)
 	}
+	backend, err := startup.ParseBackend(cfg.backend)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "%v\n", err)
+		os.Exit(2)
+	}
 	res, err := startup.Add(startup.AddOptions{
 		Name: cfg.name, Exec: exec,
 		DisplayName: cfg.displayName, Comment: cfg.comment,
 		NoDisplay: cfg.noDisplay, Force: cfg.force,
+		Backend: backend,
 	})
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%v\n", err)
@@ -80,6 +85,8 @@ func parseStartupAddFlags(args []string) startupAddFlags {
 		constants.FlagDescStartupAddNoDisplay)
 	fs.BoolVar(&cfg.force, constants.FlagStartupAddForce, false,
 		constants.FlagDescStartupAddForce)
+	fs.StringVar(&cfg.backend, constants.FlagStartupAddBackend, "",
+		constants.FlagDescStartupAddBackend)
 	fs.Parse(args)
 	if cfg.name == "" {
 		fmt.Fprintln(os.Stderr,

@@ -1,26 +1,12 @@
 package startup
 
 // Add implements `gitmap startup-add` with a strict "managed-only,
-// never escalate" contract that mirrors Remove:
-//
-//  1. Validate the entry name (same isValidName rules as Remove —
-//     no path separators, no NUL, non-empty after normalization).
-//  2. Ensure the autostart dir exists (create with 0o755 if missing
-//     so first-run on a brand-new account works without a separate
-//     `mkdir`). Errors here are real I/O failures and propagate.
-//  3. Resolve target path: <dir>/gitmap-<name>.desktop. The
-//     `gitmap-` prefix is forced regardless of caller-supplied name
-//     so the cheap pre-filter in collectManaged still picks the
-//     entry up. A name already starting with the prefix is NOT
-//     double-prefixed.
-//  4. If the target exists AND is NOT gitmap-managed → refuse
-//     (AddRefused). NEVER overwrite a third-party autostart entry,
-//     even with --force. --force only lifts the "already exists and
-//     IS ours" check.
-//  5. Render the .desktop body with the X-Gitmap-Managed=true
-//     marker and write it atomically (write-to-temp + rename) so a
-//     crash mid-write cannot leave a half-written file the next
-//     login session would try to execute.
+// never escalate" contract that mirrors Remove. The flow validates
+// the name, ensures the autostart dir exists, resolves the
+// platform-specific filename, refuses to overwrite third-party
+// files (even with --force), and writes the rendered body
+// atomically. See per-OS render/dispatch helpers for format
+// details (renderDesktop, renderPlist, addWindows*).
 
 import (
 	"fmt"
@@ -56,6 +42,12 @@ type AddOptions struct {
 	// with the same name. Has NO effect on third-party files; those
 	// always refuse.
 	Force bool
+	// Backend selects the Windows autostart target (Registry vs
+	// Startup-folder shortcut). Ignored on Linux/macOS, which each
+	// have one canonical backend. Zero value (BackendUnspecified)
+	// means "use the OS default" which is BackendRegistry on
+	// Windows.
+	Backend Backend
 }
 
 // AddStatus tags the four mutually-exclusive Add outcomes. Kept
@@ -95,10 +87,11 @@ type AddResult struct {
 //     X-Gitmap-Managed=true marker into AutostartDir().
 //   - darwin     → writes a LaunchAgent `.plist` with the
 //     XGitmapManaged <true/> marker into ~/Library/LaunchAgents/.
-//   - windows    → AutostartDir() returns the unsupported-OS error
-//     and we propagate it (the cmd runner ALSO short-circuits on
-//     windows; this is defense-in-depth so direct callers of the
-//     startup package can't accidentally land here either).
+//   - windows    → routes via opts.Backend (Registry by default,
+//     or Startup-folder .lnk shortcut). Both backends share the
+//     same managed-marker contract enforced by HKCU\Software\Gitmap
+//     tracking subkeys + a sibling marker value next to Run-key
+//     entries. See addWindows / winbackend.go for details.
 //
 // Both OS paths share the same five-status outcome model
 // (Created/Overwritten/Refused/BadName/Exists) and the same
@@ -109,6 +102,10 @@ func Add(opts AddOptions) (AddResult, error) {
 	clean := normalizeName(opts.Name)
 	if !isValidName(clean) {
 		return AddResult{Status: AddBadName}, nil
+	}
+	if runtime.GOOS == "windows" {
+
+		return addWindows(clean, opts)
 	}
 	dir, err := AutostartDir()
 	if err != nil {
@@ -121,6 +118,10 @@ func Add(opts AddOptions) (AddResult, error) {
 
 	return writeManaged(full, clean, opts)
 }
+
+// addWindows lives in winbackend.go (kept with the other Windows
+// dispatch helpers so the public Add API has only the OS routing
+// switch in this file).
 
 // platformFilename picks the OS-specific filename shape. macOS uses
 // the reverse-DNS `gitmap.<name>.plist` convention; everything else
