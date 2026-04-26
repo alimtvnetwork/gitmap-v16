@@ -18,7 +18,6 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"runtime"
 
 	"github.com/alimtvnetwork/gitmap-v7/gitmap/constants"
 	"github.com/alimtvnetwork/gitmap-v7/gitmap/startup"
