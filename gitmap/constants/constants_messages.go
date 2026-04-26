@@ -187,7 +187,19 @@ const (
 	ErrScanFailed        = "Error: scan failed on directory %s: %v (operation: resolve)\n"
 	ErrScanDirNotFound   = "Error: scan target %s does not exist (resolved to %s)\n"
 	ErrScanDirNotDir     = "Error: scan target %s is not a directory (resolved to %s)\n"
+	// ErrScanRelativeRootInvalid is emitted when --relative-root cannot be
+	// resolved to an existing directory or is not a parent of the scan dir.
+	// Operation tag mirrors ErrScanFailed style for log-grep consistency.
+	ErrScanRelativeRootInvalid = "Error: --relative-root %s is invalid: %v (operation: resolve)\n"
+	// ErrScanRelativeRootNotAncestor fires when the user-supplied root
+	// does not contain a discovered repo, which would yield a "../"
+	// path in the output and break clone-script reproducibility.
+	ErrScanRelativeRootNotAncestor = "Error: --relative-root %s is not an ancestor of repo %s (would produce %q)\n"
 	MsgScanResolvedDir   = "  ↳ Resolved %q → %s\n"
+	// MsgScanRelativeRoot announces the pinned RelativePath base when it
+	// differs from the scan dir, so the user sees that output paths
+	// will be computed against this directory rather than [dir].
+	MsgScanRelativeRoot = "  ↳ RelativePath root pinned to %s\n"
 	ErrCloneFailed       = "Error: clone failed for source file %s: %v (operation: read)\n"
 	ErrOutputFailed      = "Error: output generation failed: %v\n"
 	ErrCreateDir         = "Error: cannot create directory at %s: %v (operation: mkdir)\n"
