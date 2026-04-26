@@ -96,7 +96,8 @@ type ScanProgress struct {
 }
 
 // ScanOptions bundles optional hooks and tunables for ScanDirWithOptions.
-// Zero-value is valid and equivalent to the legacy ScanDir signature.
+// Zero-value is valid and equivalent to the legacy ScanDir signature
+// (with the depth cap defaulting to DefaultMaxDepth).
 type ScanOptions struct {
 	// ExcludeDirs is the list of directory base names to skip.
 	ExcludeDirs []string
@@ -105,6 +106,13 @@ type ScanOptions struct {
 	// Progress, when non-nil, is invoked from a single goroutine with
 	// throttled snapshots while the scan runs and once more at the end.
 	Progress func(ScanProgress)
+	// MaxDepth caps the directory levels descended below the scan root.
+	// Zero (the field's zero value) means "use DefaultMaxDepth"; a
+	// negative value disables the cap entirely (legacy unbounded
+	// behavior). Repos discovered at any depth still stop their own
+	// subtree as before — the cap only matters for paths that have NOT
+	// hit a `.git` marker yet.
+	MaxDepth int
 }
 
 // ScanDir walks root recursively and returns all Git repo paths found.
@@ -139,6 +147,7 @@ func ScanDirWithOptions(root string, opts ScanOptions) ([]RepoInfo, error) {
 		absRoot,
 		buildExcludeSet(opts.ExcludeDirs),
 		resolveWorkerCount(opts.Workers),
+		resolveMaxDepth(opts.MaxDepth),
 		opts.Progress,
 	)
 }
@@ -151,6 +160,18 @@ func resolveWorkerCount(requested int) int {
 	}
 	if requested > scanWorkersMax {
 		return scanWorkersMax
+	}
+
+	return requested
+}
+
+// resolveMaxDepth normalizes a caller-supplied depth cap. 0 (zero-value)
+// picks DefaultMaxDepth; negative disables the cap; positive is honored
+// verbatim. Returning -1 for "unlimited" lets the hot-path check stay a
+// simple `depth+1 > cap`-style comparison while accepting any signed int.
+func resolveMaxDepth(requested int) int {
+	if requested == 0 {
+		return DefaultMaxDepth
 	}
 
 	return requested
