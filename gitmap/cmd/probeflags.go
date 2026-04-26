@@ -15,6 +15,7 @@ package cmd
 //   <positional>                 forwarded to opts.rest
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"strconv"
