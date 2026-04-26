@@ -208,12 +208,20 @@ func WalkBatchFromDir(root string) ([]string, error) {
 	return absoluteAndSorted(repos), nil
 }
 
-// isGitRepo reports whether path contains a .git entry (file or directory —
-// `.git` files exist for git worktrees).
-func isGitRepo(path string) bool {
+// IsGitRepo reports whether path contains a .git entry (file or directory —
+// `.git` files exist for git worktrees). Exported so the cmd-package
+// dispatcher can decide between single-repo and batch mode without
+// importing internal helpers.
+func IsGitRepo(path string) bool {
 	_, err := os.Stat(filepath.Join(path, ".git"))
 
 	return err == nil
+}
+
+// isGitRepo is the unexported alias kept for back-compat with existing
+// call sites inside this package. New callers should use IsGitRepo.
+func isGitRepo(path string) bool {
+	return IsGitRepo(path)
 }
 
 // absoluteAndSorted resolves each input path to an absolute form and
