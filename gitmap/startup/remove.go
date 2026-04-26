@@ -1,20 +1,11 @@
 package startup
 
 // Remove implements `gitmap startup-remove <name>` with a strict
-// "managed-only, never escalate" contract:
-//
-//  1. Reject inputs that contain a path separator OR are empty —
-//     prevents `..`-based traversal and accidental deletion of files
-//     outside the autostart dir.
-//  2. Resolve the full target path inside AutostartDir(). If the
-//     file does not exist → return RemoveNoOp (clean exit 0, "did
-//     nothing"). Missing files are NOT errors — list/remove must be
-//     idempotent so users can safely script them.
-//  3. Open and re-check the X-Gitmap-Managed marker. If the file
-//     exists but is not ours → return RemoveRefused (also clean exit
-//     0 with a clear message; never delete a third-party file).
-//  4. Only on a verified gitmap-managed file: os.Remove and return
-//     RemoveDeleted with the absolute path so the CLI can echo it.
+// "managed-only, never escalate" contract: reject empty / path-
+// separator names, treat missing files as RemoveNoOp (idempotent),
+// re-check the in-file marker before deleting, and refuse to touch
+// third-party files. On Windows, dispatches to removeWindows in
+// winbackend.go which tries Registry then Startup-folder.
 
 import (
 	"fmt"
