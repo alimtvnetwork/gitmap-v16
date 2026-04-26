@@ -324,7 +324,7 @@ func (st *scanState) processDir(job dirJob) {
 		return
 	}
 	if st.containsGitMarker(job.path, entries) {
-		st.recordRepo(job.path)
+		st.recordRepo(job.path, job.depth)
 
 		return
 	}
