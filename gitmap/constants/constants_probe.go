@@ -53,7 +53,7 @@ const (
 	MsgProbeNoneFmt     = "  · %s → no new version (method=%s)\n"
 	MsgProbeFailFmt     = "  ✗ %s → %s\n"
 	MsgProbeDoneFmt     = "✓ Probe complete: %d available, %d unchanged, %d failed.\n"
-	MsgProbeUsageHeader = "Usage: gitmap probe [<repo-path>|--all] [--json] [--workers N]"
+	MsgProbeUsageHeader = "Usage: gitmap probe [<repo-path>|--all] [--json] [--probe-workers N] [--probe-depth N]"
 	MsgProbeNoTargets   = "No repos to probe. Pass a path or --all.\n"
 )
 
