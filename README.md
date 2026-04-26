@@ -384,6 +384,68 @@ gitmap rescan                   # re-scan all known directories
 
 → [scan](gitmap/helptext/scan.md) · [rescan](gitmap/helptext/rescan.md) · [list](gitmap/helptext/list.md)
 
+#### Scan rules — what counts as a repo, and how deep we walk
+
+The scanner is intentionally strict so the catalog stays trustworthy.
+These rules are stable across releases and are enforced by
+[`gitmap/scanner/scanner.go`](gitmap/scanner/scanner.go) (see also
+[`spec/01-app/03-scanner.md`](spec/01-app/03-scanner.md)).
+
+**1. Repo markers — what makes a directory a "repo".** A directory is
+recorded as a repo when it contains a child entry literally named
+`.git` matching either of these forms:
+
+| Marker form | Matches | Notes |
+|---|---|---|
+| `.git/` directory | Standard `git init` / `git clone` checkout | Counted unconditionally. |
+| `.git` regular file | `git worktree add` linked checkouts; submodules whose `.git` was absorbed into the superproject | Only counted when the file's contents start with the literal prefix `gitdir:` (read budget: 256 bytes). A stray `.git` text file without that prefix is ignored to prevent false positives. |
+
+Anything else under the directory — bare repos, `*.git` mirror folders,
+hand-rolled `HEAD` files — is **not** treated as a repo by `gitmap scan`.
+
+**2. Gitdir / worktree handling — no descent into discovered repos.**
+Once a directory is recorded as a repo (by either marker form above),
+the scanner does **not** descend into its subtree. This means:
+
+- A worktree's `.git` file (`gitdir: /path/to/main/.git/worktrees/<name>`)
+  registers the worktree directory itself as a repo. The linked main
+  repo is recorded separately when its own `.git/` directory is reached
+  via the normal walk.
+- Submodules with absorbed `.git` files are recorded as repos at their
+  own location, independent of the superproject.
+- Nested repos hidden under a discovered repo (e.g. a `vendor/` checkout
+  under a project that itself is a repo) are **not** discovered. Move
+  them outside, scan them separately, or scan their parent directly.
+
+**3. Default 4-level nesting cap.** The scanner refuses to descend more
+than `DefaultMaxDepth = 4` directory levels below the scan root, even
+when no `.git` marker has been found on the path. Depth is counted
+from the root:
+
+| Depth | Example path under `gitmap scan ~/code` |
+|---|---|
+| `0` | `~/code` (the scan root itself) |
+| `1` | `~/code/<org>` |
+| `2` | `~/code/<org>/<project>` |
+| `3` | `~/code/<org>/<project>/<service>` |
+| `4` | `~/code/<org>/<project>/<service>/<module>` |
+| `5+` | **Not walked** under the default cap |
+
+The cap exists to prevent runaway walks into dependency trees that
+slipped past the exclude list (e.g. a forgotten `node_modules/` deep
+inside a project). Repos discovered at any depth still stop their own
+subtree from descending — the cap only matters for paths that have
+**not** hit a `.git` marker yet.
+
+Override via `ScanOptions.MaxDepth` when calling the library directly:
+a positive value sets a custom cap, a negative value disables the cap
+entirely (legacy unbounded behavior), and zero (the field's zero
+value) keeps `DefaultMaxDepth = 4`.
+
+**Excluded directory names** are skipped before the depth check fires
+— see the per-scan `--config` exclude list and the project defaults
+documented in [`gitmap/helptext/scan.md`](gitmap/helptext/scan.md).
+
 ---
 
 <div align="center">
