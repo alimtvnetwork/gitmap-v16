@@ -13,12 +13,34 @@ import (
 	"github.com/alimtvnetwork/gitmap-v7/gitmap/scanner"
 )
 
+// BuildOptions bundles every configurable knob BuildRecords* exposes
+// so adding a new option later doesn't grow the helper signatures
+// further. The two thin wrappers below preserve the legacy positional
+// signatures for callers that don't need the new fields.
+type BuildOptions struct {
+	// Mode is "https" or "ssh" — selects which clone URL is recorded.
+	Mode string
+	// DefaultNote is written to ScanRecord.Notes when the repo has a
+	// remote URL. Empty by default.
+	DefaultNote string
+	// RelRoot, when non-empty, rewrites every RelativePath against
+	// this absolute, cleaned path. Repos outside relRoot fall back to
+	// the scanner-computed RelativePath with a stderr warning. See
+	// relativePathFor for the precise contract.
+	RelRoot string
+	// DefaultBranch is the fallback branch name passed to
+	// gitutil.DetectBranchWithDefault. Empty string means "use the
+	// built-in constants.DefaultBranch" (preserves legacy behavior).
+	// CLI surface: `gitmap scan --default-branch <name>`.
+	DefaultBranch string
+}
+
 // BuildRecords converts a list of RepoInfo into ScanRecords using the
 // per-repo RelativePath the scanner already computed (against the scan
 // dir). Kept as a thin wrapper so legacy callers (cmd/as.go,
 // cmd/releaseautoregister.go) don't need to thread an unused root.
 func BuildRecords(repos []scanner.RepoInfo, mode, defaultNote string) []model.ScanRecord {
-	return BuildRecordsWithRoot(repos, mode, defaultNote, "")
+	return BuildRecordsWithOptions(repos, BuildOptions{Mode: mode, DefaultNote: defaultNote})
 }
 
 // BuildRecordsWithRoot is like BuildRecords but rewrites every
@@ -32,10 +54,19 @@ func BuildRecords(repos []scanner.RepoInfo, mode, defaultNote string) []model.Sc
 // repo, falling back to the scanner-computed RelativePath for THAT row so
 // one bad ancestor doesn't drop the entire record.
 func BuildRecordsWithRoot(repos []scanner.RepoInfo, mode, defaultNote, relRoot string) []model.ScanRecord {
+	return BuildRecordsWithOptions(repos, BuildOptions{
+		Mode: mode, DefaultNote: defaultNote, RelRoot: relRoot,
+	})
+}
+
+// BuildRecordsWithOptions is the full-fat entry point. New options
+// (e.g. DefaultBranch) ride on the BuildOptions struct so the helper
+// signatures don't keep growing. The two wrappers above just forward.
+func BuildRecordsWithOptions(repos []scanner.RepoInfo, opts BuildOptions) []model.ScanRecord {
 	records := make([]model.ScanRecord, 0, len(repos))
 	for _, repo := range repos {
-		repo.RelativePath = relativePathFor(repo, relRoot)
-		rec := buildOneRecord(repo, mode, defaultNote)
+		repo.RelativePath = relativePathFor(repo, opts.RelRoot)
+		rec := buildOneRecord(repo, opts)
 		records = append(records, rec)
 	}
 
@@ -66,15 +97,18 @@ func relativePathFor(repo scanner.RepoInfo, relRoot string) string {
 	return rel
 }
 
-// buildOneRecord creates a single ScanRecord from a RepoInfo.
-func buildOneRecord(repo scanner.RepoInfo, mode, note string) model.ScanRecord {
+// buildOneRecord creates a single ScanRecord from a RepoInfo. The
+// fallback branch name is taken from opts.DefaultBranch when set and
+// from constants.DefaultBranch otherwise — see resolveDefaultBranch.
+func buildOneRecord(repo scanner.RepoInfo, opts BuildOptions) model.ScanRecord {
 	remoteURL, _ := gitutil.RemoteURL(repo.AbsolutePath)
-	branch, branchSource := gitutil.DetectBranch(repo.AbsolutePath)
+	branch, branchSource := gitutil.DetectBranchWithDefault(
+		repo.AbsolutePath, resolveDefaultBranch(opts.DefaultBranch))
 	httpsURL := toHTTPS(remoteURL)
 	sshURL := toSSH(remoteURL)
-	cloneURL := selectCloneURL(httpsURL, sshURL, mode)
+	cloneURL := selectCloneURL(httpsURL, sshURL, opts.Mode)
 	repoName := extractRepoName(remoteURL)
-	noteText := buildNote(remoteURL, note)
+	noteText := buildNote(remoteURL, opts.DefaultNote)
 	instruction := buildInstruction(cloneURL, branch, repo.RelativePath)
 
 	return model.ScanRecord{
@@ -84,6 +118,18 @@ func buildOneRecord(repo scanner.RepoInfo, mode, note string) model.ScanRecord {
 		RelativePath: repo.RelativePath, AbsolutePath: repo.AbsolutePath,
 		CloneInstruction: instruction, Notes: noteText,
 	}
+}
+
+// resolveDefaultBranch picks the fallback branch name passed to
+// gitutil.DetectBranchWithDefault. An empty opts value (the zero
+// value) resolves to constants.DefaultBranch so legacy callers see
+// identical behavior to the pre-flag implementation.
+func resolveDefaultBranch(override string) string {
+	if override == "" {
+		return constants.DefaultBranch
+	}
+
+	return override
 }
 
 // toHTTPS converts a remote URL to HTTPS format.
