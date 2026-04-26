@@ -8,7 +8,7 @@
 
 | # | File | Task | Inference made |
 |---|------|------|----------------|
-| _(none yet)_ | | | |
+| 01 | [01-json-schema-docs-scope.md](01-json-schema-docs-scope.md) | Generate JSON schema docs for each JSON output | Narrow scope: only stablejson-backed outputs (today: `startup-list --json`); JSON Schema 2020-12 + `propertyOrder` extension; hand-written; contract test guards drift; remaining 20 outputs tracked in `_TODO.md` |
 
 ## How to read each entry
 
@@ -21,4 +21,4 @@ Each `xx-brief-title.md` file contains:
 
 ## Counter
 
-Tasks consumed: 0 / 40
+Tasks consumed: 1 / 40
