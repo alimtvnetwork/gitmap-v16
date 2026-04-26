@@ -10,7 +10,8 @@
     "relativePath": "acme/widget",
     "absolutePath": "/repos/acme/widget",
     "cloneInstruction": "git clone https://github.com/acme/widget.git",
-    "notes": ""
+    "notes": "",
+    "depth": 1
   },
   {
     "id": 2,
@@ -23,6 +24,7 @@
     "relativePath": "acme/gadget",
     "absolutePath": "/repos/acme/gadget",
     "cloneInstruction": "git clone -b develop https://github.com/acme/gadget.git",
-    "notes": "pinned to develop"
+    "notes": "pinned to develop",
+    "depth": 4
   }
 ]
