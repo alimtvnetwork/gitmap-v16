@@ -220,15 +220,18 @@ func writeCompactObject(buf *bytes.Buffer, fields []Field) error {
 	return nil
 }
 
-// writeObject writes a single `{ ... }` block at array-item
-// indentation (2 spaces outer, 4 spaces inner) into buf. Keys appear
+// writeObject writes a single `{ ... }` block into buf using
+// caller-controlled indentation. The outer brace sits at one level
+// of `indent`; each key/value line sits at two levels. Keys appear
 // in the exact order given. Each value is JSON-marshalled in
 // isolation so a malformed value fails the WHOLE call rather than
 // emitting half a corrupt object.
-func writeObject(buf *bytes.Buffer, fields []Field) error {
-	buf.WriteString("  {\n")
+func writeObject(buf *bytes.Buffer, fields []Field, indent string) error {
+	outer := indent
+	inner := indent + indent
+	buf.WriteString(outer + "{\n")
 	for i, f := range fields {
-		buf.WriteString("    ")
+		buf.WriteString(inner)
 		keyBytes, err := json.Marshal(f.Key)
 		if err != nil {
 
@@ -243,11 +246,11 @@ func writeObject(buf *bytes.Buffer, fields []Field) error {
 		}
 		buf.Write(valBytes)
 		if i < len(fields)-1 {
-			buf.WriteString(",")
+			buf.WriteByte(',')
 		}
-		buf.WriteString("\n")
+		buf.WriteByte('\n')
 	}
-	buf.WriteString("  }")
+	buf.WriteString(outer + "}")
 
 	return nil
 }
