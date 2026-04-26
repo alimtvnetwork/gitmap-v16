@@ -86,3 +86,39 @@ func shouldAnnounceResolve(original, abs string) bool {
 
 	return true
 }
+
+// resolveRelativeRoot validates the user-supplied --relative-root and
+// returns an absolute, cleaned path suitable for passing to mapper.
+// Empty input returns "" — the mapper treats that as "fall back to the
+// per-repo RelativePath the scanner already computed against the scan
+// dir". A non-existent or non-directory path is fatal: silently falling
+// back would yield surprising output paths and break the whole point of
+// the flag (cwd-stable artifacts).
+func resolveRelativeRoot(raw, scanDir string, quiet bool) string {
+	trimmed := strings.TrimSpace(raw)
+	if trimmed == "" {
+		return ""
+	}
+	expanded := expandHome(trimmed)
+	abs, err := filepath.Abs(expanded)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, constants.ErrScanRelativeRootInvalid, raw, err)
+		os.Exit(1)
+	}
+	abs = filepath.Clean(abs)
+	info, statErr := os.Stat(abs)
+	if statErr != nil {
+		fmt.Fprintf(os.Stderr, constants.ErrScanRelativeRootInvalid, raw, statErr)
+		os.Exit(1)
+	}
+	if !info.IsDir() {
+		fmt.Fprintf(os.Stderr, constants.ErrScanRelativeRootInvalid, raw,
+			fmt.Errorf("not a directory"))
+		os.Exit(1)
+	}
+	if !quiet && abs != scanDir {
+		fmt.Fprintf(os.Stderr, constants.MsgScanRelativeRoot, abs)
+	}
+
+	return abs
+}
