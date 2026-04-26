@@ -14,6 +14,8 @@ package constants
 // Aliases mirror the install/uninstall short-form pattern so users
 // who already know `in`/`un` can guess `sl`/`sr` without lookup.
 const (
+	CmdStartupAdd         = "startup-add"
+	CmdStartupAddAlias    = "sa"
 	CmdStartupList        = "startup-list"
 	CmdStartupListAlias   = "sl"
 	CmdStartupRemove      = "startup-remove"
@@ -23,6 +25,7 @@ const (
 // Startup help text. Format mirrors HelpInstall / HelpUninstall so
 // the rendered `gitmap help` table stays visually consistent.
 const (
+	HelpStartupAdd    = "  startup-add (sa)          Create a Linux/Unix autostart entry pointing at gitmap"
 	HelpStartupList   = "  startup-list (sl)         List Linux/Unix autostart entries created by gitmap"
 	HelpStartupRemove = "  startup-remove (sr) <name> Remove a gitmap-managed autostart entry by name"
 )
