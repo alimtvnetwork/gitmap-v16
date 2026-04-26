@@ -1,7 +1,9 @@
 package startup
 
+// withFakeAutostartDir + writeDesktop are defined in startup_test.go
+// (same package); reused here without redeclaration.
+
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -9,32 +11,6 @@ import (
 
 	"github.com/alimtvnetwork/gitmap-v7/gitmap/constants"
 )
-
-// withFakeAutostartDir sets up a temporary XDG_CONFIG_HOME and creates the autostart directory.
-func withFakeAutostartDir(t *testing.T) string {
-	t.Helper()
-	root := t.TempDir()
-	t.Setenv("XDG_CONFIG_HOME", root)
-	dir := filepath.Join(root, "autostart")
-	if err := os.MkdirAll(dir, 0755); err != nil {
-		t.Fatalf("mkdir: %v", err)
-	}
-	return dir
-}
-
-// writeDesktop creates a .desktop file in the given dir.
-func writeDesktop(t *testing.T, dir, name string, managed bool, exec string) string {
-	t.Helper()
-	path := filepath.Join(dir, name)
-	content := "[Desktop Entry]\nType=Application\nExec=" + exec + "\n"
-	if managed {
-		content += fmt.Sprintf("%s=%s\n", constants.StartupMarkerKey, constants.StartupMarkerVal)
-	}
-	if err := os.WriteFile(path, []byte(content), 0644); err != nil {
-		t.Fatalf("writeDesktop: %v", err)
-	}
-	return path
-}
 
 // TestAdd_CreatesManagedFile verifies the happy path: a fresh
 // autostart dir gets a new gitmap-<name>.desktop file containing the
@@ -84,9 +60,7 @@ func TestAdd_RefusesNonManagedOverwrite(t *testing.T) {
 	}
 }
 
-// TestAdd_ExistsWithoutForce confirms idempotent re-runs: a second
-// add with the same name returns AddExists and does NOT touch the
-// existing file.
+// TestAdd_ExistsWithoutForce confirms idempotent re-runs.
 func TestAdd_ExistsWithoutForce(t *testing.T) {
 	withFakeAutostartDir(t)
 	first, err := Add(AddOptions{Name: "watch", Exec: "/v1"})
@@ -143,12 +117,10 @@ func TestAdd_BadName(t *testing.T) {
 }
 
 // TestAdd_AutoCreatesDir confirms a missing autostart dir is created
-// rather than producing an error — first-run on a fresh account
-// must succeed without a separate `mkdir` step.
+// rather than producing an error.
 func TestAdd_AutoCreatesDir(t *testing.T) {
 	root := t.TempDir()
 	t.Setenv("XDG_CONFIG_HOME", root)
-	// Note: no autostart subdir created.
 	res, err := Add(AddOptions{Name: "watch", Exec: "/x"})
 	if err != nil {
 		t.Fatalf("Add: %v", err)
