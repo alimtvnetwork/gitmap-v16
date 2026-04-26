@@ -1,29 +1,19 @@
 package cmd
 
-// Contract for `gitmap startup-list --json-indent=N`. Pins three
-// invariants:
+// Contract for `gitmap startup-list --json-indent=N`. Pins:
 //
-//  1. Indent value is whitespace-only — key names and key ORDER
-//     are byte-identical across every accepted indent (0..8). A
-//     future change that accidentally sorts keys when minifying
-//     (e.g. by routing through map[string]any) would fail this.
+//  1. Key order is byte-identical across every accepted indent
+//     (0..8). Indent value is whitespace-only — never a sort key.
+//  2. Indent=0 produces single-line minified output with no inter-
+//     token whitespace (matches `jq -c` framing).
+//  3. Indent=2 (default) is byte-identical to legacy
+//     encodeStartupListJSON output, so existing JSON golden
+//     fixtures keep passing without regeneration.
+//  4. Empty list always emits `[]\n` regardless of indent.
 //
-//  2. Indent=0 produces a single-line minified document with no
-//     inter-token whitespace. Matches `jq -c` framing.
-//
-//  3. Indent=2 (the default) produces output byte-identical to the
-//     legacy encodeStartupListJSON pretty form — sibling golden
-//     fixtures for the default indent continue to pass without
-//     regeneration.
-//
-//  4. Empty list always emits `[]\n` regardless of indent — the
-//     length-check contract every jq pipeline depends on.
-//
-// These are the FOUR things a downstream consumer needs to be true
-// to safely set --json-indent in any pipeline. Anything else (exact
-// space placement, escape behavior) is delegated to stablejson and
-// covered by stablejson_test.go and the existing JSON byte-exact
-// tests.
+// Escape behavior and exact space placement are delegated to
+// stablejson (covered by stablejson_test.go and the JSON
+// byte-exact tests).
 
 import (
 	"bytes"
