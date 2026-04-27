@@ -47,11 +47,12 @@ func TestSortGoldenDiffEntries_OrdersByStatusThenPath(t *testing.T) {
 }
 
 func TestGoldenDiffTotals_AccumulateMixedStatuses(t *testing.T) {
-	totals := goldenDiffTotals{count: 3}
+	totals := goldenDiffTotals{count: 4}
 	totals.accumulate(goldenDiffEntry{status: "A", added: 10, deleted: 0})
 	totals.accumulate(goldenDiffEntry{status: "M", added: 4, deleted: 7})
 	totals.accumulate(goldenDiffEntry{status: "D", added: 0, deleted: 12})
-	assertTotalsEqual(t, totals, 1, 1, 1, 14, 19)
+	totals.accumulate(goldenDiffEntry{status: "R", added: 1, deleted: 1})
+	assertTotalsEqual(t, totals, 1, 1, 1, 1, 15, 20)
 }
 
 // assertTotalsEqual centralizes the multi-field comparison so the
