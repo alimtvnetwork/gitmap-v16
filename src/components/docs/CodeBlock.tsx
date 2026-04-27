@@ -244,45 +244,55 @@ const CodeBlock = ({ code, language = "bash", title }: CodeBlockProps) => {
             )}
           </div>
           <div className="flex items-center gap-1">
-            <button
-              onClick={() => cycleFontSize("down")}
-              className="rounded-sm p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-              title="Decrease font size"
-            >
-              <AArrowDown className="h-3.5 w-3.5" />
-            </button>
+            <DocsTooltip label="Decrease font size">
+              <button
+                onClick={() => cycleFontSize("down")}
+                aria-label="Decrease font size"
+                className="docs-focus-ring rounded-sm p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+              >
+                <AArrowDown className="h-3.5 w-3.5" />
+              </button>
+            </DocsTooltip>
             <span className="min-w-[14px] text-center text-[10px] font-mono text-muted-foreground/80">
               {FONT_SIZES[fontSizeIdx].label}
             </span>
-            <button
-              onClick={() => cycleFontSize("up")}
-              className="rounded-sm p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-              title="Increase font size"
-            >
-              <AArrowUp className="h-3.5 w-3.5" />
-            </button>
+            <DocsTooltip label="Increase font size">
+              <button
+                onClick={() => cycleFontSize("up")}
+                aria-label="Increase font size"
+                className="docs-focus-ring rounded-sm p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+              >
+                <AArrowUp className="h-3.5 w-3.5" />
+              </button>
+            </DocsTooltip>
             <div className="mx-0.5 h-4 w-px bg-border" />
-            <button
-              onClick={handleCopy}
-              className="rounded-sm p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-              title="Copy"
-            >
-              {copied ? <Check className="h-3.5 w-3.5 text-primary" /> : <Copy className="h-3.5 w-3.5" />}
-            </button>
-            <button
-              onClick={handleDownload}
-              className="rounded-sm p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-              title="Download"
-            >
-              <Download className="h-3.5 w-3.5" />
-            </button>
-            <button
-              onClick={() => setFullscreen(!fullscreen)}
-              className="rounded-sm p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-              title={fullscreen ? "Exit fullscreen" : "Fullscreen"}
-            >
-              {fullscreen ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
-            </button>
+            <DocsTooltip label={copied ? "Copied!" : "Copy snippet"}>
+              <button
+                onClick={handleCopy}
+                aria-label="Copy snippet"
+                className="docs-focus-ring rounded-sm p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+              >
+                {copied ? <Check className="h-3.5 w-3.5 text-primary" /> : <Copy className="h-3.5 w-3.5" />}
+              </button>
+            </DocsTooltip>
+            <DocsTooltip label="Download snippet">
+              <button
+                onClick={handleDownload}
+                aria-label="Download snippet"
+                className="docs-focus-ring rounded-sm p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+              >
+                <Download className="h-3.5 w-3.5" />
+              </button>
+            </DocsTooltip>
+            <DocsTooltip label={fullscreen ? "Exit fullscreen" : "Fullscreen"}>
+              <button
+                onClick={() => setFullscreen(!fullscreen)}
+                aria-label={fullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+                className="docs-focus-ring rounded-sm p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+              >
+                {fullscreen ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
+              </button>
+            </DocsTooltip>
           </div>
         </div>
 
