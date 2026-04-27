@@ -465,3 +465,51 @@ describe("DocsTooltip — interaction mode switching", () => {
     });
   });
 });
+
+// Single-render conjunction test for the injection-scope contract.
+// The dedicated suite above (line ~270) covers each half (valid
+// element gets the label / each fallback shape does not) in
+// isolation. This test pins down BOTH halves in ONE render so a
+// future refactor that accidentally inverts the guard — e.g.
+// "inject on the wrapper too" or "skip on real elements" — fails
+// here even if the per-shape suites are mutated together.
+describe("DocsTooltip — aria-label injection scope (combined)", () => {
+  beforeEach(() => cleanup());
+
+  it("injects on the real-element trigger AND skips the fallback wrapper rendered as a sibling", () => {
+    render(
+      <TooltipProvider delayDuration={0} skipDelayDuration={0}>
+        <div>
+          <DocsTooltip label="Real-element label">
+            <button type="button" data-testid="real-trigger" />
+          </DocsTooltip>
+          <DocsTooltip label="Fallback label">just text</DocsTooltip>
+        </div>
+      </TooltipProvider>,
+    );
+
+    // Half 1: the single valid element child receives the label
+    // verbatim — withAccessibleName cloned the props onto it.
+    const realTrigger = screen.getByTestId("real-trigger");
+    expect(realTrigger.tagName).toBe("BUTTON");
+    expect(realTrigger.getAttribute("aria-label")).toBe("Real-element label");
+
+    // Half 2: the synthesized fallback wrapper for the string child
+    // is publicly tagged with data-docs-tooltip-fallback="true" AND
+    // carries NO aria-label — proving the FALLBACK_WRAPPER_PROP
+    // short-circuit in withAccessibleName fired.
+    const fallbackWrapper = screen.getByText("just text");
+    expect(fallbackWrapper.tagName).toBe("SPAN");
+    expect(fallbackWrapper.getAttribute("data-docs-tooltip-fallback")).toBe(
+      "true",
+    );
+    expect(fallbackWrapper.getAttribute("aria-label")).toBeNull();
+
+    // Defensive: the fallback's own label string must NEVER appear
+    // as an aria-label anywhere in the rendered subtree (a regression
+    // where the wrapper-skip is removed would leak it onto the span).
+    const leaked = document.querySelector('[aria-label="Fallback label"]');
+    expect(leaked).toBeNull();
+  });
+});
+
