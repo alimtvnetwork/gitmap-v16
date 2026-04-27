@@ -23,6 +23,12 @@ const (
 	CmdPullAlias             = "p"
 	CmdRescan                = "rescan"
 	CmdRescanAlias           = "rsc"
+	// CmdRescanSubtree narrowly re-runs `gitmap scan` against the
+	// absolutePath of an at-cap row from a previous scan output. Default
+	// MaxDepth is bumped to RescanSubtreeDefaultMaxDepth so users get a
+	// deeper view in one step; override with --max-depth.
+	CmdRescanSubtree         = "rescan-subtree"
+	CmdRescanSubtreeAlias    = "rss"
 	CmdSetup                 = "setup"
 	CmdStatus                = "status"
 	CmdStatusAlias           = "st"
