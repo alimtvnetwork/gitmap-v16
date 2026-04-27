@@ -14,7 +14,6 @@ import (
 	"context"
 	"os/exec"
 	"strings"
-	"time"
 
 	"github.com/alimtvnetwork/gitmap-v7/gitmap/constants"
 )
@@ -83,6 +82,3 @@ func remoteBranchSource(branch string) string {
 	return constants.BranchSourceRemoteHEAD
 }
 
-// asTimeoutSeconds is exported as a func (not a const) so tests can
-// shadow the timeout without touching the constants package.
-var _ = time.Second
