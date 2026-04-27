@@ -39,6 +39,9 @@ type cloneNowFlags struct {
 	// streamed before each row's clone). Mirrors clone-from /
 	// clone-next so all clone commands share one flag shape.
 	output string
+	// verifyCmdFaithful enables the dry-run argv-vs-displayed checker.
+	// See gitmap/cmd/clonetermverify.go for behavior.
+	verifyCmdFaithful bool
 }
 
 // runCloneNow is the dispatcher entry. checkHelp handles `--help`
