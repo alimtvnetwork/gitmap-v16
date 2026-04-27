@@ -69,6 +69,14 @@ const (
 	ProbeFlagWorkers      = "--workers"
 	ProbeFlagProbeWorkers = "--probe-workers"
 	ProbeFlagDepth        = "--probe-depth"
+	// ProbeFlagOutput selects an alternative human-output mode.
+	// Currently only "terminal" is recognized — it emits the
+	// standardized RepoTermBlock per repo (branch, from, to,
+	// command) so the per-probe summary matches the shape used
+	// by scan, clone-from, and clone-next. Mutually exclusive
+	// with --json (terminal beats JSON when both are passed
+	// because explicit terminal opts in to the human format).
+	ProbeFlagOutput = "--output"
 )
 
 // Foreground probe pool sizing (v3.134.0+) and clone-depth (v3.135.0+).

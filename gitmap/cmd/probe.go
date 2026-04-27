@@ -101,7 +101,9 @@ func probeAndReport(db *store.DB, targets []model.ScanRecord, opts probeOptions)
 
 	entries, available, unchanged, failed := runProbePool(db, targets, opts)
 
-	if opts.jsonOut {
+	// JSON wins only when the user did NOT also pass --output terminal;
+	// explicit terminal opts in to the human format and trumps json.
+	if opts.jsonOut && !opts.termOut {
 		emitProbeJSON(entries)
 		return
 	}
@@ -152,7 +154,14 @@ func probeWorker(db *store.DB, jobs <-chan probeJob, entries []probeJSONEntry,
 		result := executeOneProbe(db, j.repo, opts.depth)
 		entries[j.idx] = makeProbeEntry(j.repo, result)
 		counterMu.Lock()
-		*available, *unchanged, *failed = tallyProbe(j.repo, result, *available, *unchanged, *failed, opts.jsonOut)
+		// In --output terminal mode we suppress the legacy 1-line
+		// "ok/none/fail" tally print so the standardized block is
+		// the only per-repo output. Counters still update.
+		quietTally := opts.jsonOut || opts.termOut
+		*available, *unchanged, *failed = tallyProbe(j.repo, result, *available, *unchanged, *failed, quietTally)
+		if opts.termOut {
+			emitProbeTermBlock(j.idx+1, j.repo, result)
+		}
 		counterMu.Unlock()
 	}
 }

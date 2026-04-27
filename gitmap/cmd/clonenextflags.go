@@ -46,6 +46,11 @@ type CloneNextFlags struct {
 	// clone, no folder removal, no DB write, no GH Desktop / VS Code
 	// launch, no shell handoff. See FlagCloneNextDryRun.
 	DryRun bool
+	// Output selects the per-repo summary format. Empty keeps the
+	// legacy terse stage messages; "terminal" additionally emits
+	// the standardized RepoTermBlock right before the clone, so the
+	// shape matches scan/clone-from/probe.
+	Output string
 }
 
 // parseCloneNextFlags parses flags for the clone-next command.
@@ -74,6 +79,7 @@ func parseCloneNextFlags(args []string) CloneNextFlags {
 		constants.FlagDescCloneNextNoProgress)
 	reportErrFlag := fs.Bool(constants.FlagScanReportErrors, false, constants.FlagDescScanReportErrors)
 	dryRunFlag := fs.Bool(constants.FlagCloneNextDryRun, false, constants.FlagDescCloneNextDryRun)
+	outputFlag := fs.String(constants.FlagCloneNextOutput, "", constants.FlagDescCloneNextOutput)
 	// Reorder so flags placed AFTER the positional version (e.g.
 	// `gitmap cn v+1 -f`) are still recognized. Go's stdlib flag
 	// parser stops at the first non-flag arg, so without this the
@@ -94,6 +100,7 @@ func parseCloneNextFlags(args []string) CloneNextFlags {
 		NoProgress:     *noProgressFlag,
 		ReportErrors:   *reportErrFlag,
 		DryRun:         *dryRunFlag,
+		Output:         *outputFlag,
 	}
 	if fs.NArg() > 0 {
 		out.VersionArg = fs.Arg(0)

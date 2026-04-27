@@ -29,11 +29,12 @@ import (
 	"strings"
 
 	"github.com/alimtvnetwork/gitmap-v7/gitmap/constants"
+	"github.com/alimtvnetwork/gitmap-v7/gitmap/render"
 )
 
-// Render writes the human-readable dry-run preview to w. Returns
-// the first write error so callers (CLI) can surface it instead of
-// silently truncating output to a closed pipe.
+// Render writes the legacy human-readable dry-run preview to w.
+// Returns the first write error so callers (CLI) can surface it
+// instead of silently truncating output to a closed pipe.
 func Render(w io.Writer, p Plan) error {
 	header := fmt.Sprintf(constants.MsgCloneFromDryHeader, p.Source, p.Format, len(p.Rows))
 	if _, err := io.WriteString(w, header); err != nil {
@@ -49,6 +50,69 @@ func Render(w io.Writer, p Plan) error {
 	}
 
 	return nil
+}
+
+// RenderTerminal writes the standardized per-repo block (one block
+// per row) using render.RenderRepoTermBlocks. The block matches the
+// format emitted by scan, clone-next, and probe so users learn one
+// shape regardless of which command produced it.
+func RenderTerminal(w io.Writer, p Plan) error {
+	header := fmt.Sprintf(constants.MsgCloneFromDryHeader, p.Source, p.Format, len(p.Rows))
+	if _, err := io.WriteString(w, header); err != nil {
+		return err
+	}
+	blocks := make([]render.RepoTermBlock, 0, len(p.Rows))
+	for i, r := range p.Rows {
+		blocks = append(blocks, rowToBlock(i+1, r))
+	}
+
+	return render.RenderRepoTermBlocks(w, blocks)
+}
+
+// rowToBlock maps a clone-from Row into the standardized block.
+// OriginalURL == TargetURL because clone-from does not rewrite URLs
+// — the user's manifest specifies the URL verbatim.
+func rowToBlock(n int, r Row) render.RepoTermBlock {
+	dest := r.Dest
+	if len(dest) == 0 {
+		dest = DeriveDest(r.URL)
+	}
+
+	return render.RepoTermBlock{
+		Index:        n,
+		Name:         dest,
+		Branch:       r.Branch,
+		BranchSource: branchSourceForRow(r),
+		OriginalURL:  r.URL,
+		TargetURL:    r.URL,
+		CloneCommand: cloneCommandForRow(r, dest),
+	}
+}
+
+// branchSourceForRow surfaces "manifest" when the row pinned a
+// branch explicitly, or "default HEAD" when git will pick.
+func branchSourceForRow(r Row) string {
+	if len(strings.TrimSpace(r.Branch)) > 0 {
+		return "manifest"
+	}
+
+	return "default HEAD"
+}
+
+// cloneCommandForRow renders the would-be `git clone` invocation,
+// matching buildGitArgs in execute.go (same flag order so the
+// preview is faithful to the executed command).
+func cloneCommandForRow(r Row, dest string) string {
+	parts := []string{"git", "clone"}
+	if len(strings.TrimSpace(r.Branch)) > 0 {
+		parts = append(parts, "-b", r.Branch)
+	}
+	if r.Depth > 0 {
+		parts = append(parts, fmt.Sprintf("--depth=%d", r.Depth))
+	}
+	parts = append(parts, r.URL, dest)
+
+	return strings.Join(parts, " ")
 }
 
 // renderRow formats one row's four-line block. Pure function so

@@ -99,6 +99,13 @@ func runCloneNext(args []string) {
 	flattenedFolder := parsed.BaseName
 	targetPath := filepath.Join(parentDir, flattenedFolder)
 
+	// --output terminal: print the standardized RepoTermBlock so
+	// the cn pre-clone summary matches the shape used by scan,
+	// clone-from, and probe. Emitted BEFORE the legacy stage
+	// banners so it's always the first thing the user sees.
+	maybePrintCloneNextTermBlock(cnFlags, targetName, currentBranch(cwd),
+		remoteURL, targetURL, targetPath)
+
 	// Stage 1/3 banner — only emitted in -f mode where the multi-stage
 	// nature actually helps. Default mode keeps the legacy terse output
 	// so we don't break existing screenshots / scripts that grep it.

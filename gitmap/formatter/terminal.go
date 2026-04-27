@@ -8,13 +8,20 @@ import (
 
 	"github.com/alimtvnetwork/gitmap-v7/gitmap/constants"
 	"github.com/alimtvnetwork/gitmap-v7/gitmap/model"
+	"github.com/alimtvnetwork/gitmap-v7/gitmap/render"
 )
 
 // Terminal writes a professional colored output to the given writer.
 // When quiet is true, the clone help section is suppressed (useful for CI/scripts).
+//
+// The "Per-Repo Summary" section emits one standardized block per repo
+// via render.RenderRepoTermBlocks. The block is intentionally rendered
+// without color so the output is grep-friendly across all four
+// commands that share it (scan, clone-from, clone-next, probe).
 func Terminal(w io.Writer, records []model.ScanRecord, outputDir string, quiet bool) error {
 	printBanner(w, len(records))
 	printRepoList(w, records)
+	printRepoSummaryBlocks(w, records)
 	printFolderTree(w, records)
 	printOutputFiles(w, outputDir)
 	if quiet {
@@ -23,6 +30,18 @@ func Terminal(w io.Writer, records []model.ScanRecord, outputDir string, quiet b
 	printCloneHelp(w)
 
 	return nil
+}
+
+// printRepoSummaryBlocks writes the standardized per-repo summary
+// section. Empty input is a no-op so quiet/edge runs stay clean.
+func printRepoSummaryBlocks(w io.Writer, records []model.ScanRecord) {
+	if len(records) == 0 {
+		return
+	}
+	fmt.Fprintf(w, constants.ColorYellow+"  ■ Per-Repo Summary"+constants.ColorReset+"\n")
+	fmt.Fprintf(w, constants.ColorDim+constants.TermSeparator+constants.ColorReset+"\n")
+	_ = render.RenderRepoTermBlocks(w, render.FromScanRecords(records))
+	fmt.Fprintln(w)
 }
 
 // printBanner writes the header section.

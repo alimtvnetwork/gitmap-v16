@@ -30,6 +30,10 @@ import (
 // inside the shallow-clone fallback regardless.
 type probeOptions struct {
 	jsonOut bool
+	// termOut, when true, prints the standardized RepoTermBlock
+	// per repo so the per-probe summary matches the shape used by
+	// scan/clone-from/clone-next. Set via `--output terminal`.
+	termOut bool
 	workers int
 	depth   int
 	rest    []string
@@ -66,6 +70,9 @@ func applyProbeFlag(opts *probeOptions, args []string, i int) (int, bool, error)
 		opts.jsonOut = true
 		return i, true, nil
 	}
+	if next, ok, err := applyOutputFlag(opts, args, i); ok || err != nil {
+		return next, true, err
+	}
 	if next, ok, err := applyWorkersFlag(opts, args, i); ok || err != nil {
 		return next, true, err
 	}
@@ -74,6 +81,41 @@ func applyProbeFlag(opts *probeOptions, args []string, i int) (int, bool, error)
 	}
 
 	return i, false, nil
+}
+
+// applyOutputFlag handles `--output terminal` (and the inline
+// `--output=terminal` form). Any other value is rejected with a
+// pointed error so users don't silently get the wrong format. The
+// flag flips opts.termOut; emission lives in probereport.go.
+func applyOutputFlag(opts *probeOptions, args []string, i int) (int, bool, error) {
+	if !matchesFlag(args[i], constants.ProbeFlagOutput) {
+		return i, false, nil
+	}
+	val, next, err := readStringFlag(args, i)
+	if err != nil {
+		return i, true, err
+	}
+	if val != constants.OutputTerminal {
+		return i, true, fmt.Errorf(
+			"version probe: --output only supports %q, got %q",
+			constants.OutputTerminal, val)
+	}
+	opts.termOut = true
+
+	return next, true, nil
+}
+
+// readStringFlag mirrors readIntFlag for string-valued flags.
+// Supports both `--flag value` and `--flag=value`.
+func readStringFlag(args []string, i int) (string, int, error) {
+	if eq := strings.IndexByte(args[i], '='); eq >= 0 {
+		return args[i][eq+1:], i, nil
+	}
+	if i+1 >= len(args) {
+		return "", i, fmt.Errorf("version probe: %s requires a value", args[i])
+	}
+
+	return args[i+1], i + 1, nil
 }
 
 // applyWorkersFlag handles --probe-workers / --workers (with a
