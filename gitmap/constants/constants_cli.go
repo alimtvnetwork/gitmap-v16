@@ -164,10 +164,13 @@ const (
 	MsgRegoldensPass2NotRun     = "▣ Pass 2: did NOT run — pass 1 failed (exit %d); fixtures left in partial state, determinism unverified\n"
 	MsgRegoldensPass2NotRunSkip = "▣ Pass 2: did NOT run — --skip-verify was set; determinism unverified\n"
 	MsgRegoldensPass2Ran        = "▣ Pass 2: ran and PASSED — writer is deterministic; goldens are safe to commit\n"
+	MsgRegoldensPrecheckHeader  = "▸ Pre-check: determinism (trigger ON, allow-update gate OFF — no fixture writes)\n"
+	MsgRegoldensPrecheckPass    = "✓ Pre-check passed — no non-deterministic writers detected; proceeding to pass 1\n"
 	ErrRegoldensMissingPat     = "regoldens: --pattern is required (e.g. --pattern TestCloneFromReportJSON_Golden)"
 	ErrRegoldensPass1Failed    = "regoldens: pass 1 (regenerate) failed with exit code %d — fixtures may be partially written; inspect git status before committing"
 	ErrRegoldensPass2Failed    = "regoldens: pass 2 (verify) failed with exit code %d — the writer is non-deterministic; fix the writer, do not re-run with --skip-verify"
 	ErrRegoldensDiffMode       = "regoldens: --diff=%q is not valid; use --diff=short or --diff=full"
+	ErrRegoldensPrecheckFailed = "regoldens: determinism pre-check FAILED — at least one golden writer produced different bytes across runs; fix the writer (likely culprits: map iteration, time.Now, randomness, locale-dependent formatting). Pass 1 was NOT run; no fixtures were touched."
 )
 
 // Usage header.
