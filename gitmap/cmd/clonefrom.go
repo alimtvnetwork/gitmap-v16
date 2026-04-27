@@ -117,23 +117,7 @@ func parseCloneFromFlags(args []string) cloneFromFlags {
 	return cfg
 }
 
-// validateCheckoutFlag exits 2 when --checkout is set to anything
-// other than the empty string or one of the three concrete modes.
-// Empty is allowed and means "fall back to per-row + the built-in
-// default" — same as omitting the flag entirely.
-func validateCheckoutFlag(v string) {
-	if len(v) == 0 {
-		return
-	}
-	switch v {
-	case constants.CloneFromCheckoutAuto,
-		constants.CloneFromCheckoutSkip,
-		constants.CloneFromCheckoutForce:
-		return
-	}
-	fmt.Fprintf(os.Stderr, constants.MsgCloneFromBadCheckoutFlag+"\n", v)
-	os.Exit(2)
-}
+// validateCheckoutFlag lives in clonefrom_checkout.go.
 
 // runCloneFromDry renders the dry-run preview and exits with the
 // dry-run conventional code (0 = "I would do these things"). No
