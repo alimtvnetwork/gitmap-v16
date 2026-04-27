@@ -51,6 +51,21 @@ If pass 2 fails, the writer is non-deterministic (map iteration
 order, timestamps, locale-dependent floats). Fix the writer — do
 NOT re-run with `--skip-verify`.
 
+**Diff summary (`--diff`).** Between pass 1 and pass 2, prints a
+concise per-file report of every changed file under any
+`testdata/` directory:
+
+```
+▸ Golden diff summary (testdata/ files touched by pass 1):
+  M  gitmap/clonefrom/testdata/clonefrom_report_canonical.json  (+3 / -1)
+  A  gitmap/formatter/testdata/scan_compact_v2.txt              (+42 / -0)
+  ─ 2 file(s) changed: 1 added, 1 modified, 0 deleted (+45 / -1 total)
+```
+
+The summary fires whether pass 1 passed or failed (so partial
+fixture writes are visible before the process exits) and is
+skipped gracefully when the working tree is not a git repository.
+
 ## Examples
 
 Regenerate the clone-from JSON report goldens and verify:
