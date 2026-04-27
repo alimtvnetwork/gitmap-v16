@@ -180,32 +180,8 @@ func looksLikeOursLnk(filename string) bool {
 	return strings.HasPrefix(filename, constants.StartupWinValuePrefix)
 }
 
-// startupFolderDir returns %APPDATA%\Microsoft\Windows\Start Menu\
-// Programs\Startup. Honors $APPDATA so test fixtures can redirect
-// to a temp dir.
-func startupFolderDir() (string, error) {
-	roaming := os.Getenv("APPDATA")
-	if len(roaming) == 0 {
-
-		return "", fmt.Errorf("APPDATA env var is empty")
-	}
-
-	return filepath.Join(roaming, constants.StartupFolderRelative), nil
-}
-
-// fileExists is a tiny os.Stat wrapper. Treats permission errors
-// as "exists" (conservative — better to refuse a write than to
-// silently overwrite a file we can't read).
-func fileExists(p string) bool {
-	if _, err := os.Stat(p); err == nil || !os.IsNotExist(err) {
-		return true
-	}
-
-	return false
-}
-
-// In-process .lnk writer (writeShortcutFile, buildShortcutBytes)
-// lives in winshortcut_writer.go and winshortcut_linkinfo.go.
-// Legacy PowerShell helper (createShortcutViaPowerShell,
-// buildShortcutScript) lives in winshortcut_ps.go — retained as a
-// fallback for future non-trivial target shapes.
+// startupFolderDir + fileExists helpers live in winshortcut_helpers.go.
+// Writer (writeShortcutFile, buildShortcutBytes) lives in
+// winshortcut_writer.go + winshortcut_linkinfo.go. Legacy
+// PowerShell helper lives in winshortcut_ps.go — retained as a
+// future fallback for non-trivial target shapes.
