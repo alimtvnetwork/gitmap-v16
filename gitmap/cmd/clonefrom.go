@@ -22,6 +22,7 @@ import (
 	"io"
 	"os"
 
+	"github.com/alimtvnetwork/gitmap-v7/gitmap/cloneconcurrency"
 	"github.com/alimtvnetwork/gitmap-v7/gitmap/clonefrom"
 	"github.com/alimtvnetwork/gitmap-v7/gitmap/constants"
 )
@@ -52,6 +53,13 @@ type cloneFromFlags struct {
 	verifyCmdFaithfulExitOnMismatch bool
 	// printCloneArgv dumps the executor argv to stderr.
 	printCloneArgv bool
+	// maxConcurrency is the resolved worker-pool size. The parser
+	// runs cloneconcurrency.Resolve so the value seen here is
+	// always >=1 (0=auto becomes NumCPU at parse time). Increasing
+	// N preserves the on-disk hierarchy because each worker still
+	// uses the row's Dest / DeriveDest verbatim — only progress-line
+	// timing changes.
+	maxConcurrency int
 }
 
 // runCloneFrom is the dispatcher entry. checkHelp handles `--help`
