@@ -24,11 +24,19 @@ extension is tolerated for convenience:
 | Flag | Default | Description |
 |------|---------|-------------|
 | `--dry-run` | `false` | Show what would be deleted (or refused/no-op) without touching the filesystem |
+| `--backend` | (try both) | Windows only: `registry` or `startup-folder`. Scopes the removal to one backend; without it, gitmap probes the registry first then the Startup folder and removes the first match |
 
 `--dry-run` runs the full classification (existence + marker check)
 but skips the actual unlink. The same four outcomes are reported,
 each prefixed with `(dry-run)` so log scrapers can distinguish a
 preview from a real action.
+
+`--backend` is ignored on Linux/macOS — those OSes have one
+canonical autostart backend each (`.desktop` and `.plist`
+respectively). On Windows, passing `--backend=registry` will NOT
+fall back to the Startup folder if the registry entry is missing
+(returns `(no-op)` instead). This is deliberate: scoped removal
+must never silently delete an entry the user did not target.
 
 ## Outcomes
 
