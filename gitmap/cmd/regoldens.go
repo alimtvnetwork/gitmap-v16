@@ -102,6 +102,13 @@ func emitRegoldensDryRun(cfg regoldensFlags) {
 		goTestArgv(cfg)...,
 	), " ")
 	pass2 := strings.Join(goTestArgv(cfg), " ")
+	if cfg.determinism {
+		precheck := strings.Join(append(
+			[]string{goTestUpdateTriggerEnv + "=" + goTestUpdateEnvValue},
+			goTestArgv(cfg)...,
+		), " ")
+		fmt.Fprintf(os.Stdout, "▸ Pre-check (would run first):\n  %s\n", precheck)
+	}
 	fmt.Fprintf(os.Stdout, constants.MsgRegoldensDryRun, pass1, pass2)
 	if cfg.hasDiff() {
 		fmt.Fprintf(os.Stdout, "  (--diff=%s: golden diff summary would print between passes)\n", cfg.diffMode)
