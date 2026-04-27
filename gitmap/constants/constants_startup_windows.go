@@ -13,9 +13,12 @@ package constants
 // and `gitmap startup-remove` enumerate / search BOTH backends so
 // users don't have to remember which one a given entry lives in.
 const (
-	// StartupBackendRegistry writes to HKCU\Software\Microsoft\
-	// Windows\CurrentVersion\Run with a sibling tracking subkey
-	// under HKCU\Software\Gitmap\StartupRegistry\<name>.
+	// StartupBackendRegistry writes ONE direct value to HKCU\
+	// Software\Microsoft\Windows\CurrentVersion\Run and tracks
+	// ownership in a SEPARATE scope under HKCU\Software\Gitmap\
+	// StartupRegistry\<name>. The Run key never carries a sibling
+	// marker — Windows would dispatch it as an autostart command
+	// at every login.
 	StartupBackendRegistry = "registry"
 	// StartupBackendStartupFolder writes a .lnk file into
 	// %APPDATA%\Microsoft\Windows\Start Menu\Programs\Startup,
@@ -46,13 +49,13 @@ const (
 	RegGitmapRoot          = `Software\Gitmap`
 	RegGitmapRegistrySub   = `Software\Gitmap\StartupRegistry`
 	RegGitmapStartupFolder = `Software\Gitmap\StartupFolder`
-	// RegMarkerSiblingValue is written next to the Run-key value so
-	// Add can refuse to overwrite a third-party value with the same
-	// name even when the tracking subkey under HKCU\Software\Gitmap
-	// is missing (e.g., user manually deleted the metadata). Belt-
-	// and-suspenders: BOTH the sibling value and the tracking
-	// subkey must agree the entry is gitmap-managed before Remove
-	// will delete the Run value.
+	// RegMarkerSiblingSuffix is DEPRECATED and no longer written.
+	// The direct-value Run-key model (gitmap v3.175.0+) keeps the
+	// ownership marker out-of-band under HKCU\Software\Gitmap so
+	// the Run key contains only real autostart commands. Kept as
+	// a constant so external cleanup scripts that historically
+	// removed `<name>.gitmap-managed` companions can still
+	// reference the suffix without code drift.
 	RegMarkerSiblingSuffix = `.gitmap-managed`
 	// Tracking-subkey value names. Stored as REG_SZ so `reg query`
 	// shows them readable; CreatedAt is RFC3339 UTC.
