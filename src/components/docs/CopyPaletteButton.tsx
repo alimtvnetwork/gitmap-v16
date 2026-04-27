@@ -51,7 +51,7 @@ function buildPaletteCss(themeName: string, selector: string): string {
 export function CopyPaletteButton() {
   const { isDark } = useTheme();
   const [copied, setCopied] = useState(false);
-  const themeLabel = isDark ? "VS Code Dark+" : "VS Code Light+";
+  const themeLabel = isDark ? "Dark" : "Light";
   const selector = isDark ? ".dark" : ".light";
 
   const handleCopy = async () => {
@@ -68,7 +68,7 @@ export function CopyPaletteButton() {
 
   const tooltipText = copied
     ? "Copied!"
-    : `Copy ${themeLabel} CSS variables to clipboard`;
+    : `Copy ${themeLabel} theme palette (CSS variables) to clipboard`;
 
   return (
     <Tooltip>
@@ -76,7 +76,7 @@ export function CopyPaletteButton() {
         <button
           type="button"
           onClick={handleCopy}
-          aria-label={`Copy ${themeLabel} CSS variables to clipboard`}
+          aria-label={`Copy ${themeLabel} theme palette to clipboard`}
           className="inline-flex h-7 w-7 items-center justify-center rounded-sm border border-border bg-card text-muted-foreground shadow-sm transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-card"
         >
           {copied ? (
