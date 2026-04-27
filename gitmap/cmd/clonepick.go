@@ -168,10 +168,12 @@ func runClonePickExecute(plan clonepick.Plan) {
 	}
 
 	if result.Status == clonepick.StatusFailed {
+		maybeExitOnCmdFaithfulMismatch()
 		os.Exit(1)
 	}
 
 	if plan.DestDir != "." && plan.DestDir != "" {
 		WriteShellHandoff(result.Detail)
 	}
+	maybeExitOnCmdFaithfulMismatch()
 }
