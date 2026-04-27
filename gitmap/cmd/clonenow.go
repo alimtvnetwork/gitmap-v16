@@ -50,6 +50,7 @@ type cloneNowFlags struct {
 func runCloneNow(args []string) {
 	checkHelp("clone-now", args)
 	cfg := parseCloneNowFlags(args)
+	setCmdFaithfulVerify(cfg.verifyCmdFaithful)
 	plan, err := clonenow.ParseFile(cfg.file, cfg.format, cfg.mode, cfg.onExists)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
@@ -84,6 +85,8 @@ func parseCloneNowFlags(args []string) cloneNowFlags {
 		constants.CloneNowOnExistsSkip, constants.FlagDescCloneNowOnExists)
 	fs.StringVar(&cfg.output, constants.FlagCloneTermOutput, "",
 		constants.FlagDescCloneTermOutput)
+	fs.BoolVar(&cfg.verifyCmdFaithful, constants.FlagCloneVerifyCmdFaithful,
+		false, constants.FlagDescCloneVerifyCmdFaithful)
 	reordered := reorderFlagsBeforeArgs(args)
 	fs.Parse(reordered)
 	if fs.NArg() < 1 {
