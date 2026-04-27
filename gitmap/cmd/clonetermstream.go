@@ -24,28 +24,25 @@ import (
 	"github.com/alimtvnetwork/gitmap-v7/gitmap/constants"
 	"github.com/alimtvnetwork/gitmap-v7/gitmap/render"
 )
+
+// CloneTermBlockInput carries the per-repo data every clone command
+// already has on hand. Branch/BranchSource may be empty — the
+// renderer falls back to "(unknown)" so the block shape is stable.
 //
 // Faithfulness contract (audited): the printed `cmd:` line MUST be
-// byte-identical to the argv the executor passes to `exec.Command`.
-// Each caller therefore controls two override fields:
+// byte-identical to the argv the executor passes to exec.Command.
+// Each caller controls three override fields to achieve that:
 //
 //   - CmdBranch:        branch passed to `-b` in the printed cmd.
 //                       Empty means "no `-b` flag".
 //   - CmdExtraArgsPre:  literal tokens inserted between `git clone`
 //                       and the `-b` slot. Used by clone-pick for
-//                       `--filter=blob:none --no-checkout`.
+//                       `--filter=blob:none --no-checkout` and the
+//                       long-form `--branch X` / `--depth N`.
 //   - CmdExtraArgsPost: literal tokens inserted between the `-b`
 //                       slot and the positional `<url> <dest>` pair.
-//                       Used by clone-from for `--depth=N` (which
-//                       its executor places AFTER `-b`).
-//
-// CloneTermBlockInput carries the per-repo data every clone command
-// already has on hand. Branch/BranchSource may be empty — the
-// renderer falls back to "(unknown)" so the block shape is stable.
-//
-// CmdBranch + CmdExtraArgsPre/Post let each caller make the printed
-// cmd EXACTLY match its real exec — see file-header faithfulness
-// contract.
+//                       Used by clone-from for `--depth=N` (its
+//                       executor places --depth AFTER -b).
 type CloneTermBlockInput struct {
 	Index        int
 	Name         string
