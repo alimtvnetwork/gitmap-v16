@@ -20,7 +20,7 @@ import (
 func executeRegoldens(cfg regoldensFlags) {
 	pass1Code := runRegoldensPassCapture(cfg, true, constants.MsgRegoldensPass1Header)
 	maybeEmitDiffSummary(cfg)
-	exitOnPass1Failure(pass1Code)
+	exitOnPass1Failure(cfg, pass1Code)
 	if handleSkipVerify(cfg) {
 		return
 	}
@@ -45,25 +45,33 @@ func maybeEmitDiffSummary(cfg regoldensFlags) {
 }
 
 // exitOnPass1Failure logs the pass-1 error and exits 1 when pass 1
-// returned non-zero. Called AFTER the diff summary so users see the
-// partial fixture state before the process dies.
-func exitOnPass1Failure(code int) {
+// returned non-zero. When --diff is enabled, also emits the explicit
+// final line declaring that pass 2 did not run, so contributors get
+// an unambiguous status even on the failure path.
+func exitOnPass1Failure(cfg regoldensFlags, code int) {
 	if code == 0 {
 		return
 	}
 	fmt.Fprintf(os.Stderr, constants.ErrRegoldensPass1Failed, code)
 	fmt.Fprintln(os.Stderr)
+	if cfg.hasDiff() {
+		fmt.Fprintf(os.Stderr, constants.MsgRegoldensPass2NotRun, code)
+	}
 	os.Exit(1)
 }
 
 // handleSkipVerify emits the skip-verify success path and returns
-// true when --skip-verify is set so the caller can short-circuit
-// the verify pass.
+// true when --skip-verify is set. With --diff enabled it also prints
+// the explicit pass-2-not-run final line for symmetry with the
+// failure path.
 func handleSkipVerify(cfg regoldensFlags) bool {
 	if !cfg.skipVerify {
 		return false
 	}
 	fmt.Fprint(os.Stderr, constants.MsgRegoldensSkipVerify)
+	if cfg.hasDiff() {
+		fmt.Fprint(os.Stderr, constants.MsgRegoldensPass2NotRunSkip)
+	}
 	fmt.Fprintf(os.Stdout, constants.MsgRegoldensSuccessNoVeri,
 		cfg.pattern, cfg.pkg)
 	return true
@@ -72,11 +80,15 @@ func handleSkipVerify(cfg regoldensFlags) bool {
 // runPass2AndAnnounce executes the determinism verification pass
 // and prints the final success line. Pass 2 exits 1 internally on
 // failure (via runRegoldensPass), so reaching the final Fprintf
-// implies both passes succeeded.
+// implies both passes succeeded. With --diff enabled it also emits
+// the explicit "Pass 2 ran and PASSED" final line.
 func runPass2AndAnnounce(cfg regoldensFlags) {
 	runRegoldensPass(cfg, false,
 		constants.MsgRegoldensPass2Header,
 		constants.ErrRegoldensPass2Failed)
+	if cfg.hasDiff() {
+		fmt.Fprint(os.Stderr, constants.MsgRegoldensPass2Ran)
+	}
 	fmt.Fprintf(os.Stdout, constants.MsgRegoldensSuccess,
 		cfg.pattern, cfg.pkg)
 }
