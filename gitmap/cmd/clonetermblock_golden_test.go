@@ -24,6 +24,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/alimtvnetwork/gitmap-v7/gitmap/goldenguard"
 	"github.com/alimtvnetwork/gitmap-v7/gitmap/render"
 )
 
@@ -275,14 +276,16 @@ func renderGoldenBlock(t *testing.T, in CloneTermBlockInput) []byte {
 // TestCloneTermBlock_Golden is the CI guard: every clone-related
 // command's per-repo block must match its checked-in fixture. A diff
 // indicates either an intentional format change (update the golden
-// with -update and call it out in the PR) or a regression.
+// with `-update` AND GITMAP_ALLOW_GOLDEN_UPDATE=1, then call it out
+// in the PR) or a regression. The dual gate (flag + env) prevents a
+// stray `-update` in a CI invocation from silently rewriting bytes.
 func TestCloneTermBlock_Golden(t *testing.T) {
 	for _, tc := range cloneTermGoldenCases() {
 		t.Run(tc.name, func(t *testing.T) {
 			path := filepath.Join("testdata", tc.fixture)
 			got := renderGoldenBlock(t, tc.input)
 
-			if *updateGolden {
+			if goldenguard.AllowUpdate(t, *updateGolden) {
 				if err := os.WriteFile(path, got, 0o644); err != nil {
 					t.Fatalf("update golden %s: %v", path, err)
 				}
@@ -293,8 +296,9 @@ func TestCloneTermBlock_Golden(t *testing.T) {
 
 			want, err := os.ReadFile(path)
 			if err != nil {
-				t.Fatalf("read golden %s: %v (run with -update to "+
-					"create)", path, err)
+				t.Fatalf("read golden %s: %v (run with -update "+
+					"AND GITMAP_ALLOW_GOLDEN_UPDATE=1 to create)",
+					path, err)
 			}
 			if !bytes.Equal(got, want) {
 				t.Fatalf("%s mismatch\n--- want (%s) ---\n%s"+
