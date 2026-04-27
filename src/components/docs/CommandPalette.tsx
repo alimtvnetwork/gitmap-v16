@@ -9,7 +9,7 @@ import {
   CommandList,
   CommandSeparator,
 } from "@/components/ui/command";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { DocsTooltip } from "@/components/docs/DocsTooltip";
 import {
   BookOpen,
   Flag,
@@ -91,22 +91,19 @@ const CommandPalette = () => {
 
   return (
     <>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <button
-            onClick={() => setOpen(true)}
-            aria-label="Open command palette (search commands, flags, pages)"
-            className="docs-focus-ring flex items-center gap-2 px-3 py-1.5 rounded-lg border border-border bg-card text-muted-foreground text-xs font-sans hover:bg-muted/50 hover:text-foreground transition-colors"
-          >
-            <Search className="h-3 w-3" />
-            <span className="hidden sm:inline">Search...</span>
-            <kbd className="hidden sm:inline-flex items-center gap-0.5 rounded border border-border bg-muted px-1.5 py-0.5 text-[10px] font-mono text-muted-foreground">
-              ⌘K
-            </kbd>
-          </button>
-        </TooltipTrigger>
-        <TooltipContent side="bottom">Search commands, flags & pages (⌘K)</TooltipContent>
-      </Tooltip>
+      <DocsTooltip label="Search commands, flags & pages (⌘K)">
+        <button
+          onClick={() => setOpen(true)}
+          aria-label="Open command palette (search commands, flags, pages)"
+          className="docs-focus-ring flex items-center gap-2 px-3 py-1.5 rounded-lg border border-border bg-card text-muted-foreground text-xs font-sans hover:bg-muted/50 hover:text-foreground transition-colors"
+        >
+          <Search className="h-3 w-3" />
+          <span className="hidden sm:inline">Search...</span>
+          <kbd className="hidden sm:inline-flex items-center gap-0.5 rounded border border-border bg-muted px-1.5 py-0.5 text-[10px] font-mono text-muted-foreground">
+            ⌘K
+          </kbd>
+        </button>
+      </DocsTooltip>
 
       <CommandDialog open={open} onOpenChange={setOpen}>
         <CommandInput placeholder="Search commands, flags, pages..." />

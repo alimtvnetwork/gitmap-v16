@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Check, ClipboardCopy } from "lucide-react";
 import { useTheme } from "@/hooks/useTheme";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { DocsTooltip } from "@/components/docs/DocsTooltip";
 
 // CSS custom properties that make up the active VS Code-inspired palette.
 // Read live from the document so the snapshot always reflects what's rendered.
@@ -71,23 +71,20 @@ export function CopyPaletteButton() {
     : `Copy ${themeLabel} theme palette (CSS variables) to clipboard`;
 
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <button
-          type="button"
-          onClick={handleCopy}
-          aria-label={`Copy ${themeLabel} theme palette to clipboard`}
-          className="docs-focus-ring inline-flex h-7 w-7 items-center justify-center rounded-sm border border-border bg-card text-muted-foreground shadow-sm transition-colors hover:text-foreground"
-        >
-          {copied ? (
-            <Check className="h-3.5 w-3.5" aria-hidden="true" />
-          ) : (
-            <ClipboardCopy className="h-3.5 w-3.5" aria-hidden="true" />
-          )}
-        </button>
-      </TooltipTrigger>
-      <TooltipContent side="bottom">{tooltipText}</TooltipContent>
-    </Tooltip>
+    <DocsTooltip label={tooltipText}>
+      <button
+        type="button"
+        onClick={handleCopy}
+        aria-label={`Copy ${themeLabel} theme palette to clipboard`}
+        className="docs-focus-ring inline-flex h-7 w-7 items-center justify-center rounded-sm border border-border bg-card text-muted-foreground shadow-sm transition-colors hover:text-foreground"
+      >
+        {copied ? (
+          <Check className="h-3.5 w-3.5" aria-hidden="true" />
+        ) : (
+          <ClipboardCopy className="h-3.5 w-3.5" aria-hidden="true" />
+        )}
+      </button>
+    </DocsTooltip>
   );
 }
 
