@@ -81,6 +81,44 @@ If the resolved path does not exist, gitmap exits with:
 
     Error: scan target ../../nope does not exist (resolved to /home/alim/nope)
 
+## Depth column and `--max-depth`
+
+Every CSV/JSON row carries a `depth` column: the directory level (relative
+to the scan root) where the `.git` folder was discovered. The scan root
+itself is `0`, its immediate children are `1`, and so on. The `--max-depth`
+flag is the **inclusive** cap on how deep the walker may descend before it
+stops enqueuing further subdirectories.
+
+How to read at-cap rows in the CSV:
+
+- `depth < max-depth` — the walker reached the repo with budget to spare.
+  Anything nested under that repo was *not* skipped by the depth cap (the
+  walker stops descending into a found repo for a different reason: repos
+  own their subtree).
+- `depth == max-depth` — the repo was found exactly at the boundary. The
+  walker did **not** descend into its children, and any nested
+  repositories below it were silently skipped because the cap was hit.
+  These rows are the ones to re-run with a larger `--max-depth` (or
+  `-1` for unlimited) if you suspect monorepos-of-monorepos at the edge.
+- `depth > max-depth` — never produced by the walker. If you see one,
+  treat it as a bug.
+
+Bumping `--max-depth` does not change `depth` values for repos already
+discovered; it only widens the search so deeper repos can appear with
+their own (larger) `depth`. Lowering the cap below an existing row's
+`depth` will make that row disappear from the next scan.
+
+Quick rescan recipe for at-cap rows:
+
+    # find candidates in the previous CSV (depth column == cap, default 4)
+    awk -F, 'NR>1 && $NF==4' .gitmap/output/gitmap.csv
+
+    # rescan with a wider cap
+    gitmap scan ~/work --max-depth 8
+
+    # …or remove the cap entirely
+    gitmap scan ~/work --max-depth -1
+
 ### Example 1: Scan a directory
 
     gitmap scan D:\wp-work
