@@ -64,6 +64,19 @@ func runRegoldens(args []string) {
 func parseRegoldensFlags(args []string) regoldensFlags {
 	fs := flag.NewFlagSet("regoldens", flag.ExitOnError)
 	cfg := regoldensFlags{pkg: constants.RegoldensDefaultPackageGlob}
+	bindRegoldensFlags(fs, &cfg)
+	if err := fs.Parse(args); err != nil {
+		fmt.Fprintf(os.Stderr, "regoldens: parse flags: %v\n", err)
+		os.Exit(2)
+	}
+
+	return cfg
+}
+
+// bindRegoldensFlags registers every CLI flag against the parser.
+// Split out so parseRegoldensFlags stays inside the function-length
+// budget — the binding step is mechanical and rarely changes.
+func bindRegoldensFlags(fs *flag.FlagSet, cfg *regoldensFlags) {
 	fs.StringVar(&cfg.pattern, constants.FlagRegoldensPattern, "",
 		constants.FlagDescRegoldensPattern)
 	fs.StringVar(&cfg.pkg, constants.FlagRegoldensPackage,
@@ -73,12 +86,6 @@ func parseRegoldensFlags(args []string) regoldensFlags {
 		constants.FlagDescRegoldensSkipVerify)
 	fs.BoolVar(&cfg.isDryRun, constants.FlagRegoldensDryRun, false,
 		constants.FlagDescRegoldensDryRun)
-	if err := fs.Parse(args); err != nil {
-		fmt.Fprintf(os.Stderr, "regoldens: parse flags: %v\n", err)
-		os.Exit(2)
-	}
-
-	return cfg
 }
 
 // emitRegoldensDryRun prints both invocations without executing.
@@ -102,29 +109,39 @@ func goTestArgv(cfg regoldensFlags) []string {
 }
 
 // executeRegoldens runs pass 1, then (unless --skip-verify) pass 2.
-// Each pass exits with status 1 on failure so CI / make can chain
-// `gitmap regoldens` into other steps and rely on the exit code.
+// Failure of either pass exits status 1 so CI / make can chain this
+// command and rely on the exit code.
 func executeRegoldens(cfg regoldensFlags) {
-	fmt.Fprint(os.Stderr, constants.MsgRegoldensPass1Header)
-	if code := runGoTestPass(cfg, true); code != 0 {
-		fmt.Fprintf(os.Stderr, constants.ErrRegoldensPass1Failed, code)
-		fmt.Fprintln(os.Stderr)
-		os.Exit(1)
-	}
+	runRegoldensPass(cfg, true,
+		constants.MsgRegoldensPass1Header,
+		constants.ErrRegoldensPass1Failed)
 	if cfg.skipVerify {
 		fmt.Fprint(os.Stderr, constants.MsgRegoldensSkipVerify)
 		fmt.Fprintf(os.Stdout, constants.MsgRegoldensSuccessNoVeri,
 			cfg.pattern, cfg.pkg)
 		return
 	}
-	fmt.Fprint(os.Stderr, constants.MsgRegoldensPass2Header)
-	if code := runGoTestPass(cfg, false); code != 0 {
-		fmt.Fprintf(os.Stderr, constants.ErrRegoldensPass2Failed, code)
-		fmt.Fprintln(os.Stderr)
-		os.Exit(1)
-	}
+	runRegoldensPass(cfg, false,
+		constants.MsgRegoldensPass2Header,
+		constants.ErrRegoldensPass2Failed)
 	fmt.Fprintf(os.Stdout, constants.MsgRegoldensSuccess,
 		cfg.pattern, cfg.pkg)
+}
+
+// runRegoldensPass prints the header, runs one `go test` pass, and
+// exits 1 with the supplied error format when the pass fails.
+// withGate selects whether the gate env vars are injected (pass 1)
+// or stripped (pass 2). Extracted so executeRegoldens stays small
+// and the pass1/pass2 control flow is symmetric.
+func runRegoldensPass(cfg regoldensFlags, withGate bool, header, errFmt string) {
+	fmt.Fprint(os.Stderr, header)
+	code := runGoTestPass(cfg, withGate)
+	if code == 0 {
+		return
+	}
+	fmt.Fprintf(os.Stderr, errFmt, code)
+	fmt.Fprintln(os.Stderr)
+	os.Exit(1)
 }
 
 // runGoTestPass executes one `go test` invocation and returns its
