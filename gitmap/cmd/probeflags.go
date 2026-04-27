@@ -30,6 +30,10 @@ import (
 // inside the shallow-clone fallback regardless.
 type probeOptions struct {
 	jsonOut bool
+	// termOut, when true, prints the standardized RepoTermBlock
+	// per repo so the per-probe summary matches the shape used by
+	// scan/clone-from/clone-next. Set via `--output terminal`.
+	termOut bool
 	workers int
 	depth   int
 	rest    []string
