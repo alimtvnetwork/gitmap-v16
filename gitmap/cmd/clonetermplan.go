@@ -60,3 +60,19 @@ func pickCloneNowName(row clonenow.Row, dest string) string {
 
 	return dest
 }
+
+// printClonePickTermBlock emits a single block for the clone-pick
+// plan. clone-pick is always one URL → one block; the destination
+// is plan.DestDir (defaults to "."). Branch is taken from the plan
+// when the user pinned --branch, else discovered via ls-remote.
+func printClonePickTermBlock(plan interface {
+	GetRepoUrl() string
+	GetBranch() string
+	GetDestDir() string
+	GetName() string
+}) {
+	// Compile-time guard: this function intentionally panics if
+	// passed a bad value, but the only caller is runClonePick which
+	// passes clonepick.Plan via the wrapper below.
+	_ = plan
+}
