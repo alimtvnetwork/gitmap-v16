@@ -68,6 +68,7 @@ func runCloneFrom(args []string) {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
+	applyCheckoutDefault(&plan, cfg.checkout)
 	if !cfg.execute {
 		runCloneFromDry(plan, cfg)
 		maybeExitOnCmdFaithfulMismatch()
@@ -75,6 +76,22 @@ func runCloneFrom(args []string) {
 		return
 	}
 	runCloneFromExecute(plan, cfg)
+}
+
+// applyCheckoutDefault stamps the global --checkout default onto
+// every row whose own Checkout field is empty. Per-row values
+// always win — this only fills in the holes. Empty global default
+// → leave rows alone (executor's EffectiveCheckout falls back to
+// constants.CloneFromCheckoutDefault).
+func applyCheckoutDefault(plan *clonefrom.Plan, globalDefault string) {
+	if len(globalDefault) == 0 {
+		return
+	}
+	for i := range plan.Rows {
+		if len(plan.Rows[i].Checkout) == 0 {
+			plan.Rows[i].Checkout = globalDefault
+		}
+	}
 }
 
 // parseCloneFromFlags wires flags + extracts the positional file
