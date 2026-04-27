@@ -112,3 +112,54 @@ func tallyProbe(repo model.ScanRecord, r probe.Result, ok, none, fail int, jsonO
 
 	return ok, none + 1, fail
 }
+
+// emitProbeTermBlock prints the standardized RepoTermBlock for one
+// probed repo. Called by the worker (under counterMu) when
+// `--output terminal` is active so the per-probe summary matches the
+// shape used by scan, clone-from, and clone-next.
+//
+// The block surfaces the probe outcome in CloneCommand: a successful
+// probe shows the would-be `git clone -b <nextTag> <url>` invocation
+// the user can copy/paste; a failed probe shows the trimmed error.
+func emitProbeTermBlock(idx int, repo model.ScanRecord, r probe.Result) {
+	url := pickProbeURL(repo)
+	cmd := probeCloneCommandFor(url, r)
+	block := render.RepoTermBlock{
+		Index:        idx,
+		Name:         repo.Slug,
+		Branch:       repo.Branch,
+		BranchSource: probeBranchSource(repo),
+		OriginalURL:  url,
+		TargetURL:    url,
+		CloneCommand: cmd,
+	}
+	_ = render.RenderRepoTermBlock(os.Stdout, block)
+}
+
+// probeCloneCommandFor renders the next-version git clone command
+// when the probe surfaced a tag, falls back to the bare clone when
+// no new tag exists, and surfaces the probe error verbatim when the
+// probe failed (so the user immediately sees why no command is
+// suggested).
+func probeCloneCommandFor(url string, r probe.Result) string {
+	if r.Error != "" {
+		return fmt.Sprintf("(probe failed: %s)", r.Error)
+	}
+	if !r.IsAvailable || r.NextVersionTag == "" {
+		return fmt.Sprintf("%s %s %s", constants.GitBin, constants.GitClone, url)
+	}
+
+	return fmt.Sprintf("%s %s -b %s %s",
+		constants.GitBin, constants.GitClone, r.NextVersionTag, url)
+}
+
+// probeBranchSource returns "manifest" when the repo has a branch
+// recorded in the scan DB, "" otherwise (the renderer drops the
+// parenthesized source segment when source is empty).
+func probeBranchSource(repo model.ScanRecord) string {
+	if repo.Branch == "" {
+		return ""
+	}
+
+	return "manifest"
+}
