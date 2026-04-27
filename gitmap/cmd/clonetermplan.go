@@ -22,6 +22,7 @@ package cmd
 
 import (
 	"github.com/alimtvnetwork/gitmap-v7/gitmap/clonenow"
+	"github.com/alimtvnetwork/gitmap-v7/gitmap/clonepick"
 	"github.com/alimtvnetwork/gitmap-v7/gitmap/constants"
 )
 
@@ -65,14 +66,24 @@ func pickCloneNowName(row clonenow.Row, dest string) string {
 // plan. clone-pick is always one URL → one block; the destination
 // is plan.DestDir (defaults to "."). Branch is taken from the plan
 // when the user pinned --branch, else discovered via ls-remote.
-func printClonePickTermBlock(plan interface {
-	GetRepoUrl() string
-	GetBranch() string
-	GetDestDir() string
-	GetName() string
-}) {
-	// Compile-time guard: this function intentionally panics if
-	// passed a bad value, but the only caller is runClonePick which
-	// passes clonepick.Plan via the wrapper below.
-	_ = plan
+func printClonePickTermBlock(plan clonepick.Plan) {
+	branch := plan.Branch
+	source := "manifest"
+	if len(branch) == 0 {
+		branch = detectRemoteHEAD(plan.RepoUrl)
+		source = remoteBranchSource(branch)
+	}
+	name := plan.Name
+	if len(name) == 0 {
+		name = repoNameFromURL(plan.RepoUrl)
+	}
+	maybePrintCloneTermBlock(constants.OutputTerminal, CloneTermBlockInput{
+		Index:        1,
+		Name:         name,
+		Branch:       branch,
+		BranchSource: source,
+		OriginalURL:  plan.RepoUrl,
+		TargetURL:    plan.RepoUrl,
+		Dest:         plan.DestDir,
+	})
 }
