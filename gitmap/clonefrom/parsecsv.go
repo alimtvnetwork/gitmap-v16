@@ -59,13 +59,13 @@ func readCSVRows(cr *csv.Reader, idx csvIndex) ([]Row, error) {
 
 // csvIndex maps logical column names to record indices. Negative
 // value means "column absent" — only `url` is required.
-type csvIndex struct{ url, dest, branch, depth int }
+type csvIndex struct{ url, dest, branch, depth, checkout int }
 
 // indexCSVHeader walks the header row once and records each
 // column's position. Case-insensitive so spreadsheet exports with
 // "URL"/"Url" headers work without preprocessing.
 func indexCSVHeader(header []string) csvIndex {
-	idx := csvIndex{url: -1, dest: -1, branch: -1, depth: -1}
+	idx := csvIndex{url: -1, dest: -1, branch: -1, depth: -1, checkout: -1}
 	for i, name := range header {
 		switch strings.ToLower(strings.TrimSpace(name)) {
 		case "url":
@@ -76,6 +76,8 @@ func indexCSVHeader(header []string) csvIndex {
 			idx.branch = i
 		case "depth":
 			idx.depth = i
+		case "checkout":
+			idx.checkout = i
 		}
 	}
 
@@ -86,9 +88,10 @@ func indexCSVHeader(header []string) csvIndex {
 // pre-computed column index. Returns a wrapped error on bad depth.
 func csvRow(rec []string, idx csvIndex) (Row, error) {
 	row := Row{
-		URL:    strings.TrimSpace(get(rec, idx.url)),
-		Dest:   strings.TrimSpace(get(rec, idx.dest)),
-		Branch: strings.TrimSpace(get(rec, idx.branch)),
+		URL:      strings.TrimSpace(get(rec, idx.url)),
+		Dest:     strings.TrimSpace(get(rec, idx.dest)),
+		Branch:   strings.TrimSpace(get(rec, idx.branch)),
+		Checkout: strings.ToLower(strings.TrimSpace(get(rec, idx.checkout))),
 	}
 	if depthStr := strings.TrimSpace(get(rec, idx.depth)); len(depthStr) > 0 {
 		d, err := strconv.Atoi(depthStr)
