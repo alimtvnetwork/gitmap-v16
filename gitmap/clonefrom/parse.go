@@ -102,12 +102,14 @@ func jsonRow(obj map[string]any) (Row, error) {
 	url, _ := obj["url"].(string)
 	dest, _ := obj["dest"].(string)
 	branch, _ := obj["branch"].(string)
+	checkout, _ := obj["checkout"].(string)
 	depth := 0
 	if d, ok := obj["depth"].(float64); ok {
 		depth = int(d)
 	}
 	row := Row{URL: strings.TrimSpace(url), Dest: strings.TrimSpace(dest),
-		Branch: strings.TrimSpace(branch), Depth: depth}
+		Branch: strings.TrimSpace(branch), Depth: depth,
+		Checkout: strings.ToLower(strings.TrimSpace(checkout))}
 
 	return row, validateRow(row)
 }
