@@ -258,3 +258,90 @@ describe("DocsTooltip — non-element children fallback", () => {
     expect(matched).toBe(true);
   });
 });
+
+// aria-label injection is the keyboard/SR a11y promise of DocsTooltip:
+// when the trigger child is a single valid React element AND the child
+// does not already declare an aria-label, the tooltip's `label` (or the
+// explicit `ariaLabel` prop) is grafted onto the child as aria-label.
+// Conversely, the synthesized fallback wrapper used for non-element
+// children (string, number, null, fragment, multi-children) is NOT a
+// caller-owned trigger — injecting onto it would silently paper over
+// misuse. This suite locks in BOTH halves of the contract.
+describe("DocsTooltip — aria-label injection scope", () => {
+  beforeEach(() => cleanup());
+
+  it("injects aria-label onto a single valid element child", () => {
+    render(
+      <TooltipProvider delayDuration={0} skipDelayDuration={0}>
+        <DocsTooltip label="Save changes">
+          <button type="button" data-testid="real">
+            <svg aria-hidden="true" />
+          </button>
+        </DocsTooltip>
+      </TooltipProvider>,
+    );
+    const btn = screen.getByTestId("real");
+    expect(btn.getAttribute("aria-label")).toBe("Save changes");
+  });
+
+  it("preserves a child's existing aria-label (child wins)", () => {
+    render(
+      <TooltipProvider delayDuration={0} skipDelayDuration={0}>
+        <DocsTooltip label="generic label">
+          <button type="button" aria-label="explicit child label" data-testid="real">
+            x
+          </button>
+        </DocsTooltip>
+      </TooltipProvider>,
+    );
+    expect(screen.getByTestId("real").getAttribute("aria-label")).toBe(
+      "explicit child label",
+    );
+  });
+
+  it("does NOT inject aria-label onto the fallback wrapper for a string child", () => {
+    render(
+      <TooltipProvider delayDuration={0} skipDelayDuration={0}>
+        <DocsTooltip label="should not leak">just text</DocsTooltip>
+      </TooltipProvider>,
+    );
+    const wrapper = screen.getByText("just text");
+    expect(wrapper.tagName).toBe("SPAN");
+    expect(wrapper.getAttribute("aria-label")).toBeNull();
+    // The fallback marker prop must reach the DOM so the skip rule
+    // is observable / testable from the outside.
+    expect(wrapper.getAttribute("data-docs-tooltip-fallback")).toBe("true");
+  });
+
+  it("does NOT inject aria-label onto the fallback wrapper for a fragment child", () => {
+    render(
+      <TooltipProvider delayDuration={0} skipDelayDuration={0}>
+        <DocsTooltip label="should not leak">
+          <>
+            <span data-testid="frag-a">a</span>
+            <span data-testid="frag-b">b</span>
+          </>
+        </DocsTooltip>
+      </TooltipProvider>,
+    );
+    // Neither inner element gets an aria-label.
+    expect(screen.getByTestId("frag-a").getAttribute("aria-label")).toBeNull();
+    expect(screen.getByTestId("frag-b").getAttribute("aria-label")).toBeNull();
+  });
+
+  it("uses the explicit ariaLabel prop (not label) when injecting onto a real element", () => {
+    render(
+      <TooltipProvider delayDuration={0} skipDelayDuration={0}>
+        <DocsTooltip
+          label={<span>icon + text</span>}
+          ariaLabel="explicit aria"
+        >
+          <button type="button" data-testid="real" />
+        </DocsTooltip>
+      </TooltipProvider>,
+    );
+    expect(screen.getByTestId("real").getAttribute("aria-label")).toBe(
+      "explicit aria",
+    );
+  });
+});
