@@ -57,16 +57,16 @@ Unknown object keys are tolerated — future schema additions don't break old gi
 
 ### CSV
 
-A header row of `url,dest,branch,depth` (case-insensitive). Only the `url` column is required to be present in the header; missing optional columns default to empty.
+A header row of `url,dest,branch,depth,checkout` (case-insensitive). Only the `url` column is required to be present in the header; missing optional columns default to empty.
 
 ```csv
-url,dest,branch,depth
-https://github.com/charmbracelet/bubbletea.git,,,
-git@github.com:cli/cli.git,github-cli,,
-https://example.org/big.git,,main,1
+url,dest,branch,depth,checkout
+https://github.com/charmbracelet/bubbletea.git,,,,
+git@github.com:cli/cli.git,github-cli,,,skip
+https://example.org/big.git,,main,1,force
 ```
 
-Extra columns after `depth` are ignored. Ragged rows (fewer fields than the header) are tolerated.
+Extra columns past the recognised set are ignored. Ragged rows (fewer fields than the header) are tolerated.
 
 ## URL forms
 
