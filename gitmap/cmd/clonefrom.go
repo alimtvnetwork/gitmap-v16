@@ -162,6 +162,7 @@ func runCloneFromExecute(plan clonefrom.Plan, cfg cloneFromFlags) {
 	if err := clonefrom.RenderSummary(os.Stdout, results, reportPath); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 	}
+	maybeExitOnCmdFaithfulMismatch()
 	os.Exit(cloneFromExitCode(results))
 }
 
