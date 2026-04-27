@@ -113,6 +113,13 @@ func buildPlistDict(label, display string, opts AddOptions) []plistEntry {
 		{"ProgramArguments", plistValue{kind: "stringArray", strArray: splitExecArgs(opts.Exec)}},
 		{"RunAtLoad", plistValue{kind: "bool", boolean: true}},
 	}
+	// WorkingDirectory is the canonical LaunchAgent key launchd
+	// chdirs to before exec'ing ProgramArguments. Inserted right
+	// after RunAtLoad so the "what runs / where it runs" pair sits
+	// together in the rendered file.
+	if len(opts.WorkingDir) > 0 {
+		out = append(out, plistEntry{"WorkingDirectory", plistValue{kind: "string", str: opts.WorkingDir}})
+	}
 	if len(display) > 0 && display != label {
 		out = append(out, plistEntry{"GitmapDisplayName", plistValue{kind: "string", str: display}})
 	}

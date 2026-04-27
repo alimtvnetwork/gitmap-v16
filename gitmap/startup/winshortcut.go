@@ -66,7 +66,7 @@ func writeStartupShortcut(full, clean string, opts AddOptions) (AddResult, error
 		return AddResult{}, fmt.Errorf(constants.ErrStartupShortcutCreate, full, err)
 	}
 	if err := writeTrackingSubkey(constants.RegGitmapStartupFolder, clean,
-		opts.Exec, constants.StartupBackendStartupFolder); err != nil {
+		opts.Exec, constants.StartupBackendStartupFolder, opts.WorkingDir); err != nil {
 
 		return AddResult{}, err
 	}

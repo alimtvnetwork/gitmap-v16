@@ -36,6 +36,13 @@ func renderDesktop(clean string, opts AddOptions) []byte {
 		fmt.Fprintf(&b, "Comment=%s\n", opts.Comment)
 	}
 	fmt.Fprintf(&b, "Exec=%s\n", opts.Exec)
+	// Path= is the XDG-spec field for the working directory the
+	// session manager sets before invoking Exec=. Emitted before
+	// Terminal= to match the field order recommended by
+	// `desktop-file-validate` (identity → exec → path → terminal).
+	if len(opts.WorkingDir) > 0 {
+		fmt.Fprintf(&b, "Path=%s\n", opts.WorkingDir)
+	}
 	b.WriteString("Terminal=false\n")
 	b.WriteString("X-GNOME-Autostart-enabled=true\n")
 	if opts.NoDisplay {

@@ -58,10 +58,14 @@ const (
 	// reference the suffix without code drift.
 	RegMarkerSiblingSuffix = `.gitmap-managed`
 	// Tracking-subkey value names. Stored as REG_SZ so `reg query`
-	// shows them readable; CreatedAt is RFC3339 UTC.
-	RegTrackKeyExec      = "Exec"
-	RegTrackKeyCreatedAt = "CreatedAt"
-	RegTrackKeySource    = "Source" // "registry" | "startup-folder"
+	// shows them readable; CreatedAt is RFC3339 UTC. WorkingDir is
+	// only written when the user passed --working-dir; an empty
+	// value is omitted entirely so `reg query` output stays tidy
+	// for the common no-cwd case.
+	RegTrackKeyExec       = "Exec"
+	RegTrackKeyCreatedAt  = "CreatedAt"
+	RegTrackKeySource     = "Source" // "registry" | "startup-folder"
+	RegTrackKeyWorkingDir = "WorkingDir"
 )
 
 // Windows file naming. The Run-key value name and the .lnk filename

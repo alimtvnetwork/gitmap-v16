@@ -46,8 +46,9 @@ func trackingSubkeyExists(_, _ string) bool {
 }
 
 // writeTrackingSubkey stub: unreachable on non-Windows but kept
-// symmetric with the windows file so .lnk code can call it.
-func writeTrackingSubkey(_, _, _, _ string) error {
+// symmetric with the windows file so .lnk code can call it. The
+// trailing workingDir parameter mirrors the Windows signature.
+func writeTrackingSubkey(_, _, _, _, _ string) error {
 	return fmt.Errorf(constants.ErrStartupUnsupportedOS)
 }
 

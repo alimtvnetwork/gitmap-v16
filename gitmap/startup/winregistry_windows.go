@@ -64,7 +64,7 @@ func addWindowsRegistry(clean string, opts AddOptions) (AddResult, error) {
 		return AddResult{Status: AddExists, Path: runValuePath(valueName)}, nil
 	}
 	if err := writeTrackingSubkey(constants.RegGitmapRegistrySub, clean,
-		opts.Exec, constants.StartupBackendRegistry); err != nil {
+		opts.Exec, constants.StartupBackendRegistry, opts.WorkingDir); err != nil {
 
 		return AddResult{}, err
 	}
@@ -146,12 +146,13 @@ func writeRunValue(valueName, exec string) error {
 	return nil
 }
 
-// writeTrackingSubkey creates HKCU\<parent>\<name> with the three
-// metadata values (Exec / CreatedAt / Source). CreatedAt is RFC3339
-// UTC for stable cross-locale parsing by future tooling. Used by
-// BOTH the registry backend (Source="registry") and the .lnk
-// backend (Source="startup-folder").
-func writeTrackingSubkey(parent, name, exec, source string) error {
+// writeTrackingSubkey creates HKCU\<parent>\<name> with the standard
+// metadata values (Exec / CreatedAt / Source) plus an optional
+// WorkingDir value when the caller passed a non-empty working
+// directory. CreatedAt is RFC3339 UTC for stable cross-locale
+// parsing by future tooling. Used by BOTH the registry backend
+// (Source="registry") and the .lnk backend (Source="startup-folder").
+func writeTrackingSubkey(parent, name, exec, source, workingDir string) error {
 	full := parent + `\` + name
 	k, _, err := registry.CreateKey(registry.CURRENT_USER, full, registry.SET_VALUE)
 	if err != nil {
@@ -172,6 +173,12 @@ func writeTrackingSubkey(parent, name, exec, source string) error {
 	if err := k.SetStringValue(constants.RegTrackKeySource, source); err != nil {
 
 		return fmt.Errorf(constants.ErrStartupRegistryWrite, constants.RegTrackKeySource, err)
+	}
+	if workingDir != "" {
+		if err := k.SetStringValue(constants.RegTrackKeyWorkingDir, workingDir); err != nil {
+
+			return fmt.Errorf(constants.ErrStartupRegistryWrite, constants.RegTrackKeyWorkingDir, err)
+		}
 	}
 
 	return nil
