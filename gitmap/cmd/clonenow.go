@@ -62,9 +62,12 @@ type cloneNowFlags struct {
 
 // runCloneNow is the dispatcher entry. checkHelp handles `--help`
 // per the project help-system convention before any flag parsing
-// so unparseable flags don't suppress the help text.
+// so unparseable flags don't suppress the help text. We point at
+// the canonical `reclone` help page; the legacy `clone-now` and
+// `relclone` page stubs (kept for `gitmap help clone-now` users)
+// redirect to the same content.
 func runCloneNow(args []string) {
-	checkHelp("clone-now", args)
+	checkHelp(constants.CmdCloneReclone, args)
 	cfg := parseCloneNowFlags(args)
 	setCmdFaithfulVerify(cfg.verifyCmdFaithful)
 	setCmdFaithfulExitOnMismatch(cfg.verifyCmdFaithfulExitOnMismatch)
