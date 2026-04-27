@@ -190,7 +190,19 @@ func runCloneNowExecute(plan clonenow.Plan, cfg cloneNowFlags) {
 	if cfg.output == constants.OutputTerminal {
 		hook = printCloneNowTermBlockRow
 	}
-	results := clonenow.ExecuteWithHooks(plan, cfg.cwd, progress, hook)
+	// Dispatch sequential vs parallel on the resolved worker count.
+	// Auto-default (NumCPU) lands here as N>=1 already (the parser
+	// runs cloneconcurrency.Resolve), so a single comparison is all
+	// that's needed. The concurrent runner short-circuits to
+	// ExecuteWithHooks for workers <=1 — keeping a single sequential
+	// code path under the hood.
+	var results []clonenow.Result
+	if cfg.maxConcurrency > 1 {
+		fmt.Fprintf(os.Stderr, constants.MsgCloneConcurrencyEnabledFmt, cfg.maxConcurrency)
+		results = clonenow.ExecuteWithHooksConcurrent(plan, cfg.cwd, progress, hook, cfg.maxConcurrency)
+	} else {
+		results = clonenow.ExecuteWithHooks(plan, cfg.cwd, progress, hook)
+	}
 	if err := clonenow.RenderSummary(os.Stdout, results); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 	}
