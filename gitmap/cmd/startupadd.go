@@ -31,6 +31,7 @@ type startupAddFlags struct {
 	exec        string
 	displayName string
 	comment     string
+	workingDir  string
 	noDisplay   bool
 	force       bool
 	backend     string
@@ -57,7 +58,8 @@ func runStartupAdd(args []string) {
 		Name: cfg.name, Exec: exec,
 		DisplayName: cfg.displayName, Comment: cfg.comment,
 		NoDisplay: cfg.noDisplay, Force: cfg.force,
-		Backend: backend,
+		WorkingDir: cfg.workingDir,
+		Backend:    backend,
 	})
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%v\n", err)
@@ -85,6 +87,8 @@ func parseStartupAddFlags(args []string) startupAddFlags {
 		constants.FlagDescStartupAddNoDisplay)
 	fs.BoolVar(&cfg.force, constants.FlagStartupAddForce, false,
 		constants.FlagDescStartupAddForce)
+	fs.StringVar(&cfg.workingDir, constants.FlagStartupAddWorkingDir, "",
+		constants.FlagDescStartupAddWorkingDir)
 	fs.StringVar(&cfg.backend, constants.FlagStartupAddBackend, "",
 		constants.FlagDescStartupAddBackend)
 	fs.Parse(args)

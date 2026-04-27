@@ -117,12 +117,15 @@ const (
 	FlagStartupAddComment       = "comment"
 	FlagStartupAddNoDisplay     = "no-display"
 	FlagStartupAddForce         = "force"
+	FlagStartupAddWorkingDir    = "working-dir"
 	FlagDescStartupAddName      = "Logical name for the entry (filename becomes gitmap-<name>.desktop). Required."
 	FlagDescStartupAddExec      = "Command to run at login (default: path to the running gitmap binary)"
 	FlagDescStartupAddDisplay   = "Override the Name= field shown in desktop session managers"
 	FlagDescStartupAddComment   = "Optional Comment= field text"
 	FlagDescStartupAddNoDisplay = "Set NoDisplay=true so the entry stays out of app menus"
 	FlagDescStartupAddForce     = "Overwrite an existing gitmap-managed entry (never overwrites third-party files)"
+	FlagDescStartupAddWorkingDir = "Working directory the entry runs in " +
+		"(Linux Path=, macOS WorkingDirectory, Windows tracking-subkey WorkingDir)"
 )
 
 // startup-list CLI flag. Reuses the project-wide OutputTerminal/CSV/
