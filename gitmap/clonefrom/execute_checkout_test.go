@@ -20,6 +20,7 @@ package clonefrom
 import (
 	"io"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
