@@ -86,7 +86,7 @@ const DocsLayout = ({ children }: DocsLayoutProps) => {
                     <Sun className="h-3.5 w-3.5" aria-hidden="true" />
                   </button>
                 </TooltipTrigger>
-                <TooltipContent side="bottom">Light theme (VS Code Light+)</TooltipContent>
+                <TooltipContent side="bottom">Light theme</TooltipContent>
               </Tooltip>
             </div>
             {isSystem && (
