@@ -10,27 +10,27 @@ package clonenow
 //     destination via the row's RelativePath verbatim (same as the
 //     sequential path), so increasing the worker count NEVER
 //     reshuffles where repos land.
-//   - Result ORDER matches input order. We keep stable ordering
-//     because the renderer/summary downstream is index-aware and
-//     scripts that grep stderr for "[i/total]" expect consistent
-//     numbering. Per-row PROGRESS LINES, however, fire in
-//     completion order — that's the only observable difference
-//     vs. the sequential runner.
-//   - The BeforeRow hook is dispatched on the dispatcher goroutine
-//     BEFORE the row enters the work queue. Mirrors the sequential
-//     hook timing ("before clone starts") with the caveat that
-//     "starts" now means "enqueued" rather than "shell-out begins".
-//     The cmd layer's standardized terminal block is positional, not
-//     time-sensitive, so this is fine.
-//   - A workers value <= 1 falls back to the sequential
-//     ExecuteWithHooks so there is exactly one code path per regime
-//     (no "concurrent runner with N=1" middle ground that drifts).
+//   - Result ORDER matches input order. Scripts that grep stderr
+//     for "[i/total]" expect monotonic numbering, so per-row
+//     progress lines are emitted in order AFTER the pool drains.
+//   - The BeforeRow hook fires synchronously on the dispatcher
+//     goroutine in input order, BEFORE the row enters the work
+//     queue. Mirrors the sequential hook timing contract.
+//   - workers <= 1 falls back to the sequential ExecuteWithHooks so
+//     there is exactly one code path per regime.
 
 import (
 	"io"
 	"os"
 	"sync"
 )
+
+// concurrentJob is the named pool work unit (an anonymous struct
+// would be assignable but harder to refactor / test).
+type concurrentJob struct {
+	idx int
+	row Row
+}
 
 // ExecuteWithHooksConcurrent is the parallel sibling of
 // ExecuteWithHooks. See file header for the contract.
@@ -44,8 +44,7 @@ func ExecuteWithHooksConcurrent(plan Plan, cwd string, progress io.Writer,
 			cwd = wd
 		}
 	}
-	total := len(plan.Rows)
-	out := make([]Result, total)
+	out := make([]Result, len(plan.Rows))
 	dispatchConcurrent(plan, cwd, beforeRow, workers, out)
 	emitProgressInOrder(progress, out)
 
@@ -57,44 +56,39 @@ func ExecuteWithHooksConcurrent(plan Plan, cwd string, progress io.Writer,
 // under the 15-line function cap.
 func dispatchConcurrent(plan Plan, cwd string, beforeRow BeforeRowHook,
 	workers int, out []Result) {
-	type job struct {
-		idx int
-		row Row
-	}
-	jobs := make(chan job, len(plan.Rows))
+	jobs := make(chan concurrentJob, len(plan.Rows))
 	var wg sync.WaitGroup
 	wg.Add(workers)
 	for i := 0; i < workers; i++ {
-		go func() {
-			defer wg.Done()
-			for j := range jobs {
-				out[j.idx] = executeRow(j.row, plan, cwd)
-			}
-		}()
+		go runConcurrentWorker(jobs, plan, cwd, out, &wg)
 	}
-	enqueueClonenowJobsCh(plan, beforeRow, jobs)
+	enqueueConcurrentJobs(plan, beforeRow, jobs)
 	close(jobs)
 	wg.Wait()
 }
 
-// enqueueClonenowJobsCh fires the BeforeRow hook (synchronously, in
+// runConcurrentWorker is the per-goroutine drain loop. Pulled out
+// so dispatchConcurrent stays under the function-length cap.
+func runConcurrentWorker(jobs <-chan concurrentJob, plan Plan, cwd string,
+	out []Result, wg *sync.WaitGroup) {
+	defer wg.Done()
+	for j := range jobs {
+		out[j.idx] = executeRow(j.row, plan, cwd)
+	}
+}
+
+// enqueueConcurrentJobs fires the BeforeRow hook (synchronously, in
 // input order) and enqueues each row. The channel's buffer is
 // sized to the row count so this never blocks the dispatcher.
-func enqueueClonenowJobsCh(plan Plan, beforeRow BeforeRowHook,
-	jobs chan<- struct {
-		idx int
-		row Row
-	}) {
+func enqueueConcurrentJobs(plan Plan, beforeRow BeforeRowHook,
+	jobs chan<- concurrentJob) {
 	total := len(plan.Rows)
 	for i, r := range plan.Rows {
 		if beforeRow != nil {
 			url := r.PickURL(plan.Mode)
 			beforeRow(i+1, total, r, url, r.RelativePath)
 		}
-		jobs <- struct {
-			idx int
-			row Row
-		}{idx: i, row: r}
+		jobs <- concurrentJob{idx: i, row: r}
 	}
 }
 
