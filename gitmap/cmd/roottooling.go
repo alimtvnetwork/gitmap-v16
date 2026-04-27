@@ -64,5 +64,6 @@ func toolingDispatchEntries() []dispatchEntry {
 		},
 		{[]string{constants.CmdZip}, func() { runZip(argsTail()) }},
 		{[]string{constants.CmdReplace, constants.CmdReplaceAlias}, func() { runReplace(argsTail()) }},
+		{[]string{constants.CmdRegoldens, constants.CmdRegoldensAlias}, func() { runRegoldens(argsTail()) }},
 	}
 }
