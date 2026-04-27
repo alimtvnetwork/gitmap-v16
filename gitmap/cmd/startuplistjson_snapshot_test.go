@@ -30,19 +30,15 @@ import (
 	"github.com/alimtvnetwork/gitmap-v7/gitmap/startup"
 )
 
-// expectedStartupListJSONSchema is now sourced from the versioned
-// schema registry (cmd/testdata/schemas/startup-list.vN.json). The
-// test-time wrapper preserves the existing variable name so legacy
-// CSV-header callers continue to compile while routing through the
-// registry's drift-detection + --accept-schema/--update-schema flow.
+// Schema for `gitmap startup-list --format=json|jsonl|csv` rows is
+// now sourced from the versioned schema registry (see
+// cmd/testdata/schemas/startup-list.vN.json + assertSchemaKeysArray
+// in schemaregistry_assert_test.go).
 //
 // To add a key (e.g. `enabled`): create startup-list.v2.json with
 // the new key list, OR run `GITMAP_UPDATE_SCHEMA=startup-list go
 // test ./cmd/...` once and acknowledge with `-accept-schema=
 // startup-list@v2` thereafter.
-//
-//nolint:gochecknoglobals // Test-only convenience alias.
-var expectedStartupListJSONSchema []string
 
 // TestStartupListJSONSnapshot_SchemaIsLocked is the headline schema
 // guarantee. Encodes a representative multi-entry list, then asserts
