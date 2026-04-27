@@ -123,4 +123,16 @@ const (
 	ErrCloneFromReportMkdir = "clone-from: mkdir %s: %v"
 	// %s = file path, %v = err.
 	ErrCloneFromReportCreate = "clone-from: create report %s: %v"
+	// MsgCloneFromMkdirParentFailFmt is the per-row Detail string set
+	// when MkdirAll on the dest's parent dir fails (permission,
+	// read-only FS). Single source of truth so the report column and
+	// the per-row progress line stay byte-identical.
+	// %v = err.
+	MsgCloneFromMkdirParentFailFmt = "mkdir parent: %v"
+	// ErrCloneFromMkdirParent is the standardized stderr log emitted
+	// alongside the per-row failure. Follows the project's Code Red
+	// format: Error: ... at <path>: <err> (operation: ..., reason: ...).
+	// %s = parent path, %v = err.
+	ErrCloneFromMkdirParent = "Error: clone-from: failed to create dest parent at %s: %v " +
+		"(operation: MkdirAll, reason: cannot preserve folder hierarchy)\n"
 )

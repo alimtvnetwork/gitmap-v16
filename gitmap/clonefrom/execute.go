@@ -68,20 +68,20 @@ func Execute(plan Plan, cwd string, progress io.Writer) []Result {
 }
 
 // executeRow handles one row's lifecycle: resolve dest, check
-// skip rule, build git args, run, time, return.
+// skip rule, ensure the dest's parent directory exists (so nested
+// dest paths like `org-a/repo-1` preserve the original folder
+// hierarchy without surprising "could not create work tree dir"
+// failures from git), build git args, run, time, return.
 func executeRow(r Row, cwd string) Result {
 	start := time.Now()
-	dest := r.Dest
-	if len(dest) == 0 {
-		dest = DeriveDest(r.URL)
-	}
-	absDest := dest
-	if !filepath.IsAbs(absDest) {
-		absDest = filepath.Join(cwd, dest)
-	}
+	dest, absDest := resolveDest(r, cwd)
 	if shouldSkip(absDest) {
 		return Result{Row: r, Dest: dest, Status: constants.CloneFromStatusSkipped,
 			Detail: constants.MsgCloneFromDestExists, Duration: time.Since(start)}
+	}
+	if detail, ok := prepareDestParent(absDest); !ok {
+		return Result{Row: r, Dest: dest, Status: constants.CloneFromStatusFailed,
+			Detail: detail, Duration: time.Since(start)}
 	}
 	detail, ok := runGitClone(r, dest, cwd)
 	status := constants.CloneFromStatusOK
@@ -93,21 +93,8 @@ func executeRow(r Row, cwd string) Result {
 		Duration: time.Since(start)}
 }
 
-// shouldSkip returns true when the dest is a non-empty directory.
-// Errors reading the dir (permission denied) → false (let git try
-// and fail with a clearer message than we could craft).
-func shouldSkip(absDest string) bool {
-	info, err := os.Stat(absDest)
-	if err != nil || !info.IsDir() {
-		return false
-	}
-	entries, err := os.ReadDir(absDest)
-	if err != nil {
-		return false
-	}
-
-	return len(entries) > 0
-}
+// resolveDest, prepareDestParent, and shouldSkip live in
+// execute_dest.go to keep this file under the 200-line cap.
 
 // runGitClone shells out to `git clone` with the row's options.
 // Returns (detail, ok). On success detail is empty. On failure

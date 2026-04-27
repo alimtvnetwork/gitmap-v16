@@ -80,6 +80,10 @@ Anything else is rejected at parse time with a row-number-pointing error.
 
 When `--execute` is on, a row is marked **skipped** (not failed) if its resolved destination already exists as a non-empty directory. Re-running the same plan after fixing one row's typo therefore does NOT re-clone the others.
 
+## Folder hierarchy
+
+Nested `dest` paths preserve the original folder hierarchy: a row with `dest: org-a/team-x/repo-1` clones into `<cwd>/org-a/team-x/repo-1/`, with any missing parent directories created automatically (`MkdirAll`, idempotent on existing dirs). If a parent path collides with an existing FILE the row is marked **failed** with `mkdir parent: …` in the detail column — never silently swallowed.
+
 ## Exit codes
 
 | Code | Meaning |
