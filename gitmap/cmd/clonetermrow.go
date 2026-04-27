@@ -51,6 +51,12 @@ func printCloneNowTermBlockRow(index, total int, row clonenow.Row,
 // clonefrom.branchSourceForRow ("manifest" if pinned, else the
 // ls-remote-discovered default — falling through to "(unknown)"
 // inside the renderer if detection fails).
+//
+// Faithfulness: the executor (clonefrom/execute.go buildGitArgs)
+// only passes `-b` when row.Branch is non-empty, and adds
+// `--depth=N` AFTER `-b` when row.Depth > 0. The printed cmd
+// mirrors that exactly via CmdBranch (= row.Branch, NOT the
+// ls-remote fallback) and CmdExtraArgsPost.
 func printCloneFromTermBlockRow(index, total int, row clonefrom.Row,
 	dest string) {
 	_ = total // reserved for future "[i/N]" prefix
@@ -60,13 +66,19 @@ func printCloneFromTermBlockRow(index, total int, row clonefrom.Row,
 		branch = detectRemoteHEAD(row.URL)
 		source = remoteBranchSource(branch)
 	}
+	var post []string
+	if row.Depth > 0 {
+		post = []string{fmt.Sprintf("--depth=%d", row.Depth)}
+	}
 	maybePrintCloneTermBlock(constants.OutputTerminal, CloneTermBlockInput{
-		Index:        index,
-		Name:         dest,
-		Branch:       branch,
-		BranchSource: source,
-		OriginalURL:  row.URL,
-		TargetURL:    row.URL,
-		Dest:         dest,
+		Index:            index,
+		Name:             dest,
+		Branch:           branch,
+		BranchSource:     source,
+		OriginalURL:      row.URL,
+		TargetURL:        row.URL,
+		Dest:             dest,
+		CmdBranch:        row.Branch, // executor uses row.Branch, NOT detected
+		CmdExtraArgsPost: post,
 	})
 }
