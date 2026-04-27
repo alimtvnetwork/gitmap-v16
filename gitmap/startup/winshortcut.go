@@ -1,22 +1,14 @@
 package startup
 
-// .lnk Startup folder backend. Unlike the registry backend, this
-// file compiles on every OS — it shells out to powershell.exe which
-// only exists on Windows, but the Go code itself uses no Windows-
-// only APIs. A runtime guard in addWindowsStartupFolder rejects
-// non-Windows callers with the unsupported-OS error before any
-// powershell invocation is attempted.
+// .lnk Startup folder backend. Uses the in-process Shell Link
+// writer in winshortcut_writer.go + winshortcut_linkinfo.go — no
+// PowerShell shellout. Pure-Go, microsecond write, no powershell.exe
+// dependency, unit-testable on Linux CI. The legacy
+// createShortcutViaPowerShell helper in winshortcut_ps.go is
+// retained as a future fallback for non-trivial target shapes
+// (UNC, icons, args) but is not on the normal Add path.
 //
-// PowerShell shellout rationale (vs hand-rolling [MS-SHLLINK]):
-// the binary Shell Link format is ~80 pages of spec with multiple
-// optional sub-records (LinkInfo, IDList, ExtraData) that tools
-// like Explorer and `start` are picky about. Shipping a hand-rolled
-// writer untested by the developer is a regression risk; shelling
-// to `WScript.Shell.CreateShortcut` produces a .lnk that Windows
-// itself authored, guaranteeing format correctness. Trade-off:
-// powershell.exe must be on PATH (covered by ErrStartupPowerShellMissing).
-//
-// Marker contract: the .lnk filename uses the `gitmap-` prefix,
+// Marker contract: the .lnk filename uses the `gitmap-` prefix
 // AND a tracking subkey under HKCU\Software\Gitmap\StartupFolder\
 // <name> records the entry as ours. Both must agree before Remove
 // will delete the .lnk. Same belt-and-suspenders rule as the
@@ -69,7 +61,7 @@ func writeStartupShortcut(full, clean string, opts AddOptions) (AddResult, error
 
 		return AddResult{Status: AddExists, Path: full}, nil
 	}
-	if err := createShortcutViaPowerShell(full, opts.Exec); err != nil {
+	if err := writeShortcutFile(full, opts.Exec); err != nil {
 
 		return AddResult{}, fmt.Errorf(constants.ErrStartupShortcutCreate, full, err)
 	}
@@ -188,30 +180,8 @@ func looksLikeOursLnk(filename string) bool {
 	return strings.HasPrefix(filename, constants.StartupWinValuePrefix)
 }
 
-// startupFolderDir returns %APPDATA%\Microsoft\Windows\Start Menu\
-// Programs\Startup. Honors $APPDATA so test fixtures can redirect
-// to a temp dir.
-func startupFolderDir() (string, error) {
-	roaming := os.Getenv("APPDATA")
-	if len(roaming) == 0 {
-
-		return "", fmt.Errorf("APPDATA env var is empty")
-	}
-
-	return filepath.Join(roaming, constants.StartupFolderRelative), nil
-}
-
-// fileExists is a tiny os.Stat wrapper. Treats permission errors
-// as "exists" (conservative — better to refuse a write than to
-// silently overwrite a file we can't read).
-func fileExists(p string) bool {
-	if _, err := os.Stat(p); err == nil || !os.IsNotExist(err) {
-		return true
-	}
-
-	return false
-}
-
-// PowerShell helpers (createShortcutViaPowerShell,
-// buildShortcutScript) live in winshortcut_ps.go to keep this file
-// under the per-file budget.
+// startupFolderDir + fileExists helpers live in winshortcut_helpers.go.
+// Writer (writeShortcutFile, buildShortcutBytes) lives in
+// winshortcut_writer.go + winshortcut_linkinfo.go. Legacy
+// PowerShell helper lives in winshortcut_ps.go — retained as a
+// future fallback for non-trivial target shapes.
