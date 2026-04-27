@@ -247,6 +247,32 @@ clean up.
 
     ✓ Overwrote gitmap-managed autostart entry: /home/me/.config/autostart/gitmap-watch.desktop
 
+### Example 4: Windows — `--force` cannot overwrite a third-party Run-key value
+
+    gitmap startup-add --name watch --exec "C:\gitmap.exe watch" --force
+
+**Output (third-party `gitmap-watch` value already in HKCU\…\Run, no tracking subkey):**
+
+      (refused) "HKCU\Software\Microsoft\Windows\CurrentVersion\Run\gitmap-watch" exists but was NOT created by gitmap — refusing to overwrite
+
+`--force` only lifts the "exists AND is ours" guard; the
+ownership gate is unconditional. Rename your entry
+(`--name watch2`) or delete the third-party value manually in
+regedit before re-running.
+
+### Example 5: Machine-wide install via `--backend=registry-hklm`
+
+    gitmap startup-add --name kiosk --backend=registry-hklm \
+      --exec "C:\gitmap.exe watch --profile kiosk"
+
+**Output (run from an elevated shell):**
+
+    ✓ Created gitmap-managed autostart entry: HKLM\Software\Microsoft\Windows\CurrentVersion\Run\gitmap-kiosk
+
+**Output (run from a non-elevated shell):**
+
+    startup-add: --backend=registry-hklm requires administrator privileges (re-run from an elevated shell, e.g. `Run as administrator` from the Start menu, or use the per-user `--backend=registry` default)
+
 ## See Also
 
 - [startup-list](startup-list.md) — List entries gitmap created
