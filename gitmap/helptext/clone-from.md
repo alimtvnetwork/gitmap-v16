@@ -35,9 +35,10 @@ The streams are split so machine consumers can grep just the previews:
 | Stream | Content |
 |---|---|
 | **stdout** | One `RepoTermBlock` per row (index, name, branch + source, original URL, target URL, exact `git clone` command). Streamed: each block prints right before that row's clone starts. |
-| **stderr** | `git clone` progress, the `[i/N] status url` per-row line, the final `gitmap clone-from: …` summary, and any warnings. |
+| **stderr** | `git clone` progress, the `[i/N] status url` per-row line, and any warnings. |
+| **stdout** (end) | Enriched summary block: `found: N repo(s)`, `by mode:` per-scheme tally (https/ssh/scp/git/file/http/other — zero-count buckets omitted), `status: N ok, N skipped, N failed (N total)`, and BOTH `report csv:` and `report json:` paths. Default mode keeps the legacy one-line summary + single CSV path. |
 
-Redirect example: `gitmap clone-from repos.csv --execute --output terminal > previews.txt 2> progress.log`.
+Redirect example: `gitmap clone-from repos.csv --execute --output terminal > previews-and-summary.txt 2> progress.log`.
 
 ## Input formats
 

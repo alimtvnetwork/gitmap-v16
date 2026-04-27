@@ -165,20 +165,20 @@ func runCloneFromExecute(plan clonefrom.Plan, cfg cloneFromFlags) {
 		hook = printCloneFromTermBlockRow
 	}
 	results := clonefrom.ExecuteWithHooks(plan, "", progress, hook)
-	reportPath := ""
-	if !cfg.noReport {
-		if p, err := clonefrom.WriteReport(results); err == nil {
-			reportPath = p
-		} else {
+	csvPath, jsonPath := writeCloneFromReports(results, cfg)
+	if cfg.output == constants.OutputTerminal {
+		if err := clonefrom.RenderSummaryTerminal(os.Stdout, results, csvPath, jsonPath); err != nil {
 			fmt.Fprintln(os.Stderr, err)
 		}
-	}
-	if err := clonefrom.RenderSummary(os.Stdout, results, reportPath); err != nil {
+	} else if err := clonefrom.RenderSummary(os.Stdout, results, csvPath); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 	}
 	maybeExitOnCmdFaithfulMismatch()
 	os.Exit(cloneFromExitCode(results))
 }
+
+// writeCloneFromReports lives in clonefrom_reports.go to keep this
+// file under the project's 200-line cap.
 
 // cloneFromExitCode returns 1 if any row failed, else 0. Skipped
 // rows are NOT failures — re-running an idempotent plan with all
