@@ -54,6 +54,12 @@ type RemoveOptions struct {
 	// produced — letting CLI renderers print "would delete X" with
 	// the same accuracy as a real run.
 	DryRun bool
+	// Backend scopes the removal to a specific Windows backend
+	// (registry or startup-folder). Zero value (BackendUnspecified)
+	// preserves legacy behavior: both backends are tried in order
+	// and the first non-NoOp result wins. Linux and macOS callers
+	// ignore this field — there's only one backend per OS.
+	Backend Backend
 }
 
 // Remove deletes the named gitmap-managed autostart entry. `name`
