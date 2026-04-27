@@ -8,6 +8,7 @@ package cmd
 // the goldenguard package (single source of truth).
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"os"
@@ -190,25 +191,10 @@ func isGoldenGateVar(kv string) bool {
 // matching POSIX shell convention for "command not found".
 func extractExitCode(err error) int {
 	var exitErr *exec.ExitError
-	if asExitErr(err, &exitErr) {
+	if errors.As(err, &exitErr) {
 		return exitErr.ExitCode()
 	}
 	fmt.Fprintf(os.Stderr, "regoldens: failed to invoke `go test`: %v\n", err)
 
 	return 127
-}
-
-// asExitErr is a tiny errors.As wrapper kept here (vs the stdlib
-// import) so the function-length budget for executeRegoldens stays
-// comfortable. Returns true when err unwraps to *exec.ExitError.
-func asExitErr(err error, target **exec.ExitError) bool {
-	if err == nil {
-		return false
-	}
-	if ee, ok := err.(*exec.ExitError); ok {
-		*target = ee
-		return true
-	}
-
-	return false
 }
