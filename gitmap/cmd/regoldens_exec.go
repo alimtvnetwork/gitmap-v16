@@ -18,6 +18,9 @@ import (
 // dedicated helper so the control flow reads top-to-bottom and the
 // per-function line budget stays comfortably under 15.
 func executeRegoldens(cfg regoldensFlags) {
+	if cfg.determinism {
+		runDeterminismPrecheck(cfg)
+	}
 	pass1Code := runRegoldensPassCapture(cfg, true, constants.MsgRegoldensPass1Header)
 	maybeEmitDiffSummary(cfg)
 	exitOnPass1Failure(cfg, pass1Code)

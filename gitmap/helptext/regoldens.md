@@ -18,7 +18,7 @@ into a single command, so contributors cannot accidentally:
 ## Synopsis
 
 ```
-gitmap regoldens --pattern <TestPattern> [--package <pkg>] [--skip-verify] [--dry-run] [--diff=short|full]
+gitmap regoldens --pattern <TestPattern> [--package <pkg>] [--skip-verify] [--dry-run] [--diff=short|full] [--determinism]
 gitmap rg --pattern <TestPattern>                               # short alias
 ```
 
@@ -31,6 +31,7 @@ gitmap rg --pattern <TestPattern>                               # short alias
 | `--skip-verify` | false  | Skip the determinism verification pass. **Not recommended** — the verify pass is the whole point. |
 | `--dry-run` | false       | Print the `go test` invocations that would run, then exit 0. |
 | `--diff=<mode>` | (off)  | After pass 1, print a per-file summary of which `testdata/` goldens changed. `short` = one terse line per file (status + path). `full` = adds `+adds / -deletes` line counts, rename source paths, and renamed totals. Use `--diff=short` or `--diff=full`. |
+| `--determinism` | false  | Run a determinism **pre-check** BEFORE pass 1: invokes `go test` with the per-test trigger but WITHOUT the allow-update gate, so any writer using `goldenguard.AllowUpdateAfterDeterminism` is exercised but no fixtures are written. Fails fast (exit 1) on the first non-deterministic writer; otherwise pass 1 proceeds. |
 
 ## Behavior
 
@@ -52,22 +53,16 @@ order, timestamps, locale-dependent floats). Fix the writer — do
 NOT re-run with `--skip-verify`.
 
 **Diff summary (`--diff=short|full`).** Between pass 1 and pass 2,
-prints a per-file report of changed files under any `testdata/`
-directory. `short` = `status path` only. `full` = adds `(+adds / -dels)`,
-rename source lines (`↳ renamed from …`), and a `renamed` total.
+prints a per-file report of changed `testdata/` goldens. `short` =
+`status path`; `full` adds `(+adds / -dels)`, `↳ renamed from …`
+lines, and a `renamed` total. Fires even if pass 1 fails (so partial
+writes are visible); skipped when not in a git working tree.
 
-```
-▸ Golden diff summary (testdata/ files touched by pass 1) [mode=full]:
-  M  gitmap/clonefrom/testdata/report_canonical.json  (+3 / -1)
-  A  gitmap/formatter/testdata/scan_compact_v2.txt    (+42 / -0)
-  R  gitmap/formatter/testdata/scan_v3.txt            (+0 / -0)
-      ↳ renamed from gitmap/formatter/testdata/scan_v2.txt
-  ─ 3 file(s) changed: 1 added, 1 modified, 1 renamed, 0 deleted (+45 / -1 total)
-```
-
-The summary fires whether pass 1 passed or failed (so partial
-fixture writes are visible) and is skipped when the working tree
-is not a git repository.
+**Determinism pre-check (`--determinism`).** Runs `go test` first
+with the trigger ON but the allow-update gate OFF. Writers using
+`AllowUpdateAfterDeterminism` are exercised 3× and compared
+byte-for-byte; if any drift is found, exit 1 BEFORE pass 1, so no
+fixture is rewritten with non-deterministic bytes.
 
 ## Examples
 
@@ -94,18 +89,22 @@ Regenerate and inspect which goldens changed before verification:
 
 ```
 gitmap rg --pattern TestCloneFromReportJSON_Golden \
-  --package ./gitmap/clonefrom/ --diff=short
-
-gitmap rg --pattern TestCloneFromReportJSON_Golden \
   --package ./gitmap/clonefrom/ --diff=full
+```
+
+Run a determinism pre-check; fail fast before any fixture is rewritten:
+
+```
+gitmap rg --pattern TestCloneFromReportJSON_Golden \
+  --package ./gitmap/clonefrom/ --determinism
 ```
 
 ## Exit codes
 
 | Code | Meaning |
 |---|---|
-| 0 | Both passes succeeded (or `--dry-run`/`--skip-verify` completed). |
-| 1 | Pass 1 (regenerate) or pass 2 (verify) failed — see stderr. |
+| 0 | Pre-check (if requested), pass 1, and pass 2 all succeeded (or `--dry-run`/`--skip-verify` completed). |
+| 1 | Pre-check, pass 1, or pass 2 failed — see stderr. The pre-check failure message names the non-deterministic writer; pass 1 was NOT run and no fixtures were touched. |
 | 2 | Bad CLI usage (missing `--pattern`, or invalid `--diff` value). |
 
 ## After regenerating
