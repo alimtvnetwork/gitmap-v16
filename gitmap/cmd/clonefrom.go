@@ -180,7 +180,17 @@ func runCloneFromExecute(plan clonefrom.Plan, cfg cloneFromFlags) {
 	if cfg.output == constants.OutputTerminal {
 		hook = printCloneFromTermBlockRow
 	}
-	results := clonefrom.ExecuteWithHooks(plan, "", progress, hook)
+	// Dispatch sequential vs parallel on the resolved worker count.
+	// 0=auto becomes NumCPU at parse time, so any value reaching
+	// here is >=1. The concurrent runner short-circuits to
+	// ExecuteWithHooks for workers <=1.
+	var results []clonefrom.Result
+	if cfg.maxConcurrency > 1 {
+		fmt.Fprintf(os.Stderr, constants.MsgCloneConcurrencyEnabledFmt, cfg.maxConcurrency)
+		results = clonefrom.ExecuteWithHooksConcurrent(plan, "", progress, hook, cfg.maxConcurrency)
+	} else {
+		results = clonefrom.ExecuteWithHooks(plan, "", progress, hook)
+	}
 	csvPath, jsonPath := writeCloneFromReports(results, cfg)
 	if cfg.output == constants.OutputTerminal {
 		if err := clonefrom.RenderSummaryTerminal(os.Stdout, results, csvPath, jsonPath); err != nil {
