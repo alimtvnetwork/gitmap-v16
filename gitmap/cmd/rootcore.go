@@ -32,6 +32,7 @@ func coreDispatchEntries() []dispatchEntry {
 		{[]string{constants.CmdCloneFrom, constants.CmdCloneFromAlias}, func() { runCloneFrom(argsTail()) }},
 		{
 			[]string{
+				constants.CmdCloneReclone, constants.CmdCloneRecloneAlias,
 				constants.CmdCloneNow, constants.CmdCloneNowAlias,
 				constants.CmdCloneRel, constants.CmdCloneRelAlias,
 			},
