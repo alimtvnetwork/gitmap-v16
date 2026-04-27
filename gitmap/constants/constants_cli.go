@@ -131,6 +131,8 @@ const (
 	FlagDescRegoldensSkipVerify  = "Skip the second verification pass that re-runs without the gate env vars"
 	FlagRegoldensDryRun          = "dry-run"
 	FlagDescRegoldensDryRun      = "Print the `go test` invocations that would run, then exit 0"
+	FlagRegoldensDiff            = "diff"
+	FlagDescRegoldensDiff        = "After pass 1, print a concise summary of which testdata/ golden files changed (added/modified/deleted) before pass 2 runs"
 	RegoldensDefaultPackageGlob  = "./..."
 )
 
@@ -142,6 +144,11 @@ const (
 	MsgRegoldensSuccess       = "✓ Goldens regenerated and verified for pattern %q in package %q\n"
 	MsgRegoldensSuccessNoVeri = "✓ Goldens regenerated for pattern %q in package %q (verification skipped)\n"
 	MsgRegoldensDryRun        = "▸ Dry run — would execute:\n  %s\n  %s\n"
+	MsgRegoldensDiffHeader    = "▸ Golden diff summary (testdata/ files touched by pass 1):\n"
+	MsgRegoldensDiffNoChanges = "  (no testdata/ files changed)\n"
+	MsgRegoldensDiffLine      = "  %s  %s  (+%d / -%d)\n"
+	MsgRegoldensDiffTotals    = "  ─ %d file(s) changed: %d added, %d modified, %d deleted (+%d / -%d total)\n"
+	MsgRegoldensDiffSkipped   = "▸ Diff summary skipped: not a git working tree (or `git` not on PATH)\n"
 	ErrRegoldensMissingPat    = "regoldens: --pattern is required (e.g. --pattern TestCloneFromReportJSON_Golden)"
 	ErrRegoldensPass1Failed   = "regoldens: pass 1 (regenerate) failed with exit code %d — fixtures may be partially written; inspect git status before committing"
 	ErrRegoldensPass2Failed   = "regoldens: pass 2 (verify) failed with exit code %d — the writer is non-deterministic; fix the writer, do not re-run with --skip-verify"
