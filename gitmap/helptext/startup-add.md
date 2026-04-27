@@ -26,6 +26,36 @@ sa
 | --working-dir    | no  | Working directory the entry runs in (see *Working directory* below) |
 | --no-display     | no  | Set `NoDisplay=true` (hide from app menus, still autostarts) |
 | --force          | no  | Overwrite an existing **gitmap-managed** entry (never overwrites third-party files) |
+| --output         | no  | Output mode: `terminal` (default human lines) or `json` (status object — see below) |
+| --json-indent    | no  | Spaces per indent level for `--output=json` (`0` = minified). Range 0..8. Ignored for terminal |
+
+## `--output=json`
+
+Emits a single-element JSON array containing one consistent status
+object — the SAME shape `startup-remove --output=json` produces, so
+a single jq filter handles both:
+
+```json
+[
+  {
+    "command": "startup-add",
+    "action": "created",
+    "name": "watch",
+    "target": "/home/me/.config/autostart/gitmap-watch.desktop",
+    "owner": "gitmap",
+    "force_used": false,
+    "dry_run": false
+  }
+]
+```
+
+- **`action`** — one of `created`, `overwritten`, `exists`, `refused`, `bad_name`.
+- **`owner`** — `gitmap` (we own the entry), `third-party` (refused), or `unknown` (bad name).
+- **`target`** — absolute file path or `HKCU\...` registry path; empty for `bad_name`.
+- **`force_used`** — reflects whether `--force` was passed.
+- **`dry_run`** — always `false` for `startup-add` (kept so add/remove records are rectangular).
+
+Key order is byte-locked across Go versions (stablejson encoder).
 
 ## Working directory
 

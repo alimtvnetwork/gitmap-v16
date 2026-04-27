@@ -132,61 +132,107 @@ func validateStartupListBackend(b string) error {
 	return fmt.Errorf(constants.ErrStartupListBadBackend, b)
 }
 
-// runStartupRemove deletes a single managed entry. After --dry-run
-// and --backend are parsed off the args, exactly one positional
-// name must remain; missing or extra positionals trigger the usage
-// error. All four RemoveStatus outcomes map to a distinct user-
-// visible message (with a `(dry-run)` mirror set when --dry-run is
+// runStartupRemove deletes a single managed entry. After --dry-run,
+// --backend, --output and --json-indent are parsed off the args,
+// exactly one positional name must remain; missing or extra
+// positionals trigger the usage error. All four RemoveStatus
+// outcomes map to a distinct user-visible message in --output=
+// terminal mode (with a `(dry-run)` mirror set when --dry-run is
 // active) so the CLI is unambiguous about what happened — or what
-// would happen.
+// would happen. --output=json emits the shared startupStatus
+// object instead, with the same field shape as startup-add for
+// uniform downstream parsing.
 func runStartupRemove(args []string) {
-	name, dryRun, backendStr, err := parseStartupRemoveFlags(args)
+	cfg, err := parseStartupRemoveFlags(args)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, constants.ErrStartupRemoveUsage)
 		os.Exit(2)
 	}
-	backend, err := startup.ParseBackend(backendStr)
+	if err := validateStartupOutput(constants.CmdStartupRemove, cfg.output, cfg.jsonIndent); err != nil {
+		fmt.Fprintf(os.Stderr, "%v\n", err)
+		os.Exit(2)
+	}
+	backend, err := startup.ParseBackend(cfg.backend)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%v\n", err)
 		os.Exit(2)
 	}
-	res, err := startup.RemoveWithOptions(name, startup.RemoveOptions{
-		DryRun: dryRun, Backend: backend,
+	res, err := startup.RemoveWithOptions(cfg.name, startup.RemoveOptions{
+		DryRun: cfg.dryRun, Backend: backend,
 	})
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%v\n", err)
 		os.Exit(1)
 	}
-	printRemoveResult(name, res)
+	if cfg.output == constants.OutputJSON {
+		_ = emitStartupStatus(cfg.output, cfg.jsonIndent,
+			removeResultToStatus(cfg.name, res))
+
+		return
+	}
+	printRemoveResult(cfg.name, res)
 }
 
-// parseStartupRemoveFlags pulls --dry-run and --backend off the
-// args and returns the remaining single positional name. Returns
-// an error when the positional count is wrong so the caller exits
-// 2 with the usage message — matching the pre-flag behavior for
-// malformed invocations.
-func parseStartupRemoveFlags(args []string) (string, bool, string, error) {
+// startupRemoveFlags bundles parsed flag values so the dispatcher
+// stays small and adding a future flag is one struct field + one
+// parser line, never a return-shape change.
+type startupRemoveFlags struct {
+	name       string
+	backend    string
+	output     string
+	jsonIndent int
+	dryRun     bool
+}
+
+// parseStartupRemoveFlags pulls --dry-run, --backend, --output, and
+// --json-indent off the args and returns the remaining single
+// positional name in the struct. Returns an error when the
+// positional count is wrong so the caller exits 2 with the usage
+// message — matching the pre-flag behavior for malformed
+// invocations.
+func parseStartupRemoveFlags(args []string) (startupRemoveFlags, error) {
 	fs := flag.NewFlagSet(constants.CmdStartupRemove, flag.ContinueOnError)
 	fs.SetOutput(os.Stderr)
-	dryRun := fs.Bool(
-		constants.FlagStartupRemoveDryRun, false,
-		constants.FlagDescStartupRemoveDryRun,
-	)
-	backend := fs.String(
-		constants.FlagStartupRemoveBackend, "",
-		constants.FlagDescStartupRemoveBackend,
-	)
+	var cfg startupRemoveFlags
+	fs.BoolVar(&cfg.dryRun, constants.FlagStartupRemoveDryRun, false,
+		constants.FlagDescStartupRemoveDryRun)
+	fs.StringVar(&cfg.backend, constants.FlagStartupRemoveBackend, "",
+		constants.FlagDescStartupRemoveBackend)
+	fs.StringVar(&cfg.output, constants.FlagStartupOutput, constants.OutputTerminal,
+		constants.FlagDescStartupOutput)
+	fs.IntVar(&cfg.jsonIndent, constants.FlagStartupJSONIndent,
+		constants.StartupListJSONIndentDefault, constants.FlagDescStartupJSONIndent)
 	if err := fs.Parse(args); err != nil {
 
-		return "", false, "", err
+		return startupRemoveFlags{}, err
 	}
 	rest := fs.Args()
 	if len(rest) != 1 {
 
-		return "", false, "", fmt.Errorf("expected 1 positional name, got %d", len(rest))
+		return startupRemoveFlags{}, fmt.Errorf("expected 1 positional name, got %d", len(rest))
+	}
+	cfg.name = rest[0]
+
+	return cfg, nil
+}
+
+// validateStartupOutput rejects unknown --output values and
+// out-of-range --json-indent. Lives here (not next to per-command
+// flag parsers) so both startup-add and startup-remove get the
+// same error wording without duplicating the switch.
+func validateStartupOutput(cmd, output string, jsonIndent int) error {
+	switch output {
+	case constants.OutputTerminal, constants.OutputJSON:
+	default:
+
+		return fmt.Errorf(constants.ErrStartupBadOutput, cmd, output)
+	}
+	if jsonIndent < 0 || jsonIndent > constants.StartupListJSONIndentMax {
+
+		return fmt.Errorf(constants.ErrStartupListBadJSONIndent, jsonIndent)
 	}
 
-	return rest[0], *dryRun, *backend, nil
+	return nil
 }
 
 // printRemoveResult routes one of four messages depending on the
