@@ -138,3 +138,14 @@ or after a manual `launchctl unload <path>` while the user's GUI
 session is active. This keeps automated uninstall scripts working in
 CI / SSH sessions where `launchctl` is unavailable. `--dry-run` does
 not call `launchctl` either.
+
+## Windows backends reference
+
+For the full ownership-detection model and how the
+`<hive>\Software\Gitmap\Startup*` tracking subkey makes
+`startup-remove` idempotent (missing entry → `noop`, third-party
+entry → `refused`, managed entry → `deleted` of both the Run-key
+value / `.lnk` and the tracking subkey), see *Windows backends*
+in [startup-add](startup-add.md). `--force` is intentionally NOT
+accepted here — `startup-remove` will never delete a non-tracked
+entry, regardless of any flag.

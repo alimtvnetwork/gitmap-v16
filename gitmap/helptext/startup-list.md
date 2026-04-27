@@ -130,3 +130,13 @@ commands on that platform instead.
 - Binary plists are not supported. Gitmap-managed entries are
   always XML, so a binary plist with our prefix is treated as
   third-party and refused.
+
+## Windows backends reference
+
+For the full ownership-detection model, the two-gate "managed by
+gitmap" check, `--force` semantics, and the idempotency contract
+backed by the `<hive>\Software\Gitmap\Startup*` tracking subkey,
+see *Windows backends* in [startup-add](startup-add.md). The same
+classifier drives every line `startup-list` prints — entries
+without a tracking subkey are filtered out, so a row in this
+listing always means gitmap can safely manage that entry.
