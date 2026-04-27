@@ -277,3 +277,18 @@ No silent loss of delete intent is acceptable.
 | Test duplicate prevention | tests |
 | Test completed-task transactional move | tests |
 | Run full `golangci-lint` | — |
+
+---
+
+## v3.153.0 Clone-Pick (spec 100) — 2026-04-27
+- ✅ Authored `spec/01-app/100-clone-pick.md` (full contract: sparse-checkout pipeline, --ask picker, CloneInteractiveSelection schema, --replay rules)
+- ✅ Authored `.lovable/memory/features/clone-pick.md` and indexed in `index.md` Core + Memories
+- ⏳ Implement `gitmap/constants/constants_clonepick.go` (command IDs, flags, messages, autoExclude defaults)
+- ⏳ Implement `gitmap/store/cloneinteractiveselection.go` + add `SQLCreateCloneInteractiveSelection` to constants_store.go and to `Migrate()` statements list
+- ⏳ Implement `gitmap/clonepick/` package: `parse.go`, `plan.go`, `sparse.go`, `picker.go` (bubbletea), `persist.go`, `render.go`
+- ⏳ Implement `gitmap/cmd/clonepick.go` dispatcher entry + register in `coreDispatchEntries()` in `rootcore.go`
+- ⏳ Add `// gitmap:cmd top-level` marker on `CmdClonePick`/`CmdClonePickAlias` const block (drift CI)
+- ⏳ Author `gitmap/helptext/clone-pick.md` (≤120 lines, 5 examples per spec §9)
+- ⏳ Tests: parse, plan cone-detection, store insert/lookup, cmd dry-run + replay-not-found + missing-args
+- ⏳ Bump `Version` constant → `3.153.0`; add CHANGELOG v3.153.0 entry
+- ⏳ Verify: `go vet ./...` and `go test ./clonepick/... ./cmd/... ./store/...`
