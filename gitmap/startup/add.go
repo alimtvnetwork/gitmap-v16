@@ -42,6 +42,15 @@ type AddOptions struct {
 	// with the same name. Has NO effect on third-party files; those
 	// always refuse.
 	Force bool
+	// WorkingDir, when non-empty, sets the process working directory
+	// for the autostart entry. Rendered as `Path=<dir>` in .desktop
+	// files (XDG spec field), `WorkingDirectory` in LaunchAgent
+	// plists, and stored as the `WorkingDir` value of the gitmap
+	// tracking subkey on Windows (HKCU\Software\Gitmap\Startup*\<name>).
+	// Callers MUST pass an absolute path; relative paths are accepted
+	// as-is and interpreted by the OS at login time. Empty means
+	// "inherit whatever the login session provides".
+	WorkingDir string
 	// Backend selects the Windows autostart target (Registry vs
 	// Startup-folder shortcut). Ignored on Linux/macOS, which each
 	// have one canonical backend. Zero value (BackendUnspecified)
