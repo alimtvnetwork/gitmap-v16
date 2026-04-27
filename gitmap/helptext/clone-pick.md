@@ -4,6 +4,12 @@ Clone only selected paths from a git repo into the current directory
 using git's native sparse-checkout. Auto-saves every selection to the
 local SQLite database for later replay.
 
+> **Note:** unlike the other clone-family commands, `clone-pick` does
+> NOT accept `--max-concurrency`. It clones exactly one repo per
+> invocation, so a worker pool would have nothing to parallelise. Use
+> `gitmap clone`, `clone-next`, `clone-now` (`relclone`), or
+> `clone-from` for batch parallelism.
+
 ## Alias
 
 cpk
