@@ -59,6 +59,7 @@ func printCloneNowTermBlockRow(index, total int, row clonenow.Row,
 	// (no-op unless --verify-cmd-faithful is on). Single source of
 	// truth: clonenow.BuildGitArgs is the same builder Execute calls.
 	runCmdFaithfulCheck(in, clonenow.BuildGitArgs(row, url, dest))
+	runCmdPrintArgv(clonenow.BuildGitArgs(row, url, dest))
 }
 
 
@@ -103,4 +104,5 @@ func printCloneFromTermBlockRow(index, total int, row clonefrom.Row,
 	// argv builder is the SAME function execute.go calls, so any
 	// future drift between the two paths surfaces here loudly.
 	runCmdFaithfulCheck(in, clonefrom.BuildGitArgs(row, dest))
+	runCmdPrintArgv(clonefrom.BuildGitArgs(row, dest))
 }

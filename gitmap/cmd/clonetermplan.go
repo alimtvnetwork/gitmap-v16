@@ -112,6 +112,7 @@ func printClonePickTermBlock(plan clonepick.Plan) {
 	// gitClonePartial uses, so any drift between displayed and
 	// executed argv surfaces in the report.
 	runCmdFaithfulCheck(in, clonepick.BuildGitArgs(plan, plan.DestDir))
+	runCmdPrintArgv(clonepick.BuildGitArgs(plan, plan.DestDir))
 }
 
 // clonePickCmdPre assembles the literal pre-positional flag tokens

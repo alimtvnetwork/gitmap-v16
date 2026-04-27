@@ -57,4 +57,5 @@ func printCloneTermBlockForURL(output string, idx int, url, dest string) {
 	// no extra flags, so the expected argv is just those two
 	// positionals. Mirrors executeDirectClone in clonenext.go.
 	runCmdFaithfulCheck(in, []string{"clone", url, dest})
+	runCmdPrintArgv([]string{"clone", url, dest})
 }
