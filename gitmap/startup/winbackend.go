@@ -108,11 +108,24 @@ func addWindows(clean string, opts AddOptions) (AddResult, error) {
 	}
 }
 
-// removeWindows tries BOTH backends in order: registry first, then
-// startup-folder. First non-NoOp result wins (Add prevents same-
-// named entries in both backends, but defense-in-depth). Returns
-// NoOp only when BOTH backends report no entry by that name.
+// removeWindows routes the deletion to the requested backend. When
+// opts.Backend is BackendUnspecified, falls back to the legacy
+// dual-backend probe: registry first, then startup-folder, first
+// non-NoOp wins. When the user passes --backend explicitly, only
+// that backend is touched and a missing entry returns NoOp without
+// silently checking the other backend (important: a user removing
+// a registry entry must not have a same-named .lnk deleted as a
+// "courtesy"). Returns NoOp only when the chosen backend (or both,
+// in fallback mode) report no entry by that name.
 func removeWindows(clean string, opts RemoveOptions) (RemoveResult, error) {
+	switch opts.Backend {
+	case BackendRegistry:
+
+		return removeWindowsRegistry(clean, opts)
+	case BackendStartupFolder:
+
+		return removeWindowsStartupFolder(clean, opts)
+	}
 	res, err := removeWindowsRegistry(clean, opts)
 	if err != nil {
 
