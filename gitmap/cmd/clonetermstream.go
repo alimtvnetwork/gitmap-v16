@@ -15,6 +15,15 @@ package cmd
 //
 // The block goes to stdout (matches clone-next and clone-from).
 // Clone progress stays on stderr per the project's stream contract.
+
+import (
+	"fmt"
+	"os"
+	"strings"
+
+	"github.com/alimtvnetwork/gitmap-v7/gitmap/constants"
+	"github.com/alimtvnetwork/gitmap-v7/gitmap/render"
+)
 //
 // Faithfulness contract (audited): the printed `cmd:` line MUST be
 // byte-identical to the argv the executor passes to `exec.Command`.
@@ -89,25 +98,25 @@ func maybePrintCloneTermBlock(output string, in CloneTermBlockInput) {
 
 // buildCloneCommand returns the exact `git clone` command the
 // executor will run. The output is byte-identical to the argv
-// joined with spaces — caller-supplied CmdExtraArgs and CmdBranch
-// drive the differences between commands (see file-header contract).
+// joined with spaces — caller-supplied CmdExtraArgsPre/Post and
+// CmdBranch drive the differences between commands (see file-header
+// faithfulness contract).
 //
 // Branch resolution rule: an explicitly-set CmdBranch wins. If
-// CmdBranch is empty AND no extra args were passed, we fall back to
-// the legacy behavior of using in.Branch as the `-b` value — this
-// keeps clone-now / clone-from / clone-pick row callers (which set
-// neither field but DO pass branches via in.Branch) working without
-// per-call-site churn. Callers that explicitly want NO `-b`
-// (URL-driven clone) set CmdBranch=="" AND pass a non-nil
-// CmdExtraArgs (even if empty slice) — handled by the explicit
-// "URL-driven" sentinel below.
+// CmdBranch is empty AND neither CmdExtraArgsPre nor CmdExtraArgsPost
+// was passed (both nil), we fall back to in.Branch as the `-b` value
+// — this keeps the original clone-now / clone-pick row callers
+// working without per-call-site churn. Callers that explicitly want
+// NO `-b` (URL-driven clone) set CmdBranch=="" AND pass a non-nil
+// CmdExtraArgsPre (even if empty slice) — see pickCmdBranch.
 func buildCloneCommand(in CloneTermBlockInput) string {
 	parts := []string{constants.GitBin, constants.GitClone}
-	parts = append(parts, in.CmdExtraArgs...)
+	parts = append(parts, in.CmdExtraArgsPre...)
 	branch := pickCmdBranch(in)
 	if len(branch) > 0 {
 		parts = append(parts, constants.GitBranchFlag, branch)
 	}
+	parts = append(parts, in.CmdExtraArgsPost...)
 	parts = append(parts, in.TargetURL, in.Dest)
 
 	return strings.Join(parts, " ")
@@ -120,11 +129,9 @@ func pickCmdBranch(in CloneTermBlockInput) string {
 	if len(in.CmdBranch) > 0 {
 		return in.CmdBranch
 	}
-	// Caller passed CmdExtraArgs but no CmdBranch — they're
-	// asserting "no -b, even if Branch is set" (URL-driven path).
-	// nil vs empty distinction: nil = legacy fallback, non-nil
-	// (even empty) = explicit opt-out.
-	if in.CmdExtraArgs != nil {
+	// Non-nil CmdExtraArgsPre is the explicit "no -b" sentinel
+	// (URL-driven clone). nil = legacy fallback to in.Branch.
+	if in.CmdExtraArgsPre != nil {
 		return ""
 	}
 
