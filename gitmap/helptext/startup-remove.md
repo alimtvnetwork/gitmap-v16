@@ -9,6 +9,7 @@ their name.
 ```
 gitmap startup-remove <name>
 gitmap startup-remove --dry-run <name>
+gitmap startup-remove --output=json <name>
 gitmap sr <name>
 ```
 
@@ -25,6 +26,8 @@ extension is tolerated for convenience:
 |------|---------|-------------|
 | `--dry-run` | `false` | Show what would be deleted (or refused/no-op) without touching the filesystem |
 | `--backend` | (try both) | Windows only: `registry` or `startup-folder`. Scopes the removal to one backend; without it, gitmap probes the registry first then the Startup folder and removes the first match |
+| `--output` | `terminal` | Output mode: `terminal` (legacy human lines) or `json` (status object — see below) |
+| `--json-indent` | `2` | Spaces per indent level for `--output=json` (`0` = minified single line). Range: 0..8. Ignored for `--output=terminal` |
 
 `--dry-run` runs the full classification (existence + marker check)
 but skips the actual unlink. The same four outcomes are reported,
@@ -37,6 +40,41 @@ respectively). On Windows, passing `--backend=registry` will NOT
 fall back to the Startup folder if the registry entry is missing
 (returns `(no-op)` instead). This is deliberate: scoped removal
 must never silently delete an entry the user did not target.
+
+## `--output=json`
+
+Emits a single-element JSON array containing one consistent status
+object — the SAME shape `startup-add --output=json` produces — so a
+single jq filter handles both commands:
+
+```json
+[
+  {
+    "command": "startup-remove",
+    "action": "deleted",
+    "name": "watch",
+    "target": "/home/me/.config/autostart/gitmap-watch.desktop",
+    "owner": "gitmap",
+    "force_used": false,
+    "dry_run": false
+  }
+]
+```
+
+Field meaning:
+
+- **`command`** — `"startup-remove"`.
+- **`action`** — one of `deleted`, `noop`, `refused`, `bad_name`.
+- **`name`** — the positional name you passed.
+- **`target`** — absolute file path (or `HKCU\...` registry path on
+  Windows). Empty string for `noop` / `bad_name`.
+- **`owner`** — `gitmap` (we deleted it), `none` (no entry by that
+  name), `third-party` (refused), or `unknown` (bad name).
+- **`force_used`** — always `false` for `startup-remove` (kept in the
+  schema so add/remove records have rectangular fields).
+- **`dry_run`** — `true` when `--dry-run` was passed.
+
+Key order is byte-locked across Go versions (stablejson encoder).
 
 ## Outcomes
 
