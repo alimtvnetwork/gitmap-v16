@@ -85,6 +85,18 @@ When `--execute` is on, a row is marked **skipped** (not failed) if its resolved
 
 Nested `dest` paths preserve the original folder hierarchy: a row with `dest: org-a/team-x/repo-1` clones into `<cwd>/org-a/team-x/repo-1/`, with any missing parent directories created automatically (`MkdirAll`, idempotent on existing dirs). If a parent path collides with an existing FILE the row is marked **failed** with `mkdir parent: …` in the detail column — never silently swallowed.
 
+## Checkout modes
+
+Each row may set a `checkout` value (and `--checkout` sets a global default). Three modes:
+
+| Mode | Effect on `git clone` | Post-clone step | Failure behaviour |
+|---|---|---|---|
+| `auto` (default) | unchanged — git clones with `--branch` when the row pins one, else uses the remote's HEAD | none | clone-time errors only |
+| `skip` | adds `--no-checkout` so no working tree is materialized (just `.git/`) | none | clone-time errors only |
+| `force` | unchanged | runs `git -C <dest> checkout <branch>` (no-op when the row has no `branch`) | row marked **failed** with `branch missing on remote: <name>` if the checkout step fails (typo'd branch, branch deleted upstream, detached-HEAD with no target). Stderr also gets a Code Red log. |
+
+A row's per-row value always wins over the `--checkout` global default. Invalid values (anything other than `auto`/`skip`/`force`) are rejected at parse time with a row-pointing error before any clone runs.
+
 ## Exit codes
 
 | Code | Meaning |
