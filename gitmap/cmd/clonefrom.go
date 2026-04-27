@@ -34,6 +34,10 @@ type cloneFromFlags struct {
 	execute  bool
 	quiet    bool
 	noReport bool
+	// output selects the per-row presentation: "" / "default" keep
+	// the legacy 4-line block; "terminal" renders the standardized
+	// branch/from/to/command block shared with scan, clone-next, probe.
+	output string
 }
 
 // runCloneFrom is the dispatcher entry. checkHelp handles `--help`
@@ -48,7 +52,7 @@ func runCloneFrom(args []string) {
 		os.Exit(1)
 	}
 	if !cfg.execute {
-		runCloneFromDry(plan)
+		runCloneFromDry(plan, cfg)
 
 		return
 	}
@@ -68,6 +72,8 @@ func parseCloneFromFlags(args []string) cloneFromFlags {
 		constants.FlagDescCloneFromQuiet)
 	fs.BoolVar(&cfg.noReport, constants.FlagCloneFromNoReport, false,
 		constants.FlagDescCloneFromNoReport)
+	fs.StringVar(&cfg.output, constants.FlagCloneFromOutput, "",
+		constants.FlagDescCloneFromOutput)
 	reordered := reorderFlagsBeforeArgs(args)
 	fs.Parse(reordered)
 	if fs.NArg() < 1 {
@@ -83,11 +89,24 @@ func parseCloneFromFlags(args []string) cloneFromFlags {
 // dry-run conventional code (0 = "I would do these things"). No
 // side effects — by design, a dry-run never touches the network
 // or the filesystem outside of READING the input file.
-func runCloneFromDry(plan clonefrom.Plan) {
-	if err := clonefrom.Render(os.Stdout, plan); err != nil {
+func runCloneFromDry(plan clonefrom.Plan, cfg cloneFromFlags) {
+	render := pickCloneFromRenderer(cfg.output)
+	if err := render(os.Stdout, plan); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
+}
+
+// pickCloneFromRenderer dispatches between the legacy and the
+// standardized terminal renderer based on --output. Anything other
+// than "terminal" (including the empty default) keeps the legacy
+// output so existing scripts and doc snippets stay byte-identical.
+func pickCloneFromRenderer(output string) func(io.Writer, clonefrom.Plan) error {
+	if output == constants.OutputTerminal {
+		return clonefrom.RenderTerminal
+	}
+
+	return clonefrom.Render
 }
 
 // runCloneFromExecute is the side-effecting branch. Picks the
