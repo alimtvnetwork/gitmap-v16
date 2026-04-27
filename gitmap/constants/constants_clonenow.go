@@ -52,6 +52,25 @@ const (
 	// `gitmap clone-now scan.json --cwd ./mirror --execute`.
 	FlagCloneNowCwd     = "cwd"
 	FlagDescCloneNowCwd = "Working directory for git clone (default: current dir)."
+	// FlagCloneNowOnExists controls re-clone behavior when the
+	// destination already contains a git repo. Default "skip" keeps
+	// the historical no-op behavior. "update" runs fetch + checkout
+	// without destroying local work. "force" removes the directory
+	// and re-clones from scratch -- destructive, opt-in only.
+	FlagCloneNowOnExists     = "on-exists"
+	FlagDescCloneNowOnExists = "Behavior when target already exists: " +
+		"'skip' (default, no-op when repo+branch match), " +
+		"'update' (fetch + checkout to align with the planned URL/branch), " +
+		"'force' (remove target and re-clone -- destructive)."
+)
+
+// On-exists policy enum strings. Stable: surfaced in --on-exists,
+// the dry-run header, and the per-row Result.Detail field. Renaming
+// is a breaking change for shell scripts that grep these values.
+const (
+	CloneNowOnExistsSkip   = "skip"
+	CloneNowOnExistsUpdate = "update"
+	CloneNowOnExistsForce  = "force"
 )
 
 // Mode enum strings. Stable: surfaced in the dry-run header and the
