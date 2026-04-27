@@ -150,4 +150,14 @@ const (
 	ErrCloneNowBadOnExists = "clone-now: --on-exists must be 'skip', 'update', or 'force', got %q"
 	// %s = path.
 	ErrCloneNowEmpty = "clone-now: %s contains zero clonable rows"
+	// MsgCloneNowMkdirParentFailFmt is the per-row Detail set when
+	// pre-creating the destination's parent directory fails. Mirrors
+	// the clonefrom equivalent so summary tables read consistently.
+	// %v = err.
+	MsgCloneNowMkdirParentFailFmt = "mkdir parent: %v"
+	// ErrCloneNowMkdirParent is the standardized stderr log emitted
+	// alongside MsgCloneNowMkdirParentFailFmt (Code Red zero-swallow).
+	// %s = parent path, %v = err.
+	ErrCloneNowMkdirParent = "Error: clone-now: failed to create dest parent at %s: %v " +
+		"(check permissions / disk space)\n"
 )
