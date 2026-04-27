@@ -21,8 +21,6 @@ package clonenow
 import (
 	"io"
 	"os"
-	"path/filepath"
-	"time"
 )
 
 // BeforeRowHook is invoked once per row, just before the row's git
@@ -45,8 +43,8 @@ func ExecuteWithHooks(plan Plan, cwd string, progress io.Writer,
 	total := len(plan.Rows)
 	for i, r := range plan.Rows {
 		if beforeRow != nil {
-			url, dest := resolveRowDisplay(r, plan, cwd)
-			beforeRow(i+1, total, r, url, dest)
+			url := r.PickURL(plan.Mode)
+			beforeRow(i+1, total, r, url, r.RelativePath)
 		}
 		res := executeRow(r, plan, cwd)
 		out = append(out, res)
@@ -55,22 +53,3 @@ func ExecuteWithHooks(plan Plan, cwd string, progress io.Writer,
 
 	return out
 }
-
-// resolveRowDisplay re-derives the (url, dest) pair the executor
-// will use, so the BeforeRow hook can render a block that matches
-// what git actually clones. We deliberately don't refactor
-// executeRow to expose these — the duplication is two lines and
-// keeps the hot path allocation-free.
-func resolveRowDisplay(r Row, plan Plan, cwd string) (string, string) {
-	url := r.PickURL(plan.Mode)
-	dest := r.RelativePath
-	if !filepath.IsAbs(dest) {
-		_ = filepath.Join(cwd, dest) // dest displayed as the relative form
-	}
-
-	return url, dest
-}
-
-// _ keeps the time import live if future hook variants need it
-// without churning this file's import block.
-var _ = time.Now
