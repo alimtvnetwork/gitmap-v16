@@ -124,4 +124,3 @@ func clonePickCmdPre(plan clonepick.Plan) []string {
 
 	return parts
 }
-}

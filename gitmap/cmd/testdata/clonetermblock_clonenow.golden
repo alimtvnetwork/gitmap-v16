@@ -1,0 +1,5 @@
+  3. scripts-fixer
+     branch:    develop (manifest)
+     from:      git@github.com:owner/scripts-fixer.git
+     to:        git@github.com:owner/scripts-fixer.git
+     command:   git clone -b develop git@github.com:owner/scripts-fixer.git repos/scripts-fixer
