@@ -86,10 +86,13 @@ func writeScanArtifact(t *testing.T, tmpDir, name string,
 }
 
 // renderPlanNormalized renders the dry-run plan and replaces the
-// absolute source path with a stable placeholder so the byte
-// comparison is portable across machines + temp-dir layouts. The
-// rest of the bytes (header text, per-row blocks) ARE the contract
-// being pinned.
+// absolute source path AND the format token with stable placeholders
+// so the byte comparison is portable across machines AND across
+// input formats. The header's source-path and format-name slots are
+// envelope metadata that legitimately differ per run/per format;
+// the meat being pinned is the row count, the per-row blocks, and
+// the overall layout — which MUST stay identical regardless of
+// which format the user fed in.
 func renderPlanNormalized(t *testing.T, plan clonenow.Plan, marker string) []byte {
 	t.Helper()
 	var buf bytes.Buffer
@@ -97,6 +100,12 @@ func renderPlanNormalized(t *testing.T, plan clonenow.Plan, marker string) []byt
 		t.Fatalf("Render: %v", err)
 	}
 	out := strings.ReplaceAll(buf.String(), plan.Source, marker)
+	// Format token lives in the dry-run header as `(<format>, mode=...)`.
+	// Replace the parenthesized prefix only — bare `csv` / `json`
+	// substrings could legitimately appear inside repo URLs or
+	// branch names in other test fixtures.
+	out = strings.Replace(out,
+		"("+plan.Format+", mode=", "(<FORMAT>, mode=", 1)
 
 	return []byte(out)
 }
