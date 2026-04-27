@@ -84,15 +84,34 @@ scan_with_pattern_per_ext() {
 }
 
 # list_tracked emits NUL-separated tracked paths matching one or
-# more shell globs. Falls back to `find` when not in a git checkout
-# (e.g. a tarball release rebuild).
+# more shell globs. Falls back to `find -name <glob> -o -name ...`
+# when not inside a git checkout (e.g. a tarball release rebuild).
 list_tracked() {
   if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
     git ls-files -z -- "$@"
-  else
-    find . -type f \( "$@" \) -print0
+    return
   fi
+  buildFindAndRun "$@"
 }
+
+# buildFindAndRun assembles a `find . -type f \( -name g1 -o -name g2 ... \)`
+# expression. Splitting it out keeps list_tracked's positive branch
+# obvious and lets the find-builder respect the 15-line function cap.
+buildFindAndRun() {
+  local args=(. -type f '(')
+  local first=1
+  for glob in "$@"; do
+    if [ "$first" -eq 1 ]; then
+      first=0
+    else
+      args+=(-o)
+    fi
+    args+=(-name "$glob")
+  done
+  args+=(')' -print0)
+  find "${args[@]}"
+}
+
 
 echo "▸ Scanning for ${ALLOW_VAR} assignments outside ${WHITELIST_PREFIX}..."
 
