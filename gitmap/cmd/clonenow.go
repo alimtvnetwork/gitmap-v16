@@ -93,7 +93,7 @@ func runCloneNow(args []string) {
 // parse-time error later.
 func parseCloneNowFlags(args []string) cloneNowFlags {
 	var cfg cloneNowFlags
-	fs := flag.NewFlagSet("clone-now", flag.ExitOnError)
+	fs := flag.NewFlagSet(constants.CmdCloneReclone, flag.ExitOnError)
 	fs.BoolVar(&cfg.execute, constants.FlagCloneNowExecute, false,
 		constants.FlagDescCloneNowExecute)
 	fs.BoolVar(&cfg.quiet, constants.FlagCloneNowQuiet, false,
