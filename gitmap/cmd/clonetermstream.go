@@ -20,32 +20,23 @@ package cmd
 // byte-identical to the argv the executor passes to `exec.Command`.
 // Each caller therefore controls two override fields:
 //
-//   - CmdBranch:    branch passed to `-b` in the printed cmd. Empty
-//                   means "no `-b` flag" — used by URL-driven clone
-//                   and clone-next, which never pass `-b` to git.
-//                   The Branch/BranchSource fields above are still
-//                   shown on the `branch:` line for context.
-//   - CmdExtraArgs: literal extra tokens inserted between
-//                   `git clone` and the `[-b X]` slot. Used by
-//                   clone-pick to surface `--filter=blob:none
-//                   --no-checkout` and by clone-from to surface
-//                   `--depth=N` when the row asked for one.
-
-import (
-	"fmt"
-	"os"
-	"strings"
-
-	"github.com/alimtvnetwork/gitmap-v7/gitmap/constants"
-	"github.com/alimtvnetwork/gitmap-v7/gitmap/render"
-)
-
+//   - CmdBranch:        branch passed to `-b` in the printed cmd.
+//                       Empty means "no `-b` flag".
+//   - CmdExtraArgsPre:  literal tokens inserted between `git clone`
+//                       and the `-b` slot. Used by clone-pick for
+//                       `--filter=blob:none --no-checkout`.
+//   - CmdExtraArgsPost: literal tokens inserted between the `-b`
+//                       slot and the positional `<url> <dest>` pair.
+//                       Used by clone-from for `--depth=N` (which
+//                       its executor places AFTER `-b`).
+//
 // CloneTermBlockInput carries the per-repo data every clone command
 // already has on hand. Branch/BranchSource may be empty — the
 // renderer falls back to "(unknown)" so the block shape is stable.
 //
-// CmdBranch and CmdExtraArgs let each caller make the printed cmd
-// EXACTLY match its real exec — see file-header faithfulness contract.
+// CmdBranch + CmdExtraArgsPre/Post let each caller make the printed
+// cmd EXACTLY match its real exec — see file-header faithfulness
+// contract.
 type CloneTermBlockInput struct {
 	Index        int
 	Name         string
@@ -57,13 +48,14 @@ type CloneTermBlockInput struct {
 	// CmdBranch overrides which branch (if any) is rendered as `-b`
 	// in the printed cmd. Empty = no `-b` flag, regardless of what
 	// Branch (the display field) holds. Defaults to Branch when the
-	// caller leaves it nil-equivalent (zero string), preserving
-	// backward compat for clone-now / clone-from / clone-pick rows
-	// that DO pass -b to git.
+	// caller leaves both CmdBranch AND CmdExtraArgs* unset (legacy
+	// fallback for clone-now / clone-pick rows).
 	CmdBranch string
-	// CmdExtraArgs are literal tokens inserted between `git clone`
-	// and the optional `-b <branch>` pair. Order is preserved.
-	CmdExtraArgs []string
+	// CmdExtraArgsPre are tokens between `git clone` and `-b`.
+	CmdExtraArgsPre []string
+	// CmdExtraArgsPost are tokens between `-b <branch>` and the
+	// positional URL/dest pair.
+	CmdExtraArgsPost []string
 }
 
 // maybePrintCloneTermBlock emits the standardized RepoTermBlock to
