@@ -180,7 +180,7 @@ func TestStartupListJSONIndent_FlagParsing(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			_, _, err := parseStartupListFlags(tc.args)
+			_, err := parseStartupListFlags(tc.args)
 			if (err != nil) != tc.wantErr {
 				t.Fatalf("args=%v: wantErr=%v got %v",
 					tc.args, tc.wantErr, err)
