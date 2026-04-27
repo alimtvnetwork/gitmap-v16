@@ -91,7 +91,7 @@ func TestAddWindowsRegistry_RoundTrip(t *testing.T) {
 		if e.Name == constants.StartupWinValuePrefix+name {
 			found = true
 			if e.Exec != `C:\gitmap.exe watch` {
-				t.Errorf("exec = %q, want C:\gitmap.exe watch", e.Exec)
+				t.Errorf("exec = %q, want %s", e.Exec, `C:\gitmap.exe watch`)
 			}
 		}
 	}
