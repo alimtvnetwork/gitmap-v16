@@ -203,8 +203,3 @@ func asExitErr(err error, target **exec.ExitError) bool {
 
 	return false
 }
-
-// Compile-time guard: io.Discard reference keeps the io import
-// useful even if a future refactor drops a stream redirect. Remove
-// the line if io is genuinely unused.
-var _ = io.Discard
