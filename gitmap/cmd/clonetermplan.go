@@ -54,6 +54,7 @@ func printCloneNowTermBlocks(plan clonenow.Plan) {
 			OriginalURL:  url,
 			TargetURL:    url,
 			Dest:         dest,
+			CmdBranch:    row.Branch, // executor only passes -b when row.Branch is set
 		})
 	}
 }
