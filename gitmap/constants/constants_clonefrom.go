@@ -42,28 +42,15 @@ const (
 		"stdout, streamed before each clone; git progress stays on stderr)"
 	// FlagCloneFromCheckout sets the GLOBAL default for post-clone
 	// working-tree behaviour. Per-row `checkout` (JSON/CSV column)
-	// overrides this. Three values:
-	//
-	//   "auto"  — current behaviour: git clone (with --branch when
-	//             row.Branch is set) materializes the working tree.
-	//   "skip"  — pass `git clone --no-checkout` so the working tree
-	//             stays empty (HEAD is detached at FETCH_HEAD's tip
-	//             but no files are written). Useful for bare-ish
-	//             mirrors / metadata-only ingestion.
-	//   "force" — same as auto for the clone step PLUS an explicit
-	//             follow-up `git checkout <branch>` (only meaningful
-	//             when row.Branch is set; on default-HEAD rows it's
-	//             a no-op since git already checked out HEAD).
-	//             Missing-branch failures are surfaced as the row's
-	//             `failed` status with a clear detail string —
-	//             never silently fall back to a different branch.
+	// overrides this. Modes: "auto" (default — git clone materializes
+	// the working tree), "skip" (passes --no-checkout, no working
+	// tree), "force" (explicit `git checkout <branch>` after clone,
+	// fails the row on missing branch / detached-HEAD-with-no-target).
 	FlagCloneFromCheckout     = "checkout"
 	FlagDescCloneFromCheckout = "Default per-row checkout mode " +
-		"('auto' | 'skip' | 'force'). Per-row 'checkout' field in " +
-		"the input file overrides this. 'skip' clones with " +
-		"--no-checkout (no working tree). 'force' explicitly checks " +
-		"out the row's branch after clone and fails the row if the " +
-		"branch is missing on the remote."
+		"('auto' | 'skip' | 'force'). Per-row 'checkout' field " +
+		"overrides this. 'skip' uses --no-checkout. 'force' runs " +
+		"git checkout after clone and fails missing-branch rows."
 )
 
 // Checkout-mode enum. Stable strings — emitted in error/detail
