@@ -25,8 +25,11 @@ type regoldensFlags struct {
 	pkg        string
 	skipVerify bool
 	isDryRun   bool
-	showDiff   bool
+	diffMode   string // "" (off), "short", or "full"
 }
+
+// hasDiff reports whether any diff summary was requested.
+func (c regoldensFlags) hasDiff() bool { return c.diffMode != "" }
 
 // goTestUpdateEnvValue mirrors goldenguard.allowUpdateValue (which
 // is unexported). Both gate env vars must equal "1" to unlock pass 1.
