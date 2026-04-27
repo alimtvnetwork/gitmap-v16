@@ -25,6 +25,7 @@ type regoldensFlags struct {
 	pkg        string
 	skipVerify bool
 	isDryRun   bool
+	showDiff   bool
 }
 
 // goTestUpdateEnvValue mirrors goldenguard.allowUpdateValue (which
