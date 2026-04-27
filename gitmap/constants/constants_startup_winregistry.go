@@ -25,6 +25,18 @@ const (
 	// with a sibling tracking subkey under HKCU\Software\Gitmap\
 	// StartupFolder\<name>.
 	StartupBackendStartupFolder = "startup-folder"
+	// StartupBackendRegistryHKLM mirrors StartupBackendRegistry but
+	// targets the MACHINE-WIDE Run key under HKEY_LOCAL_MACHINE
+	// instead of the per-user HKEY_CURRENT_USER. The autostart value
+	// fires for EVERY interactive user that logs into the machine,
+	// so writes require administrator privileges (UAC elevation).
+	// Tracking metadata is stored under
+	// HKLM\Software\Gitmap\StartupRegistry\<name> so a non-admin
+	// reader can still discover ownership without touching HKCU.
+	// Reads (list) work without elevation; add/remove require admin
+	// and surface ErrStartupHKLMNotAdmin up-front when the current
+	// process token is not elevated.
+	StartupBackendRegistryHKLM = "registry-hklm"
 )
 
 // Registry paths. HKCU only — gitmap NEVER writes to HKLM, even with
