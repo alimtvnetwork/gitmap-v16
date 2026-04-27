@@ -113,6 +113,9 @@ func addWindows(clean string, opts AddOptions) (AddResult, error) {
 	case BackendStartupFolder:
 
 		return addWindowsStartupFolder(clean, opts)
+	case BackendRegistryHKLM:
+
+		return addWindowsRegistryHKLM(clean, opts)
 	default:
 
 		return AddResult{}, fmt.Errorf(constants.ErrStartupAddBadBackend, backend.String())
@@ -121,13 +124,14 @@ func addWindows(clean string, opts AddOptions) (AddResult, error) {
 
 // removeWindows routes the deletion to the requested backend. When
 // opts.Backend is BackendUnspecified, falls back to the legacy
-// dual-backend probe: registry first, then startup-folder, first
-// non-NoOp wins. When the user passes --backend explicitly, only
-// that backend is touched and a missing entry returns NoOp without
-// silently checking the other backend (important: a user removing
-// a registry entry must not have a same-named .lnk deleted as a
-// "courtesy"). Returns NoOp only when the chosen backend (or both,
-// in fallback mode) report no entry by that name.
+// multi-backend probe: HKCU registry → HKLM registry → startup-
+// folder, first non-NoOp wins. When the user passes --backend
+// explicitly, only that backend is touched and a missing entry
+// returns NoOp without silently checking the other backends
+// (important: a user removing a registry entry must not have a
+// same-named .lnk deleted as a "courtesy"). Returns NoOp only when
+// the chosen backend (or all three, in fallback mode) report no
+// entry by that name.
 func removeWindows(clean string, opts RemoveOptions) (RemoveResult, error) {
 	switch opts.Backend {
 	case BackendRegistry:
@@ -136,27 +140,36 @@ func removeWindows(clean string, opts RemoveOptions) (RemoveResult, error) {
 	case BackendStartupFolder:
 
 		return removeWindowsStartupFolder(clean, opts)
+	case BackendRegistryHKLM:
+
+		return removeWindowsRegistryHKLM(clean, opts)
 	}
 	res, err := removeWindowsRegistry(clean, opts)
-	if err != nil {
+	if err != nil || res.Status != RemoveNoOp {
 
 		return res, err
 	}
-	if res.Status != RemoveNoOp {
+	res, err = removeWindowsRegistryHKLM(clean, opts)
+	if err != nil || res.Status != RemoveNoOp {
 
-		return res, nil
+		return res, err
 	}
 
 	return removeWindowsStartupFolder(clean, opts)
 }
 
-// listWindows enumerates BOTH backends and concatenates the
-// results. Order is registry-first, startup-folder-second so the
-// CLI can group by backend in the rendered output. Returns nil
-// (NOT an error) when both backends are empty — fresh accounts
+// listWindows enumerates ALL three backends and concatenates the
+// results. Order is HKCU-registry → HKLM-registry → startup-folder
+// so the CLI can group by backend in the rendered output. Returns
+// nil (NOT an error) when every backend is empty — fresh accounts
 // shouldn't see a scary error from `gitmap startup-list`.
 func listWindows() ([]Entry, error) {
 	reg, err := listWindowsRegistry()
+	if err != nil {
+
+		return nil, err
+	}
+	regHKLM, err := listWindowsRegistryHKLM()
 	if err != nil {
 
 		return nil, err
@@ -166,6 +179,7 @@ func listWindows() ([]Entry, error) {
 
 		return nil, err
 	}
+	out := append(reg, regHKLM...)
 
-	return append(reg, folder...), nil
+	return append(out, folder...), nil
 }
