@@ -17,20 +17,31 @@ package constants
 //
 // All user-facing strings live here per the no-magic-strings rule.
 
-// CLI surface. CmdCloneNow / CmdCloneNowAlias are referenced by the
-// dispatcher (rootcore.go) and the completion generator (which
-// scans for the `// gitmap:cmd top-level` marker in this package).
+// CLI surface — canonical name + backward-compat aliases.
 //
-// CmdCloneRel / CmdCloneRelAlias are explicit-name aliases that
-// dispatch to the same runCloneNow entry. They exist to give users
-// an unambiguous "re-clone from artifact" verb that cannot collide
-// with `gitmap clone <url>` (the direct-URL clone behavior). See
-// spec/04-clone-family/ for the rationale.
+// CmdCloneReclone ("reclone") is the CANONICAL verb as of v3.x.
+// It was renamed from clone-now so the CLI vocabulary makes the
+// split between the two clone families unambiguous:
+//
+//   - `gitmap clone <url>`   — fresh clone from a URL.
+//   - `gitmap reclone <file>` — RE-clone from a scan artifact
+//     (round-trip the recorded RelativePath layout).
+//
+// All four legacy spellings are kept as aliases so existing scripts
+// keep working forever:
+//   - clone-now / cnow  — original name (v3.161.0).
+//   - relclone / rc     — earlier explicit "re-clone" alias.
+//
+// The dispatcher in rootcore.go binds every spelling to runCloneNow.
+// The completion generator picks them up via the
+// `// gitmap:cmd top-level` marker on this const block.
 const (
-	CmdCloneNow      = "clone-now"
-	CmdCloneNowAlias = "cnow"
-	CmdCloneRel      = "relclone"
-	CmdCloneRelAlias = "rc"
+	CmdCloneReclone      = "reclone"
+	CmdCloneRecloneAlias = "rec"
+	CmdCloneNow          = "clone-now"
+	CmdCloneNowAlias     = "cnow"
+	CmdCloneRel          = "relclone"
+	CmdCloneRelAlias     = "rc"
 )
 
 // Flag names + descriptions. Long-form only; short flags are

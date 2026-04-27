@@ -201,6 +201,15 @@ func topLevelCmds() map[string]string {
 		"CmdCommitBothA":           CmdCommitBothA,
 		"CmdClonePick":             CmdClonePick,
 		"CmdClonePickAlias":        CmdClonePickAlias,
+		// Re-clone family. All six dispatch to runCloneNow via
+		// rootcore.go. CmdCloneReclone is canonical (v3.x+); the
+		// others are kept-forever back-compat aliases.
+		"CmdCloneReclone":      CmdCloneReclone,
+		"CmdCloneRecloneAlias": CmdCloneRecloneAlias,
+		"CmdCloneNow":          CmdCloneNow,
+		"CmdCloneNowAlias":     CmdCloneNowAlias,
+		"CmdCloneRel":          CmdCloneRel,
+		"CmdCloneRelAlias":     CmdCloneRelAlias,
 	}
 }
 
