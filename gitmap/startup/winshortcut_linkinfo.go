@@ -44,6 +44,16 @@ const (
 // Returns an error only when the target path contains characters
 // LocalBasePath cannot represent (NUL bytes — would break the
 // NUL-terminated ASCII encoding).
+//
+// Example:
+//
+//	raw, err := buildLinkInfo(`C:\Tools\gitmap.exe`)
+//	// raw[0:4]  = total LinkInfoSize (little-endian)
+//	// raw[4:8]  = 0x1C header size
+//	// raw[8:12] = 0x01 VolumeIDAndLocalBasePath flag
+//	// raw[0x1C:0x2C]                  = VolumeID block
+//	// raw[0x2C:0x2C+len(target)+1]    = target + 0x00
+//	// raw[len(raw)-1]                 = 0x00 CommonPathSuffix terminator
 func buildLinkInfo(target string) ([]byte, error) {
 	if bytes.IndexByte([]byte(target), 0) >= 0 {
 
@@ -71,6 +81,14 @@ type linkInfoOffsets struct {
 // computeLinkInfoOffsets converts the variable-width section sizes
 // to uint32 once, refusing pathological lengths instead of silently
 // wrapping. Returns the precomputed offsets ready to write.
+//
+// Example: with a 16-byte VolumeID, a 20-byte path ("C:\\foo.exe\x00"
+// is 12 bytes; pretend 20 for illustration), and a 1-byte suffix:
+//
+//	volOff    = 0x1C            (right after 28-byte header)
+//	pathOff   = 0x1C + 16 = 0x2C
+//	suffixOff = 0x2C + 20 = 0x40
+//	totalSize = 0x40 + 1  = 0x41
 func computeLinkInfoOffsets(volumeID, pathBytes, suffixBytes []byte) (linkInfoOffsets, error) {
 	volSize, err := safeUint32(len(volumeID))
 	if err != nil {
@@ -96,6 +114,15 @@ func computeLinkInfoOffsets(volumeID, pathBytes, suffixBytes []byte) (linkInfoOf
 
 // assembleLinkInfo writes the header + payload sections into a
 // single buffer. Pure formatting — no arithmetic, no error path.
+//
+// Example output for target "C:\\a.exe" (8 bytes + NUL = 9):
+//
+//	out[0:4]   = 0x39 0x00 0x00 0x00   // totalSize = 0x39
+//	out[4:8]   = 0x1C 0x00 0x00 0x00   // header size
+//	out[12:16] = 0x1C 0x00 0x00 0x00   // VolumeIDOffset
+//	out[16:20] = 0x2C 0x00 0x00 0x00   // LocalBasePathOffset
+//	out[0x2C:0x35] = "C:\\a.exe\x00"
+//	out[0x38]      = 0x00              // CommonPathSuffix
 func assembleLinkInfo(o linkInfoOffsets, volumeID, pathBytes, suffixBytes []byte) []byte {
 	le := binary.LittleEndian
 	out := make([]byte, o.totalSize)
