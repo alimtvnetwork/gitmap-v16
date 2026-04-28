@@ -163,8 +163,10 @@ func jsonStringNonEmpty(raw json.RawMessage) bool {
 
 // validateCSVSchema ensures the CSV input has a recognizable header
 // row whose every column is a known field and which includes at
-// least one of httpsUrl / sshUrl. Reads only the header line so the
-// caller can re-read the body afterwards.
+// least one of httpsUrl / sshUrl, AND that every data row carries a
+// non-empty URL. Per-row failures are reported with a 1-based DATA
+// row number (header is row 0; data row 1 = first row after header,
+// matching what a spreadsheet user sees as "row 2").
 func validateCSVSchema(r io.Reader) error {
 	cr := csv.NewReader(r)
 	cr.FieldsPerRecord = -1
@@ -175,8 +177,64 @@ func validateCSVSchema(r io.Reader) error {
 	if err != nil {
 		return fmt.Errorf(constants.ErrCloneNowCSVRead, err)
 	}
+	if err := validateCSVHeader(header); err != nil {
+		return err
+	}
 
-	return validateCSVHeader(header)
+	return validateCSVBody(cr, header)
+}
+
+// validateCSVBody streams the remaining CSV records (header already
+// consumed) and asserts each data row has the expected column count
+// and a non-empty URL in either httpsUrl or sshUrl. Stops at the
+// first row-level failure so users fix one issue at a time.
+func validateCSVBody(cr *csv.Reader, header []string) error {
+	urlIdxs := urlColumnIndexes(header)
+	want := len(header)
+	for dataRow := 1; ; dataRow++ {
+		rec, err := cr.Read()
+		if err == io.EOF {
+
+			return nil
+		}
+		if err != nil {
+			return fmt.Errorf(constants.ErrCloneNowCSVRowRead, dataRow, err)
+		}
+		if len(rec) != want {
+			return fmt.Errorf(constants.ErrCloneNowCSVRowFieldCount,
+				dataRow, len(rec), want)
+		}
+		if !rowHasURL(rec, urlIdxs) {
+			return fmt.Errorf(constants.ErrCloneNowCSVRowMissingURL, dataRow)
+		}
+	}
+}
+
+// urlColumnIndexes returns the positions of the httpsUrl / sshUrl
+// columns in the (already validated) header. Empty slice cannot
+// occur because validateCSVHeader rejects headers without one.
+func urlColumnIndexes(header []string) []int {
+	out := make([]int, 0, 2)
+	for i, col := range header {
+		name := normalizeHeaderName(col)
+		if name == "httpsUrl" || name == "sshUrl" {
+			out = append(out, i)
+		}
+	}
+
+	return out
+}
+
+// rowHasURL reports whether at least one of the URL columns in this
+// data row holds a non-whitespace value.
+func rowHasURL(rec []string, urlIdxs []int) bool {
+	for _, i := range urlIdxs {
+		if i < len(rec) && len(strings.TrimSpace(rec[i])) > 0 {
+			return true
+		}
+	}
+
+	return false
 }
 
 // validateCSVHeader checks every header column against the known
