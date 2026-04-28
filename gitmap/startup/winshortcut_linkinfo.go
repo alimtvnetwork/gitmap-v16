@@ -27,6 +27,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
+	"math"
 )
 
 // LinkInfo + VolumeID constants from [MS-SHLLINK] §2.3.
@@ -52,10 +53,23 @@ func buildLinkInfo(target string) ([]byte, error) {
 	pathBytes := append([]byte(target), 0x00) // NUL-terminated ASCII
 	suffixBytes := []byte{0x00}               // empty CommonPathSuffix
 
+	volSize, err := safeUint32(len(volumeID))
+	if err != nil {
+		return nil, fmt.Errorf("volumeID size: %w", err)
+	}
+	pathSize, err := safeUint32(len(pathBytes))
+	if err != nil {
+		return nil, fmt.Errorf("target path size: %w", err)
+	}
+	suffixSize, err := safeUint32(len(suffixBytes))
+	if err != nil {
+		return nil, fmt.Errorf("suffix size: %w", err)
+	}
+
 	volOff := linkInfoHeaderSize
-	pathOff := volOff + uint32(len(volumeID))
-	suffixOff := pathOff + uint32(len(pathBytes))
-	totalSize := suffixOff + uint32(len(suffixBytes))
+	pathOff := volOff + volSize
+	suffixOff := pathOff + pathSize
+	totalSize := suffixOff + suffixSize
 
 	le := binary.LittleEndian
 	out := make([]byte, totalSize)
@@ -71,6 +85,18 @@ func buildLinkInfo(target string) ([]byte, error) {
 	copy(out[suffixOff:], suffixBytes)
 
 	return out, nil
+}
+
+// safeUint32 narrows a non-negative int to uint32, refusing values
+// that would silently wrap on a 64-bit platform. Centralized so the
+// gosec G115 guard is uniform across every offset/size we compute.
+func safeUint32(n int) (uint32, error) {
+	if n < 0 || n > math.MaxUint32 {
+
+		return 0, fmt.Errorf("value %d out of uint32 range", n)
+	}
+
+	return uint32(n), nil
 }
 
 // buildVolumeID emits a minimal VolumeID block: 16-byte header,
