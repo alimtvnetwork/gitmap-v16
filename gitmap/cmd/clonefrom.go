@@ -105,8 +105,7 @@ func runCloneFrom(args []string) {
 func runCloneFromDry(plan clonefrom.Plan, cfg cloneFromFlags) {
 	render := pickCloneFromRenderer(cfg.output)
 	if err := render(os.Stdout, plan); err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
+		cliexit.Fail(constants.CmdCloneFrom, "render-dry-run", cfg.file, err, 1)
 	}
 }
 
