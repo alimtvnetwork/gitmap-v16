@@ -39,11 +39,23 @@ func seedOneWorktree(t *testing.T, root, name, bare string) {
 
 // requireGitForIntegration mirrors the unit-test helper: skip the
 // whole integration when git isn't on PATH so minimal CI containers
-// stay green.
+// stay green. Also skips when the sandbox forbids `git add` (some
+// hardened environments inject a wrapper that refuses index writes);
+// the integration here can't proceed without commits in the bare repo.
 func requireGitForIntegration(t *testing.T) {
 	t.Helper()
 	if _, err := exec.LookPath("git"); err != nil {
 		t.Skipf("git not on PATH: %v", err)
+	}
+	probe := t.TempDir()
+	if err := exec.Command("git", "-C", probe, "init", "-q").Run(); err != nil {
+		t.Skipf("git init blocked in sandbox: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(probe, "x"), []byte("x"), 0o644); err != nil {
+		t.Skipf("tempdir write blocked: %v", err)
+	}
+	if err := exec.Command("git", "-C", probe, "add", "x").Run(); err != nil {
+		t.Skipf("git add blocked in sandbox: %v", err)
 	}
 }
 
