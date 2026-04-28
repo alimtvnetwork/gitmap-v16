@@ -118,6 +118,11 @@ const (
 	ErrCloneFromCSVNoURL  = "clone-from: CSV header is missing required column 'url'"
 	// %d = row number including header, %v = err.
 	ErrCloneFromCSVRow = "clone-from: CSV row %d: %v"
+	// %d = row number including header, %s = column name, %v = err.
+	// Used when a row failure is attributable to a specific column so
+	// the operator can jump straight to the offending cell instead of
+	// re-reading the whole row to guess which field tripped validation.
+	ErrCloneFromCSVRowCol = "clone-from: CSV row %d, column %q: %v"
 	// %s = bad depth string.
 	ErrCloneFromBadDepth = "depth %q is not a valid integer"
 	ErrCloneFromEmptyURL = "url is empty after trim"

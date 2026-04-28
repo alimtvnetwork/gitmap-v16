@@ -26,24 +26,52 @@ import (
 // a duplicate validator here would just create a second source of
 // truth that could drift from git's actual behavior.
 func validateRow(r Row) error {
-	if len(r.URL) == 0 {
+	_, err := validateRowWithColumn(r)
+	return err
+}
 
-		return fmt.Errorf(constants.ErrCloneFromEmptyURL)
+// validateRowWithColumn returns the offending CSV column name
+// alongside the error so callers (the CSV parser) can name the bad
+// cell in their wrapped error. Non-CSV callers use validateRow and
+// discard the column name.
+func validateRowWithColumn(r Row) (string, error) {
+	if len(r.URL) == 0 {
+		return constants.CSVColumnURL, fmt.Errorf(constants.ErrCloneFromEmptyURL)
 	}
 	if !looksLikeGitURL(r.URL) {
-
-		return fmt.Errorf(constants.ErrCloneFromBadURL, r.URL)
+		return constants.CSVColumnURL, fmt.Errorf(constants.ErrCloneFromBadURL, r.URL)
 	}
 	if r.Depth < 0 {
-
-		return fmt.Errorf(constants.ErrCloneFromNegDepth, r.Depth)
+		return constants.CSVColumnDepth, fmt.Errorf(constants.ErrCloneFromNegDepth, r.Depth)
+	}
+	if len(r.Branch) > 0 && !isValidBranchName(r.Branch) {
+		return constants.CSVColumnBranch, fmt.Errorf(constants.ErrCloneFromBadBranch, r.Branch)
 	}
 	if !isValidCheckout(r.Checkout) {
-
-		return fmt.Errorf(constants.ErrCloneFromBadCheckout, r.Checkout)
+		return constants.CSVColumnCheckout, fmt.Errorf(constants.ErrCloneFromBadCheckout, r.Checkout)
 	}
 
-	return nil
+	return "", nil
+}
+
+// isValidBranchName rejects values that would either be silently
+// reinterpreted by git (a leading '-' becomes a flag) or that we
+// know cannot be a real ref (whitespace / control chars). This is
+// intentionally permissive — git's own ref-name rules are stricter
+// (no '..', no '@{', etc.); we catch only the high-confidence
+// failures so the error surfaces with row/column context instead
+// of as an opaque `git checkout` failure later.
+func isValidBranchName(s string) bool {
+	if strings.HasPrefix(s, "-") {
+		return false
+	}
+	for _, r := range s {
+		if r <= 0x20 || r == 0x7f {
+			return false
+		}
+	}
+
+	return true
 }
 
 // isValidCheckout accepts the empty string (means "inherit global
