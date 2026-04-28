@@ -30,6 +30,7 @@ type auditLegacyOpts struct {
 	Root       string
 	AsJSON     bool
 	ReportPath string // empty = no report file written
+	WriteDiffs bool   // --diffs: emit per-file unified diffs alongside the report
 }
 
 // runAuditLegacy is the dispatch entry point.
