@@ -81,6 +81,14 @@ type linkInfoOffsets struct {
 // computeLinkInfoOffsets converts the variable-width section sizes
 // to uint32 once, refusing pathological lengths instead of silently
 // wrapping. Returns the precomputed offsets ready to write.
+//
+// Example: with a 16-byte VolumeID, a 20-byte path ("C:\\foo.exe\x00"
+// is 12 bytes; pretend 20 for illustration), and a 1-byte suffix:
+//
+//	volOff    = 0x1C            (right after 28-byte header)
+//	pathOff   = 0x1C + 16 = 0x2C
+//	suffixOff = 0x2C + 20 = 0x40
+//	totalSize = 0x40 + 1  = 0x41
 func computeLinkInfoOffsets(volumeID, pathBytes, suffixBytes []byte) (linkInfoOffsets, error) {
 	volSize, err := safeUint32(len(volumeID))
 	if err != nil {
