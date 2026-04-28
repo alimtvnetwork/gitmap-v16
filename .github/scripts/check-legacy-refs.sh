@@ -62,8 +62,12 @@ GREP_ARGS+=(--exclude="check-legacy-refs.sh")
 echo "  [legacy-refs] scanning '$ROOT' for pattern: $PATTERN"
 
 # `|| true` lets us inspect the result without -e killing the script on
-# the "no match" exit-code-1 from grep.
-MATCHES="$(grep "${GREP_ARGS[@]}" "$PATTERN" "$ROOT" 2>/dev/null || true)"
+# the "no match" exit-code-1 from grep. Then strip lines carrying the
+# whitelist marker so docs/comments that legitimately reference the old
+# names (e.g. the audit-legacy command's own help text) don't self-trip
+# the guard.
+RAW="$(grep "${GREP_ARGS[@]}" "$PATTERN" "$ROOT" 2>/dev/null || true)"
+MATCHES="$(printf '%s\n' "$RAW" | grep -v 'gitmap-legacy-ref-allow' || true)"
 
 if [ -z "$MATCHES" ]; then
   echo "  [legacy-refs] OK — no forbidden legacy refs found."
