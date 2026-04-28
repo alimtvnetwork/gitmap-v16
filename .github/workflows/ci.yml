@@ -843,7 +843,20 @@ jobs:
           go-version-file: gitmap/go.mod
           cache-dependency-path: gitmap/go.sum
 
-      - name: Run JSON snapshot + schema contract tests (-failfast)
+      # See `lint` job for rationale — persist GOCACHE so the
+      # JSON-snapshot subset re-uses compiled test binaries from
+      # prior runs instead of recompiling cmd/ + formatter/ every
+      # time. Job-scoped key suffix keeps slots isolated.
+      - name: Cache Go build cache (GOCACHE)
+        if: needs.sha-check.outputs.already-built != 'true'
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/go-build
+          key: go-build-${{ runner.os }}-jsonsnap-${{ hashFiles('gitmap/go.sum') }}-${{ github.sha }}
+          restore-keys: |
+            go-build-${{ runner.os }}-jsonsnap-${{ hashFiles('gitmap/go.sum') }}-
+            go-build-${{ runner.os }}-jsonsnap-
+
         if: needs.sha-check.outputs.already-built != 'true'
         working-directory: gitmap
         shell: bash
