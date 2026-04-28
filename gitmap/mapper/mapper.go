@@ -50,6 +50,10 @@ func BuildRecordsWithOptions(repos []scanner.RepoInfo, opts BuildOptions) []mode
 		rec := buildOneRecord(repo, opts)
 		records = append(records, rec)
 	}
+	// Pin (RelativePath, HTTPSUrl, SSHUrl, AbsolutePath) order so
+	// terminal/CSV/JSON exports are byte-identical across runs even
+	// when the scanner ordering changes upstream. See sort.go.
+	SortRecords(records)
 
 	return records
 }
