@@ -128,6 +128,9 @@ function Invoke-DelegatedFullInstaller([string]$effectiveRepo) {
     if (-not [string]::IsNullOrWhiteSpace($Arch))       { $passArgs.Arch       = $Arch }
     if ($NoPath)    { $passArgs.NoPath    = $true }
     if ($Uninstall) { $passArgs.Uninstall = $true }
+    if ($Force)     { $passArgs.Force     = $true }
+    if ($KeepData)  { $passArgs.KeepData  = $true }
+    if ($PurgeData) { $passArgs.PurgeData = $true }
 
     & $block @passArgs
     return $true
