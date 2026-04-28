@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/alimtvnetwork/gitmap-v8/gitmap/cliexit"
 	"github.com/alimtvnetwork/gitmap-v8/gitmap/constants"
 	"github.com/alimtvnetwork/gitmap-v8/gitmap/movemerge"
 )
@@ -19,8 +20,7 @@ func runMove(args []string) {
 	rightEP := mustResolve(right, false, opts)
 	logResolved(leftEP, rightEP, opts)
 	if err := movemerge.RunMove(leftEP, rightEP, opts); err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
+		cliexit.Fail(constants.CmdMv, "move", leftEP.DisplayName+" -> "+rightEP.DisplayName, err, 1)
 	}
 }
 
@@ -46,8 +46,7 @@ func parseMoveArgs(args []string) (string, string, movemerge.Options) {
 func mustResolve(raw string, isLeft bool, opts movemerge.Options) movemerge.Endpoint {
 	ep, err := movemerge.ResolveEndpoint(raw, isLeft, opts)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
+		cliexit.Fail(constants.CmdMv, "resolve-endpoint", raw, err, 1)
 	}
 
 	return ep
