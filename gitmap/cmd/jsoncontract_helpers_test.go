@@ -125,15 +125,7 @@ func skipUntilFirstObjectStart(dec *json.Decoder) error {
 
 // collectObjectKeys, equalStringSlices, and skipOneValue have been
 // consolidated into jsonsnapshot_helpers_test.go (canonical home
-// for shared JSON-test helpers). This file keeps only the helpers
-// unique to the contract suite. trimTrailingNewline stays here
-// because it's the only file that needs trailing-newline
-// normalization (snapshot helpers rely on golden files that
-// already have a stable terminator).
-
-// trimTrailingNewline normalizes encoder output for byte comparison.
-// json.Encoder.Encode always appends a trailing '\n'; some golden
-// files may omit it. This helper lets either form match.
-func trimTrailingNewline(b []byte) []byte {
-	return []byte(strings.TrimRight(string(b), "\n"))
-}
+// for shared JSON-test helpers). trimTrailingNewline used to live
+// here for byte-comparison normalization but was removed once no
+// test required it — snapshot helpers compare against goldens with
+// a stable trailing terminator.
