@@ -181,8 +181,7 @@ func runCloneNowDry(plan clonenow.Plan, cfg cloneNowFlags) {
 		return
 	}
 	if err := clonenow.Render(os.Stdout, plan); err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
+		cliexit.Fail(constants.CmdCloneReclone, "render-dry-run", cfg.file, err, 1)
 	}
 }
 
