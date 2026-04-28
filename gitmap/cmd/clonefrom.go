@@ -131,10 +131,18 @@ func parseCloneFromFlags(args []string) cloneFromFlags {
 		false, constants.FlagDescClonePrintArgv)
 	fs.StringVar(&cfg.checkout, constants.FlagCloneFromCheckout, "",
 		constants.FlagDescCloneFromCheckout)
+	fs.StringVar(&cfg.emitSchema, constants.FlagCloneFromEmitSchema, "",
+		constants.FlagDescCloneFromEmitSchema)
 	maxConcFlag := fs.Int(constants.CloneFlagMaxConcurrency,
 		constants.CloneDefaultMaxConcurrency, constants.FlagDescCloneMaxConcurrency)
 	reordered := reorderFlagsBeforeArgs(args)
 	fs.Parse(reordered)
+	// --emit-schema short-circuits before the <file> requirement so
+	// users can run `gitmap clone-from --emit-schema=report` from any
+	// directory without inventing a dummy input file.
+	if cfg.emitSchema != "" {
+		return cfg
+	}
 	if fs.NArg() < 1 {
 		fmt.Fprintln(os.Stderr, constants.MsgCloneFromMissingArg)
 		os.Exit(2)
