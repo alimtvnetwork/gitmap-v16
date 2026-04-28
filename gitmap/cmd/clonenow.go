@@ -80,8 +80,7 @@ func runCloneNow(args []string) {
 	setCmdPrintArgv(cfg.printCloneArgv)
 	plan, err := clonenow.ParseFile(cfg.file, cfg.format, cfg.mode, cfg.onExists)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
+		cliexit.Fail(constants.CmdCloneReclone, "parse-manifest", cfg.file, err, 1)
 	}
 	validateRecloneManifestOrExit(plan)
 	if !cfg.execute {
