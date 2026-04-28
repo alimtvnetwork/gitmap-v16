@@ -41,6 +41,14 @@ func parseScanFlags(args []string) (dir, configPath, mode, output, outFile, outp
 	outputFlag := fs.String("output", "", constants.FlagDescOutput)
 	outFileFlag := fs.String("out-file", "", constants.FlagDescOutFile)
 	outputPathFlag := fs.String("output-path", "", constants.FlagDescOutputPath)
+	// `--manifest` is a unified alias for `--output-path`, mirroring
+	// the same flag on `gitmap reclone` so the scan→reclone round-
+	// trip uses one vocabulary. When BOTH are passed, `--manifest`
+	// wins ONLY if `--output-path` was left at its empty default;
+	// otherwise the explicit `--output-path` is preserved (no silent
+	// override of a previously-set value).
+	manifestFlag := fs.String(constants.FlagScanManifest, "",
+		constants.FlagDescScanManifest)
 	relRootFlag := fs.String(constants.FlagScanRelativeRoot, "", constants.FlagDescScanRelativeRoot)
 	// Empty default → mapper.resolveDefaultBranch falls back to
 	// constants.DefaultBranch. We DON'T put "main" here because doing
