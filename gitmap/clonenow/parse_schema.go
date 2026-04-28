@@ -57,6 +57,7 @@ var knownScanFields = map[string]bool{
 	"cloneInstruction": true,
 	"notes":            true,
 	"depth":            true,
+	"transport":        true,
 }
 
 // validateJSONSchema ensures the JSON input is an array of objects
