@@ -36,6 +36,12 @@ type cloneNowFlags struct {
 	// "both provided" conflict and exit 2 with a clear message
 	// instead of silently picking one.
 	manifest string
+	// scanRoot redirects auto-pickup to probe a custom root's
+	// `.gitmap/output/` instead of the process CWD. Empty means
+	// "use CWD" — the original behavior. Ignored when manifest or
+	// the positional file is supplied; --scan-root only steers the
+	// auto-pickup branch so the CLI never has competing roots.
+	scanRoot string
 	execute  bool
 	quiet    bool
 	mode     string
