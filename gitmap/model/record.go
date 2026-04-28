@@ -11,6 +11,14 @@ import "github.com/alimtvnetwork/gitmap-v8/gitmap/constants"
 // when DefaultMaxDepth (or a custom --max-depth) prevented walking
 // into deeper directories: a row with Depth == cap is a candidate
 // for a deeper rescan.
+//
+// Transport is the URL-scheme bucket the repo's discovered remote
+// falls into: one of "ssh" | "https" | "other". Surfaced as a CSV
+// column / JSON field so users can filter clones by transport with
+// a one-liner (`awk -F, '$13=="ssh"' gitmap.csv`, `jq '.[]|
+// select(.transport=="ssh")' gitmap.json`). Mirrors the same three-
+// bucket collapse that the clone-from terminal summary uses (see
+// clonefrom.TransportTally) so the two views stay in lockstep.
 type ScanRecord struct {
 	ID               int64  `json:"id"                csv:"id"`
 	Slug             string `json:"slug"              csv:"slug"`
@@ -26,6 +34,7 @@ type ScanRecord struct {
 	CloneInstruction string `json:"cloneInstruction"  csv:"cloneInstruction"`
 	Notes            string `json:"notes"             csv:"notes"`
 	Depth            int    `json:"depth"             csv:"depth"`
+	Transport        string `json:"transport"         csv:"transport"`
 }
 
 // ReleaseConfig holds release-specific configuration from config.json.
