@@ -330,6 +330,28 @@ const (
 		"supported extensions are .json, .csv, .txt (or pass --format json|csv|text)"
 	// %s = path.
 	ErrCloneNowEmpty = "clone-now: %s contains zero clonable rows"
+	// Schema validation errors. Run BEFORE the tolerant
+	// formatter.ParseJSON / formatter.ParseCSV so a typo'd field
+	// name or a wrong-shape input fails loudly instead of producing
+	// silently-empty Rows downstream. Phrases are stable so tests
+	// and shell scripts can grep them.
+	//
+	// %v = decode error from json.Decoder.
+	ErrCloneNowJSONShape = "clone-now: JSON input must be an array of objects: %v"
+	// %d = 1-based row index, %s = unknown field name, %s = sorted
+	// list of all known field names.
+	ErrCloneNowUnknownJSONField = "clone-now: JSON row %d has unknown field %q; " +
+		"known fields: %s"
+	// %d = 1-based row index. Emitted when a row has neither
+	// httpsUrl nor sshUrl set to a non-empty string.
+	ErrCloneNowMissingURL = "clone-now: JSON row %d has neither httpsUrl nor sshUrl set"
+	// Emitted when the CSV file is completely empty (no header).
+	ErrCloneNowEmptyCSV = "clone-now: CSV input is empty (no header row found)"
+	// %s = unknown column name, %s = sorted list of known fields.
+	ErrCloneNowUnknownCSVField = "clone-now: CSV header has unknown column %q; " +
+		"known columns: %s"
+	// Emitted when the CSV header has neither httpsUrl nor sshUrl.
+	ErrCloneNowCSVMissingURLCol = "clone-now: CSV header must include 'httpsUrl' or 'sshUrl'"
 	// MsgCloneNowMkdirParentFailFmt is the per-row Detail set when
 	// pre-creating the destination's parent directory fails. Mirrors
 	// the clonefrom equivalent so summary tables read consistently.

@@ -14,7 +14,9 @@ package clonenow
 // the schema, clone-now picks up the change automatically.
 
 import (
+	"bytes"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -91,22 +93,52 @@ func parseByFormat(path, format string) ([]Row, error) {
 
 	switch format {
 	case constants.CloneNowFormatJSON:
-		recs, err := formatter.ParseJSON(f)
-		if err != nil {
-			return nil, fmt.Errorf(constants.ErrCloneNowJSONDecode, err)
-		}
-
-		return rowsFromRecords(recs), nil
+		return parseJSONWithSchema(f)
 	case constants.CloneNowFormatCSV:
-		recs, err := formatter.ParseCSV(f)
-		if err != nil {
-			return nil, fmt.Errorf(constants.ErrCloneNowCSVRead, err)
-		}
-
-		return rowsFromRecords(recs), nil
+		return parseCSVWithSchema(f)
 	}
 
 	return parseTextRows(f)
+}
+
+// parseJSONWithSchema slurps the JSON file once, runs the schema
+// guard against the bytes, then hands the same bytes to the
+// tolerant formatter.ParseJSON so we don't re-decode twice with
+// divergent semantics.
+func parseJSONWithSchema(f io.Reader) ([]Row, error) {
+	data, err := io.ReadAll(f)
+	if err != nil {
+		return nil, fmt.Errorf(constants.ErrCloneNowJSONDecode, err)
+	}
+	if err := validateJSONSchema(data); err != nil {
+		return nil, err
+	}
+	recs, err := formatter.ParseJSON(bytes.NewReader(data))
+	if err != nil {
+		return nil, fmt.Errorf(constants.ErrCloneNowJSONDecode, err)
+	}
+
+	return rowsFromRecords(recs), nil
+}
+
+// parseCSVWithSchema slurps the CSV file once, validates the header
+// row, then re-reads the full payload through formatter.ParseCSV.
+// Header validation must run BEFORE the tolerant parser because
+// otherwise a wrong header would silently mis-map columns.
+func parseCSVWithSchema(f io.Reader) ([]Row, error) {
+	data, err := io.ReadAll(f)
+	if err != nil {
+		return nil, fmt.Errorf(constants.ErrCloneNowCSVRead, err)
+	}
+	if err := validateCSVSchema(bytes.NewReader(data)); err != nil {
+		return nil, err
+	}
+	recs, err := formatter.ParseCSV(bytes.NewReader(data))
+	if err != nil {
+		return nil, fmt.Errorf(constants.ErrCloneNowCSVRead, err)
+	}
+
+	return rowsFromRecords(recs), nil
 }
 
 // rowsFromRecords lifts a slice of scan records into clone-now Rows,
