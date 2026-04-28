@@ -14,7 +14,9 @@ package clonenow
 // the schema, clone-now picks up the change automatically.
 
 import (
+	"bytes"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
