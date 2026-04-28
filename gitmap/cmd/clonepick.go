@@ -51,8 +51,7 @@ func runClonePick(args []string) {
 			return
 		}
 		if err := clonepick.Render(os.Stdout, plan); err != nil {
-			fmt.Fprintln(os.Stderr, err)
-			os.Exit(1)
+			cliexit.Fail(constants.CmdClonePick, "render-dry-run", parsed.RawURL, err, 1)
 		}
 		maybeExitOnCmdFaithfulMismatch()
 
