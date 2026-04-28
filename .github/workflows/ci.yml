@@ -86,6 +86,25 @@ jobs:
           go-version-file: gitmap/go.mod
           cache-dependency-path: gitmap/go.sum
 
+      # Persist the Go build cache (GOCACHE) across runs so the
+      # compile gate and downstream `go test` invocations don't have
+      # to recompile every package from scratch on each push. setup-go
+      # already caches GOMODCACHE (~/go/pkg/mod) keyed by go.sum, but
+      # NOT ~/.cache/go-build — that's what makes the compile gate
+      # slow. We key by go.sum (toolchain/deps) + SHA (so each run
+      # saves its own entry) and fall back to any prior entry on the
+      # same go.sum via restore-keys, which is the standard pattern
+      # for warm Go build caches in CI.
+      - name: Cache Go build cache (GOCACHE)
+        if: needs.sha-check.outputs.already-built != 'true'
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/go-build
+          key: go-build-${{ runner.os }}-lint-${{ hashFiles('gitmap/go.sum') }}-${{ github.sha }}
+          restore-keys: |
+            go-build-${{ runner.os }}-lint-${{ hashFiles('gitmap/go.sum') }}-
+            go-build-${{ runner.os }}-lint-
+
       - name: Go vet
         if: needs.sha-check.outputs.already-built != 'true'
         working-directory: gitmap
@@ -824,7 +843,20 @@ jobs:
           go-version-file: gitmap/go.mod
           cache-dependency-path: gitmap/go.sum
 
-      - name: Run JSON snapshot + schema contract tests (-failfast)
+      # See `lint` job for rationale — persist GOCACHE so the
+      # JSON-snapshot subset re-uses compiled test binaries from
+      # prior runs instead of recompiling cmd/ + formatter/ every
+      # time. Job-scoped key suffix keeps slots isolated.
+      - name: Cache Go build cache (GOCACHE)
+        if: needs.sha-check.outputs.already-built != 'true'
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/go-build
+          key: go-build-${{ runner.os }}-jsonsnap-${{ hashFiles('gitmap/go.sum') }}-${{ github.sha }}
+          restore-keys: |
+            go-build-${{ runner.os }}-jsonsnap-${{ hashFiles('gitmap/go.sum') }}-
+            go-build-${{ runner.os }}-jsonsnap-
+
         if: needs.sha-check.outputs.already-built != 'true'
         working-directory: gitmap
         shell: bash
@@ -903,6 +935,20 @@ jobs:
           go-version-file: gitmap/go.mod
           cache-dependency-path: gitmap/go.sum
 
+      # See `lint` job for rationale. Per-shard cache slot
+      # (matrix.name) so parallel shards don't race on the same
+      # save key — each shard owns its own GOCACHE entry but can
+      # still warm-restore from any prior entry on the same go.sum.
+      - name: Cache Go build cache (GOCACHE)
+        if: needs.sha-check.outputs.already-built != 'true'
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/go-build
+          key: go-build-${{ runner.os }}-test-${{ matrix.name }}-${{ hashFiles('gitmap/go.sum') }}-${{ github.sha }}
+          restore-keys: |
+            go-build-${{ runner.os }}-test-${{ matrix.name }}-${{ hashFiles('gitmap/go.sum') }}-
+            go-build-${{ runner.os }}-test-${{ matrix.name }}-
+            go-build-${{ runner.os }}-test-
       - name: Run tests
         if: needs.sha-check.outputs.already-built != 'true'
         working-directory: gitmap
@@ -963,7 +1009,20 @@ jobs:
           go-version-file: gitmap/go.mod
           cache-dependency-path: gitmap/go.sum
 
-      - name: go test ./... (every package)
+      # See `lint` job for rationale. Full-suite guard touches every
+      # package, so a warm GOCACHE is the single biggest CI win here
+      # — second-run wall time drops dramatically when only a handful
+      # of packages actually changed since the last green main build.
+      - name: Cache Go build cache (GOCACHE)
+        if: needs.sha-check.outputs.already-built != 'true'
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/go-build
+          key: go-build-${{ runner.os }}-fullsuite-${{ hashFiles('gitmap/go.sum') }}-${{ github.sha }}
+          restore-keys: |
+            go-build-${{ runner.os }}-fullsuite-${{ hashFiles('gitmap/go.sum') }}-
+            go-build-${{ runner.os }}-fullsuite-
+
         if: needs.sha-check.outputs.already-built != 'true'
         id: full-test
         working-directory: gitmap
@@ -1288,7 +1347,20 @@ jobs:
           go-version-file: gitmap/go.mod
           cache-dependency-path: gitmap/go.sum
 
-      - name: Pre-build provenance stamp (stale-checkout guard)
+      # Cross-compile matrix: GOCACHE entries are partitioned by
+      # GOOS/GOARCH (the cache stores per-target compiled artifacts),
+      # so include both in the cache key to avoid one matrix leg
+      # invalidating another's saved entry.
+      - name: Cache Go build cache (GOCACHE)
+        if: needs.sha-check.outputs.already-built != 'true'
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/go-build
+          key: go-build-${{ runner.os }}-build-${{ matrix.os }}-${{ matrix.arch }}-${{ hashFiles('gitmap/go.sum') }}-${{ github.sha }}
+          restore-keys: |
+            go-build-${{ runner.os }}-build-${{ matrix.os }}-${{ matrix.arch }}-${{ hashFiles('gitmap/go.sum') }}-
+            go-build-${{ runner.os }}-build-${{ matrix.os }}-${{ matrix.arch }}-
+
         # Prints the exact commit SHA, branch, declared `constants.Version`,
         # and a sha256 fingerprint of the two historically-problematic
         # cmd/ files (updaterepo.go + updatedebugwindows.go) so a stale
