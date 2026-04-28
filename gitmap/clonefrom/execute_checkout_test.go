@@ -3,8 +3,8 @@ package clonefrom
 // Tests for the per-row Checkout option:
 //
 //   - skip   → buildGitArgs appends --no-checkout AND the post-clone
-//              hook is a no-op (no working tree materialised).
-//   - auto   → legacy behaviour, working tree present, no extra git
+//              hook is a no-op (no working tree materialized).
+//   - auto   → legacy behavior, working tree present, no extra git
 //              checkout call (covered indirectly by the existing
 //              TestExecute_HappyPath which still passes byte-for-byte).
 //   - force  → an explicit `git checkout <branch>` runs after clone.
@@ -30,7 +30,7 @@ import (
 
 // TestEffectiveCheckout_DefaultsToAuto pins the resolution rule:
 // empty Checkout → "auto". A regression here would silently change
-// the executor's behaviour for every row that omits the field.
+// the executor's behavior for every row that omits the field.
 func TestEffectiveCheckout_DefaultsToAuto(t *testing.T) {
 	if got := EffectiveCheckout(Row{}); got != constants.CloneFromCheckoutAuto {
 		t.Fatalf("EffectiveCheckout(empty) = %q, want %q",
@@ -96,7 +96,7 @@ func TestExecute_SkipCheckout_NoWorkingTree(t *testing.T) {
 	}
 	if _, err := os.Stat(filepath.Join(cwd, "out", "README")); err == nil {
 		t.Errorf("README present despite --no-checkout — working " +
-			"tree was materialised")
+			"tree was materialized")
 	}
 }
 

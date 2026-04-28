@@ -122,7 +122,7 @@ func runGitClone(r Row, dest, cwd string) (string, bool) {
 //
 // `--no-checkout` is emitted ONLY when the row's resolved Checkout
 // mode is "skip" — keeping the default-row argv byte-identical to
-// the pre-checkout-feature behaviour, which is what the existing
+// the pre-checkout-feature behavior, which is what the existing
 // golden tests + --verify-cmd-faithful checker pin.
 func buildGitArgs(r Row, dest string) []string {
 	args := []string{constants.GitClone}

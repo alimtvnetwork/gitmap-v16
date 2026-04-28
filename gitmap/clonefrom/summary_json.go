@@ -53,7 +53,7 @@ type transportTallyJSON struct {
 // provenanceEntryJSON is one field-origin record under the envelope's
 // `provenance` array. Slice-of-objects (not a map) so the on-disk
 // order is stable regardless of encoding/json's map-key sort
-// behaviour; readers can scan it in row-column order.
+// behavior; readers can scan it in row-column order.
 type provenanceEntryJSON struct {
 	Field string `json:"field"`
 	Stage string `json:"stage"`

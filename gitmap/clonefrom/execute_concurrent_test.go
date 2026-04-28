@@ -10,7 +10,7 @@ package clonefrom
 //
 // The actual `git clone` shell-out is covered by the existing
 // sequential tests; the concurrent runner reuses executeRow so
-// re-testing network behaviour here would just duplicate them.
+// re-testing network behavior here would just duplicate them.
 
 import (
 	"bytes"

@@ -1,6 +1,6 @@
 package clonefrom
 
-// Tests for the dest-parent / hierarchy-preservation behaviour added
+// Tests for the dest-parent / hierarchy-preservation behavior added
 // in execute_dest.go. Split out of execute_test.go so neither file
 // breaches the project's 200-line cap. Reuses the requireGit /
 // makeBareRepo helpers defined in execute_test.go (same package).

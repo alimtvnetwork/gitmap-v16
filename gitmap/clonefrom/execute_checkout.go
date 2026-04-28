@@ -9,7 +9,7 @@ package clonefrom
 //
 //   - "auto"  → no-op. `git clone` (with --branch when set) already
 //               materialized the working tree. This is the legacy
-//               pre-feature behaviour, preserved byte-for-byte.
+//               pre-feature behavior, preserved byte-for-byte.
 //   - "skip"  → no-op HERE; the work happened earlier in
 //               buildGitArgs which appended --no-checkout. We do
 //               NOT also run `git checkout` after — that would
