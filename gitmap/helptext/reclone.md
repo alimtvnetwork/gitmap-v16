@@ -65,6 +65,21 @@ file exists, `reclone` exits with code `2` and tells you to run
 `gitmap scan` first (or pass `--manifest` / a positional path).
 Auto-pickup never walks parent or sibling directories.
 
+## Pre-execute summary
+
+When `--execute` is passed, `reclone` prints a one-screen summary
+to stderr **before** any `git clone` runs (and before the safety
+prompt). It shows:
+
+- the resolved source manifest, format, mode, on-exists policy, and cwd
+- row totals: `N total (X new, Y already exist)` so you see the
+  blast radius at a glance
+- a sorted, indented tree of destination `RelativePath`s — capped
+  at 40 lines with an "... and N more" footer for big round-trips
+
+Pass `--no-summary` to suppress it (e.g. when a wrapper has already
+printed a richer dry-run preview).
+
 ## Safety prompt (existing destinations)
 
 Before any `git clone` runs under `--execute`, `reclone` checks
