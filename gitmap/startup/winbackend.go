@@ -143,6 +143,11 @@ func removeWindows(clean string, opts RemoveOptions) (RemoveResult, error) {
 	case BackendRegistryHKLM:
 
 		return removeWindowsRegistryHKLM(clean, opts)
+	case BackendUnspecified:
+		// Fall through to the multi-backend probe below. Listed
+		// explicitly so the exhaustive linter is satisfied and a
+		// future Backend addition forces a deliberate decision
+		// here instead of silently landing in the fallback.
 	}
 	res, err := removeWindowsRegistry(clean, opts)
 	if err != nil || res.Status != RemoveNoOp {

@@ -128,13 +128,13 @@ func scanEveryObjectKeysPure(raw []byte) ([][]string, error) {
 	dec := json.NewDecoder(bytes.NewReader(raw))
 	if err := expectDelim(dec, '['); err != nil {
 
-		return nil, fmt.Errorf("expected top-level array: %v", err)
+		return nil, fmt.Errorf("expected top-level array: %w", err)
 	}
 	var out [][]string
 	for dec.More() {
 		if err := expectDelim(dec, '{'); err != nil {
 
-			return nil, fmt.Errorf("expected object at index %d: %v", len(out), err)
+			return nil, fmt.Errorf("expected object at index %d: %w", len(out), err)
 		}
 		keys, err := pureCollectObjectKeys(dec, len(out))
 		if err != nil {

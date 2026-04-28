@@ -62,7 +62,7 @@ func TestBackgroundRunner_NilSafe(t *testing.T) {
 }
 
 // TestBackgroundRunner_DrainsAllJobs starts a small batch with a
-// stub url-picker that synthesises Results without touching the
+// stub url-picker that synthesizes Results without touching the
 // network, then asserts every record reached the sink.
 func TestBackgroundRunner_DrainsAllJobs(t *testing.T) {
 	const total = 12

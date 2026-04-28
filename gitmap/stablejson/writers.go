@@ -57,7 +57,7 @@ func writeArrayMinified(w io.Writer, buf *bytes.Buffer, items [][]Field) error {
 
 // writeCompactObject writes a single `{"k":v,"k2":v2}` block (no
 // whitespace between tokens) into buf. Key order follows the slice.
-// Each value is JSON-marshalled in isolation so a malformed value
+// Each value is JSON-marshaled in isolation so a malformed value
 // fails the WHOLE call rather than emitting half a corrupt line —
 // critical for JSONL because a half-written line would desync every
 // downstream parser that splits on `\n`.
@@ -79,7 +79,7 @@ func writeCompactObject(buf *bytes.Buffer, fields []Field) error {
 // writeObject writes a single `{ ... }` block into buf using
 // caller-controlled indentation. The outer brace sits at one level
 // of `indent`; each key/value line sits at two levels. Keys appear
-// in the exact order given. Each value is JSON-marshalled in
+// in the exact order given. Each value is JSON-marshaled in
 // isolation so a malformed value fails the WHOLE call rather than
 // emitting half a corrupt object.
 func writeObject(buf *bytes.Buffer, fields []Field, indent string) error {
@@ -104,7 +104,7 @@ func writeObject(buf *bytes.Buffer, fields []Field, indent string) error {
 // writeKeyValue marshals one Field as `"key":value` (when
 // `colonSpace==""`) or `"key": value` (when `colonSpace==" "`) and
 // appends to buf. Centralized so the compact and pretty paths share
-// identical key/value JSON marshalling — a malformed value triggers
+// identical key/value JSON marshaling — a malformed value triggers
 // the same wrapped error from both call sites.
 func writeKeyValue(buf *bytes.Buffer, f Field, colonSpace string) error {
 	keyBytes, err := json.Marshal(f.Key)

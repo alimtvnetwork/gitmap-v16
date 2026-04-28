@@ -30,7 +30,7 @@ func TestShouldRunBatch_ExplicitFlagsWin(t *testing.T) {
 
 // TestShouldRunBatch_ImplicitTrigger_FiresOnScanRoot creates a fixture
 // directory that is NOT a git repo but contains one git subdirectory,
-// then asserts the dispatcher recognises it as a scan root.
+// then asserts the dispatcher recognizes it as a scan root.
 func TestShouldRunBatch_ImplicitTrigger_FiresOnScanRoot(t *testing.T) {
 	root := t.TempDir()
 	repo := filepath.Join(root, "repo-a")

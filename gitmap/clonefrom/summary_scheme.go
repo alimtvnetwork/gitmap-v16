@@ -8,7 +8,7 @@ package clonefrom
 //
 // Classification logic intentionally mirrors validate.looksLikeGitURL:
 // any URL that survived parse-time validation lands in a named
-// bucket; truly unrecognised strings (rare — validation already
+// bucket; truly unrecognized strings (rare — validation already
 // rejects most) fall through to "other" so the tally is still
 // total-preserving.
 

@@ -97,7 +97,7 @@ func formatSummaryRow(r Result) string {
 // whether the failure is fatal (it isn't — clones already
 // happened, the report is bonus).
 func WriteReport(results []Result) (string, error) {
-	dir := filepath.Join(".gitmap")
+	dir := ".gitmap"
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return "", fmt.Errorf(constants.ErrCloneFromReportMkdir, dir, err)
 	}

@@ -25,7 +25,7 @@ package cmd
 //
 // The escape-sequence guarantees in the special-character golden
 // come from Go's encoding/json, which `gitmap/stablejson` delegates
-// per-value marshalling to. They are stable across Go 1.x releases.
+// per-value marshaling to. They are stable across Go 1.x releases.
 // HTML-escape characters (`<`, `>`, `&`) are deliberately omitted
 // so this test doesn't accidentally pin a quirk that would change
 // if a future stablejson revision flipped SetEscapeHTML(false).

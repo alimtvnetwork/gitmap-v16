@@ -138,7 +138,7 @@ const (
 	MsgClonePickReplayAmbiguous = "clone-pick: --replay: multiple selections match %q; " +
 		"use --replay <id> to disambiguate"
 
-	MsgClonePickUserCancelled = "clone-pick: cancelled by user"
+	MsgClonePickUserCancelled = "clone-pick: canceled by user"
 )
 
 // Errors. printf-style verbs documented inline.

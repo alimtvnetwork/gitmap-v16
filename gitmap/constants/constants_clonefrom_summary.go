@@ -33,7 +33,7 @@ const CloneFromTermSummarySchemeRowFmt = "    %-7s %d\n"
 // CloneFromTermSummaryStatusFmt is the one-line status tally inside
 // the terminal summary. Mirrors the wording of the legacy
 // MsgCloneFromSummaryHeader so users who already know the default
-// summary recognise the numbers. %d ok, %d skipped, %d failed,
+// summary recognize the numbers. %d ok, %d skipped, %d failed,
 // %d total.
 const CloneFromTermSummaryStatusFmt = "  status:   %d ok, %d skipped, %d failed (%d total)\n"
 
@@ -50,7 +50,7 @@ const CloneFromTermSummaryReportNone = "  report:   (skipped — --no-report or 
 // CloneFromSummaryTransportFmt is the one-line transport split shared
 // by both the legacy RenderSummary and the enriched terminal block.
 // SSH = ssh:// + scp-style; HTTPS = https://; OTHER folds http://,
-// git://, file://, and unrecognised forms so the line stays at three
+// git://, file://, and unrecognized forms so the line stays at three
 // stable columns regardless of manifest contents. Derived from
 // ClassifyScheme so this counter and the per-scheme tally can never
 // disagree. %d ssh, %d https, %d other.

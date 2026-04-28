@@ -39,7 +39,7 @@ type probeOptions struct {
 	rest    []string
 }
 
-// parseProbeArgs walks the arg list, peeling off recognised flags and
+// parseProbeArgs walks the arg list, peeling off recognized flags and
 // returning everything else as positional args. Order-agnostic.
 func parseProbeArgs(args []string) (probeOptions, error) {
 	opts := probeOptions{
