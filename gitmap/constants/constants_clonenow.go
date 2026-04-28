@@ -338,6 +338,10 @@ const (
 	//
 	// %v = decode error from json.Decoder.
 	ErrCloneNowJSONShape = "clone-now: JSON input must be an array of objects: %v"
+	// %d = 1-based row index, %s = actual JSON kind ("string",
+	// "number", "array", "null", etc.). Emitted when the top-level
+	// array is well-formed but one of its elements is not an object.
+	ErrCloneNowJSONRowNotObject = "clone-now: JSON row %d must be an object, got %s"
 	// %d = 1-based row index, %s = unknown field name, %s = sorted
 	// list of all known field names.
 	ErrCloneNowUnknownJSONField = "clone-now: JSON row %d has unknown field %q; " +
@@ -352,6 +356,20 @@ const (
 		"known columns: %s"
 	// Emitted when the CSV header has neither httpsUrl nor sshUrl.
 	ErrCloneNowCSVMissingURLCol = "clone-now: CSV header must include 'httpsUrl' or 'sshUrl'"
+	// %d = 1-based data row number (header is NOT counted; data row
+	// 1 is the first row after the header — matches what a user
+	// inspecting the file in a spreadsheet sees as "row 2"). %v =
+	// underlying csv.Reader error.
+	ErrCloneNowCSVRowRead = "clone-now: CSV data row %d failed to parse: %v"
+	// %d = 1-based data row number, %d = column count seen, %d =
+	// header column count expected. Emitted when a data row's column
+	// count diverges from the header so users can find the offending
+	// row instead of getting a vague "wrong field count" from csv.
+	ErrCloneNowCSVRowFieldCount = "clone-now: CSV data row %d has %d columns, " +
+		"header has %d"
+	// %d = 1-based data row number. Emitted when a CSV data row has
+	// neither httpsUrl nor sshUrl set to a non-empty value.
+	ErrCloneNowCSVRowMissingURL = "clone-now: CSV data row %d has neither httpsUrl nor sshUrl set"
 	// MsgCloneNowMkdirParentFailFmt is the per-row Detail set when
 	// pre-creating the destination's parent directory fails. Mirrors
 	// the clonefrom equivalent so summary tables read consistently.
