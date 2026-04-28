@@ -29,35 +29,24 @@ import (
 // cloneNowFlags holds parsed CLI inputs. Grouped in a struct so
 // future additions don't churn every helper signature.
 type cloneNowFlags struct {
-	file     string
+	file string
+	// manifest mirrors `file` but is sourced from the explicit
+	// --manifest flag rather than the positional argument. Kept as
+	// a separate field so parseCloneNowFlags can detect the
+	// "both provided" conflict and exit 2 with a clear message
+	// instead of silently picking one.
+	manifest string
 	execute  bool
 	quiet    bool
 	mode     string
 	format   string
 	cwd      string
 	onExists string
-	// output: "" (legacy) or "terminal" (standardized RepoTermBlock
-	// streamed before each row's clone). Mirrors clone-from /
-	// clone-next so all clone commands share one flag shape.
-	output string
-	// verifyCmdFaithful enables the dry-run argv-vs-displayed checker.
-	// See gitmap/cmd/clonetermverify.go for behavior.
-	verifyCmdFaithful bool
-	// verifyCmdFaithfulExitOnMismatch upgrades the verifier into a
-	// hard failure: any divergence sets a sticky bit and the run tail
-	// exits with constants.CloneVerifyCmdFaithfulExitCode. Implies
-	// verifyCmdFaithful — see setCmdFaithfulExitOnMismatch.
+	output   string
+	verifyCmdFaithful               bool
 	verifyCmdFaithfulExitOnMismatch bool
-	// printCloneArgv dumps the executor argv to stderr. Companion
-	// audit flag — see gitmap/cmd/cloneprintargv.go.
-	printCloneArgv bool
-	// maxConcurrency is the resolved worker-pool size (0 → auto via
-	// cloneconcurrency.Resolve at parse time, so by the time
-	// runCloneNow sees it the value is always >= 1). Increasing N
-	// preserves the on-disk hierarchy because every worker still
-	// uses each row's RelativePath verbatim — only progress-line
-	// timing changes.
-	maxConcurrency int
+	printCloneArgv                  bool
+	maxConcurrency                  int
 }
 
 // runCloneNow is the dispatcher entry. checkHelp handles `--help`
