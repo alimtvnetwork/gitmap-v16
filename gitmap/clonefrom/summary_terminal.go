@@ -116,13 +116,20 @@ func writeTermSummarySchemes(w io.Writer, results []Result) error {
 // writeTermSummaryStatus emits the one-line status tally inside the
 // terminal summary block. Numbers come from tallyResults (defined in
 // summary.go) so this renderer and the legacy RenderSummary can
-// never disagree on the counts.
+// never disagree on the counts. The shared transport line is
+// appended immediately after so both renderers expose the same
+// ssh/https/other split derived from ClassifyScheme.
 func writeTermSummaryStatus(w io.Writer, results []Result) error {
 	ok, skipped, failed := tallyResults(results)
-	_, err := fmt.Fprintf(w, constants.CloneFromTermSummaryStatusFmt,
-		ok, skipped, failed, len(results))
+	if _, err := fmt.Fprintf(w, constants.CloneFromTermSummaryStatusFmt,
+		ok, skipped, failed, len(results)); err != nil {
+		return err
+	}
+	if _, err := io.WriteString(w, "  "); err != nil {
+		return err
+	}
 
-	return err
+	return writeTransportLine(w, results)
 }
 
 // writeTermSummaryReports renders zero, one, or two report-path
