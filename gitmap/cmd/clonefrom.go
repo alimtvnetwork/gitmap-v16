@@ -156,10 +156,10 @@ func runCloneFromExecute(plan clonefrom.Plan, cfg cloneFromFlags) {
 	csvPath, jsonPath := writeCloneFromReports(results, cfg)
 	if cfg.output == constants.OutputTerminal {
 		if err := clonefrom.RenderSummaryTerminal(os.Stdout, results, csvPath, jsonPath); err != nil {
-			fmt.Fprintln(os.Stderr, err)
+			cliexit.Reportf(constants.CmdCloneFrom, "render-summary", csvPath, err)
 		}
 	} else if err := clonefrom.RenderSummary(os.Stdout, results, csvPath); err != nil {
-		fmt.Fprintln(os.Stderr, err)
+		cliexit.Reportf(constants.CmdCloneFrom, "render-summary", csvPath, err)
 	}
 	maybeExitOnCmdFaithfulMismatch()
 	os.Exit(cloneFromExitCode(results))
