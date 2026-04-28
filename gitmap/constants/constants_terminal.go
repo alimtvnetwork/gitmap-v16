@@ -194,15 +194,31 @@ const (
 //   - v0: 8 cols (no branchSource, no depth).
 //   - +branchSource: 9 cols.
 //   - +depth: 10 cols.
-//   - +repoId, +discoveredUrl: 12 cols (current). repoId is the
-//     stable transport-neutral identifier; discoveredUrl is the raw
+//   - +repoId, +discoveredUrl: 12 cols. repoId is the stable
+//     transport-neutral identifier; discoveredUrl is the raw
 //     `git remote get-url origin` value, kept verbatim so consumers
 //     can audit normalization done into httpsUrl/sshUrl.
+//   - +transport: 13 cols (current). Three-bucket collapse of the
+//     discovered remote: "ssh" | "https" | "other". Lets users
+//     filter clones by transport with a one-liner without re-deriving
+//     the bucket from raw URLs in every consumer. Mirrors the same
+//     three buckets clone-from's terminal summary uses (TransportTally).
 var ScanCSVHeaders = []string{
 	"repoName", "httpsUrl", "sshUrl", "branch", "branchSource",
 	"relativePath", "absolutePath", "cloneInstruction", "notes", "depth",
-	"repoId", "discoveredUrl",
+	"repoId", "discoveredUrl", "transport",
 }
+
+// Transport-bucket labels emitted in the new "transport" CSV column
+// and the matching JSON field. Kept here so the CSV writer, the
+// classifier in mapper, and any downstream filter share one source of
+// truth — renaming would silently break every grep/jq pipeline that
+// keys on these strings.
+const (
+	ScanTransportSSH   = "ssh"
+	ScanTransportHTTPS = "https"
+	ScanTransportOther = "other"
+)
 
 var LatestBranchCSVHeaders = []string{
 	"branch", "remote", "sha", "commitDate", "subject", "ref",
