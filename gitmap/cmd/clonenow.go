@@ -218,7 +218,7 @@ func runCloneNowExecute(plan clonenow.Plan, cfg cloneNowFlags) {
 		results = clonenow.ExecuteWithHooks(plan, cfg.cwd, progress, hook)
 	}
 	if err := clonenow.RenderSummary(os.Stdout, results); err != nil {
-		fmt.Fprintln(os.Stderr, err)
+		cliexit.Reportf(constants.CmdCloneReclone, "render-summary", cfg.file, err)
 	}
 	os.Exit(cloneNowExitCode(results))
 }
