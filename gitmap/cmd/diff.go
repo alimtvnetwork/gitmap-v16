@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/alimtvnetwork/gitmap-v8/gitmap/cliexit"
 	"github.com/alimtvnetwork/gitmap-v8/gitmap/constants"
 	"github.com/alimtvnetwork/gitmap-v8/gitmap/diff"
 )
@@ -20,17 +21,14 @@ func runDiff(args []string) {
 
 	leftEP, err := diff.ResolveEndpoint(left)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
+		cliexit.Fail(constants.CmdDiff, "resolve-endpoint", left, err, 1)
 	}
 	rightEP, err := diff.ResolveEndpoint(right)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
+		cliexit.Fail(constants.CmdDiff, "resolve-endpoint", right, err, 1)
 	}
 	if guardErr := guardDiffPaths(leftEP, rightEP); guardErr != nil {
-		fmt.Fprintln(os.Stderr, guardErr)
-		os.Exit(1)
+		cliexit.Fail(constants.CmdDiff, "guard-paths", left+" vs "+right, guardErr, 1)
 	}
 
 	entries, err := diff.DiffTrees(leftEP.WorkingDir, rightEP.WorkingDir, walkOpts)
