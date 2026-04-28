@@ -67,7 +67,7 @@ func writeCSVRow(cw *csv.Writer, r model.ScanRecord) error {
 // ParseCSV reads records from a CSV reader.
 func ParseCSV(reader io.Reader) ([]model.ScanRecord, error) {
 	cr := csv.NewReader(reader)
-	cr.FieldsPerRecord = -1 // tolerate legacy 8/9/10-col CSVs alongside current 12-col layout
+	cr.FieldsPerRecord = -1 // tolerate legacy 8/9/10/12-col CSVs alongside current 13-col layout
 	rows, err := cr.ReadAll()
 	if err != nil {
 		return nil, err
@@ -77,13 +77,14 @@ func ParseCSV(reader io.Reader) ([]model.ScanRecord, error) {
 }
 
 // parseCSVRows converts raw CSV rows (skipping header) into records.
-// Supports four layouts (auto-detected by column count) so older
+// Supports five layouts (auto-detected by column count) so older
 // CSVs keep round-tripping after each additive schema bump:
 //
 //   - legacy 8 cols : pre-branchSource layout.
 //   - 9 cols        : pre-depth layout (branchSource present).
 //   - 10 cols       : pre-repoId layout (depth present).
-//   - 12 cols       : current layout (repoId, discoveredUrl appended).
+//   - 12 cols       : pre-transport layout (repoId, discoveredUrl).
+//   - 13 cols       : current layout (transport appended).
 func parseCSVRows(rows [][]string) []model.ScanRecord {
 	records := make([]model.ScanRecord, 0, len(rows))
 	for i, row := range rows {
@@ -110,8 +111,9 @@ func rowToRecord(row []string) model.ScanRecord {
 }
 
 // rowToRecordWithSource handles the 9-col (no depth), 10-col
-// (depth, no repoId), and 12-col (current) layouts. Missing fields
-// fall back to zero values so partially-populated CSVs still load.
+// (depth, no repoId), 12-col (no transport), and 13-col (current)
+// layouts. Missing fields fall back to zero values so partially-
+// populated CSVs still load.
 func rowToRecordWithSource(row []string) model.ScanRecord {
 	depth := 0
 	if len(row) >= 10 {
@@ -120,10 +122,13 @@ func rowToRecordWithSource(row []string) model.ScanRecord {
 			depth = parsed
 		}
 	}
-	repoID, discovered := "", ""
+	repoID, discovered, transport := "", "", ""
 	if len(row) >= 12 {
 		repoID = row[10]
 		discovered = row[11]
+	}
+	if len(row) >= 13 {
+		transport = row[12]
 	}
 
 	return model.ScanRecord{
@@ -131,8 +136,10 @@ func rowToRecordWithSource(row []string) model.ScanRecord {
 		Branch: row[3], BranchSource: row[4],
 		RelativePath: row[5], AbsolutePath: row[6],
 		CloneInstruction: row[7], Notes: row[8],
-		Depth:  depth,
-		RepoID: repoID, DiscoveredURL: discovered,
+		Depth:     depth,
+		RepoID:    repoID,
+		DiscoveredURL: discovered,
+		Transport:     transport,
 	}
 }
 
