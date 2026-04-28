@@ -27,7 +27,6 @@ import (
 
 	"github.com/alimtvnetwork/gitmap-v7/gitmap/clonenow"
 	"github.com/alimtvnetwork/gitmap-v7/gitmap/constants"
-	"golang.org/x/term"
 )
 
 // confirmCloneNowExistingDestsOrExit gates the executor on a user
