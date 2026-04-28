@@ -1390,6 +1390,54 @@ should_write_profile() {
 
 # ── Main ───────────────────────────────────────────────────────────
 
+# verify_installation runs the three post-install checks the user
+# asked for: (1) print the installed version by invoking the binary,
+# (2) confirm `gitmap` resolves on PATH in the current shell, (3)
+# ensure the per-install data folder exists (create on miss). Each
+# check prints PASS/WARN with a one-line reason; failures never
+# abort because the binary is already on disk and recoverable.
+verify_installation() {
+    local bin_path="$1" app_dir="$2"
+    local data_dir="${app_dir}/data"
+
+    echo ""
+    step "Verifying installation"
+
+    # 1. Version check — use the binary directly (does not depend on
+    # PATH), so a PATH miss in step 2 still shows a real version.
+    if [ -x "${bin_path}" ] && "${bin_path}" version >/dev/null 2>&1; then
+        printf '    \033[32mPASS\033[0m  Version: %s\n' \
+            "$("${bin_path}" version 2>&1 | head -n 1)" >&2
+    else
+        printf '    \033[33mWARN\033[0m  Could not run %s version\n' "${bin_path}" >&2
+    fi
+
+    # 2. PATH check — `command -v` reflects the *current* shell, which
+    # for fresh installs may still be stale until the user reloads
+    # their profile. Treat a miss as a warning, not a failure.
+    if command -v "${BINARY_NAME}" >/dev/null 2>&1; then
+        printf '    \033[32mPASS\033[0m  PATH active: %s resolves to %s\n' \
+            "${BINARY_NAME}" "$(command -v "${BINARY_NAME}")" >&2
+    elif [ "${NO_PATH}" = true ]; then
+        printf '    \033[33mWARN\033[0m  PATH skipped (--no-path); invoke with full path: %s\n' \
+            "${bin_path}" >&2
+    else
+        printf '    \033[33mWARN\033[0m  %s not on PATH yet — reload your shell: %s\n' \
+            "${BINARY_NAME}" "${PATH_RELOAD}" >&2
+    fi
+
+    # 3. Data folder — ensure it exists so the first `gitmap scan`
+    # does not race on directory creation. Creating it here is safe
+    # because the install dir is already owned by the current user.
+    if [ -d "${data_dir}" ]; then
+        printf '    \033[32mPASS\033[0m  Data folder exists: %s\n' "${data_dir}" >&2
+    elif mkdir -p "${data_dir}" 2>/dev/null; then
+        printf '    \033[32mPASS\033[0m  Data folder created: %s\n' "${data_dir}" >&2
+    else
+        printf '    \033[33mWARN\033[0m  Could not create data folder: %s\n' "${data_dir}" >&2
+    fi
+}
+
 main() {
     echo ""
     echo "  gitmap installer"
