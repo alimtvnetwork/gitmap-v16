@@ -21,12 +21,13 @@ package cmd
 // reachable git server. The mode wiring still gets exercised: the
 // transform step picks a different column per mode and a regression
 // in mapper.selectCloneURL or in either parser would surface as a
-// failed Result row.
+// failed Result row. Fixture helpers live in
+// scan_export_clonefrom_fixture_test.go to keep this file under the
+// 200-line per-file cap.
 
 import (
 	"encoding/json"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"testing"
 
@@ -39,8 +40,9 @@ import (
 )
 
 // TestScanExportCloneFrom_HTTPSAndSSH_RoundTrips runs the full
-// pipeline once per mode. Sub-tests share the bare-repo fixture so
-// the slow path (git init + commit + bare clone) only runs once.
+// pipeline once per mode × format. Sub-tests share the bare-repo
+// fixture so the slow path (git init + commit + bare clone) only
+// runs once per top-level test invocation.
 func TestScanExportCloneFrom_HTTPSAndSSH_RoundTrips(t *testing.T) {
 	requireGitForIntegration(t)
 	bare := makeIntegrationBareRepo(t)
@@ -89,15 +91,13 @@ func scanAndBuildRecords(t *testing.T, root, mode string) []model.ScanRecord {
 func exportRecords(t *testing.T, records []model.ScanRecord, format string) string {
 	t.Helper()
 	dir := t.TempDir()
-	name := "gitmap." + format
-	path := filepath.Join(dir, name)
+	path := filepath.Join(dir, "gitmap."+format)
 	f, err := os.Create(path)
 	if err != nil {
 		t.Fatalf("create export file: %v", err)
 	}
 	defer f.Close()
-	writeFn := pickFormatterWriter(format)
-	if err := writeFn(f, records); err != nil {
+	if err := pickFormatterWriter(format)(f, records); err != nil {
 		t.Fatalf("write %s: %v", format, err)
 	}
 
@@ -105,7 +105,7 @@ func exportRecords(t *testing.T, records []model.ScanRecord, format string) stri
 }
 
 // pickFormatterWriter returns the formatter writer matching format.
-// Centralised so runRoundTrip / exportRecords stay short.
+// Centralised so exportRecords stays under the per-function budget.
 func pickFormatterWriter(format string) func(*os.File, []model.ScanRecord) error {
 	if format == "json" {
 		return func(f *os.File, r []model.ScanRecord) error { return formatter.WriteJSON(f, r) }
@@ -120,18 +120,19 @@ func pickFormatterWriter(format string) func(*os.File, []model.ScanRecord) error
 // the round-trip step the integration test exists to guard.
 func writeCloneFromManifest(t *testing.T, records []model.ScanRecord, mode, originFormat string) string {
 	t.Helper()
+	destRoot := t.TempDir()
 	rows := make([]map[string]any, 0, len(records))
 	for i, rec := range records {
-		rows = append(rows, map[string]any{
-			"url":  pickURLForMode(rec, mode),
-			"dest": filepath.Join(t.TempDir(), originFormat+"-"+mode+"-out-"+rec.RepoName),
-		})
-		if rows[i]["url"] == "" {
+		url := pickURLForMode(rec, mode)
+		if url == "" {
 			t.Fatalf("record %d has empty URL for mode %s", i, mode)
 		}
+		rows = append(rows, map[string]any{
+			"url":  url,
+			"dest": filepath.Join(destRoot, originFormat+"-"+mode+"-"+rec.RepoName),
+		})
 	}
-	dir := t.TempDir()
-	path := filepath.Join(dir, "clone-from."+originFormat+"."+mode+".json")
+	path := filepath.Join(t.TempDir(), "clone-from."+originFormat+"."+mode+".json")
 	writeJSONFile(t, path, rows)
 
 	return path
@@ -183,71 +184,5 @@ func executePlanAndAssertOK(t *testing.T, manifest, exportPath string) {
 			t.Fatalf("row %d status=%q detail=%q (export=%s)",
 				i, r.Status, r.Detail, exportPath)
 		}
-	}
-}
-
-// seedScanTree creates two worktrees under one root, each with a
-// real git remote pointing at the shared bare repo via file://.
-// Two repos exercises mapper.BuildRecords' loop and clone-from's
-// per-row Execute concurrency-free path on a non-trivial input.
-func seedScanTree(t *testing.T, bare string) string {
-	t.Helper()
-	root := t.TempDir()
-	for _, name := range []string{"alpha", "beta"} {
-		seedOneWorktree(t, root, name, bare)
-	}
-
-	return root
-}
-
-// seedOneWorktree clones the bare repo into root/name and pins the
-// remote URL to file://<bare> so mapper.BuildRecords sees a valid
-// remote for both ModeHTTPS and ModeSSH lookups.
-func seedOneWorktree(t *testing.T, root, name, bare string) {
-	t.Helper()
-	dest := filepath.Join(root, name)
-	runIntegrationGit(t, root, "clone", "-q", "file://"+bare, name)
-	runIntegrationGit(t, dest, "remote", "set-url", "origin", "file://"+bare)
-}
-
-// requireGitForIntegration mirrors the unit-test helper: skip the
-// whole integration when git isn't on PATH so minimal CI containers
-// stay green.
-func requireGitForIntegration(t *testing.T) {
-	t.Helper()
-	if _, err := exec.LookPath("git"); err != nil {
-		t.Skipf("git not on PATH: %v", err)
-	}
-}
-
-// makeIntegrationBareRepo builds a one-commit bare repo and returns
-// its absolute path. Lives in cmd/ rather than reusing
-// clonefrom.makeBareRepo because that helper is unexported in the
-// clonefrom test package.
-func makeIntegrationBareRepo(t *testing.T) string {
-	t.Helper()
-	work := t.TempDir()
-	bare := filepath.Join(t.TempDir(), "src.git")
-	runIntegrationGit(t, work, "init", "-q")
-	runIntegrationGit(t, work, "config", "user.email", "t@e")
-	runIntegrationGit(t, work, "config", "user.name", "t")
-	if err := os.WriteFile(filepath.Join(work, "README"), []byte("hi"), 0o644); err != nil {
-		t.Fatalf("seed README: %v", err)
-	}
-	runIntegrationGit(t, work, "add", ".")
-	runIntegrationGit(t, work, "commit", "-q", "-m", "init")
-	runIntegrationGit(t, work, "clone", "--bare", "-q", work, bare)
-
-	return bare
-}
-
-// runIntegrationGit fatals on error with the combined output
-// included so a CI failure points at the offending git invocation.
-func runIntegrationGit(t *testing.T, dir string, args ...string) {
-	t.Helper()
-	cmd := exec.Command("git", args...)
-	cmd.Dir = dir
-	if out, err := cmd.CombinedOutput(); err != nil {
-		t.Fatalf("git %v in %s: %v\n%s", args, dir, err, string(out))
 	}
 }
