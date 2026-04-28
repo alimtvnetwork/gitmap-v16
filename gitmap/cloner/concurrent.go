@@ -49,7 +49,7 @@ func runConcurrent(records []model.ScanRecord, targetDir string, safePull bool,
 	jobs := make(chan cloneJob, len(records))
 	out := make(chan cloneOutcome, len(records))
 
-	startWorkers(workers, jobs, out, targetDir, safePull, cache)
+	startWorkers(workers, jobs, out, targetDir, safePull)
 	enqueueJobs(records, targetDir, cache, progress, jobs, out)
 	close(jobs)
 
@@ -58,15 +58,15 @@ func runConcurrent(records []model.ScanRecord, targetDir string, safePull bool,
 
 // startWorkers spins up the worker goroutines.
 func startWorkers(workers int, jobs <-chan cloneJob, out chan<- cloneOutcome,
-	targetDir string, safePull bool, cache *CloneCache) {
+	targetDir string, safePull bool) {
 	for i := 0; i < workers; i++ {
-		go cloneWorker(jobs, out, targetDir, safePull, cache)
+		go cloneWorker(jobs, out, targetDir, safePull)
 	}
 }
 
 // cloneWorker drains the job channel until it closes.
 func cloneWorker(jobs <-chan cloneJob, out chan<- cloneOutcome,
-	targetDir string, safePull bool, cache *CloneCache) {
+	targetDir string, safePull bool) {
 	for job := range jobs {
 		result := cloneOrPullOne(job.rec, targetDir, safePull)
 		out <- cloneOutcome{rec: job.rec, dest: job.dest, result: result}
