@@ -14,6 +14,7 @@ var generatedCommands = []string{
 	"amend",
 	"amend-list",
 	"as",
+	"audit",
 	"audit-legacy",
 	"b",
 	"bk",
