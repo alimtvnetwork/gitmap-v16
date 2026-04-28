@@ -27,6 +27,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
+	"math"
 )
 
 // LinkInfo + VolumeID constants from [MS-SHLLINK] §2.3.
@@ -51,26 +52,77 @@ func buildLinkInfo(target string) ([]byte, error) {
 	volumeID := buildVolumeID()
 	pathBytes := append([]byte(target), 0x00) // NUL-terminated ASCII
 	suffixBytes := []byte{0x00}               // empty CommonPathSuffix
+	offsets, err := computeLinkInfoOffsets(volumeID, pathBytes, suffixBytes)
+	if err != nil {
 
+		return nil, err
+	}
+
+	return assembleLinkInfo(offsets, volumeID, pathBytes, suffixBytes), nil
+}
+
+// linkInfoOffsets caches every uint32 offset/size used by the
+// LinkInfo header so the assembler is a flat sequence of PutUint32
+// calls with no inline arithmetic that could re-trigger G115.
+type linkInfoOffsets struct {
+	volOff, pathOff, suffixOff, totalSize uint32
+}
+
+// computeLinkInfoOffsets converts the variable-width section sizes
+// to uint32 once, refusing pathological lengths instead of silently
+// wrapping. Returns the precomputed offsets ready to write.
+func computeLinkInfoOffsets(volumeID, pathBytes, suffixBytes []byte) (linkInfoOffsets, error) {
+	volSize, err := safeUint32(len(volumeID))
+	if err != nil {
+
+		return linkInfoOffsets{}, fmt.Errorf("volumeID size: %w", err)
+	}
+	pathSize, err := safeUint32(len(pathBytes))
+	if err != nil {
+
+		return linkInfoOffsets{}, fmt.Errorf("target path size: %w", err)
+	}
+	suffixSize, err := safeUint32(len(suffixBytes))
+	if err != nil {
+
+		return linkInfoOffsets{}, fmt.Errorf("suffix size: %w", err)
+	}
 	volOff := linkInfoHeaderSize
-	pathOff := volOff + uint32(len(volumeID))
-	suffixOff := pathOff + uint32(len(pathBytes))
-	totalSize := suffixOff + uint32(len(suffixBytes))
+	pathOff := volOff + volSize
+	suffixOff := pathOff + pathSize
 
+	return linkInfoOffsets{volOff, pathOff, suffixOff, suffixOff + suffixSize}, nil
+}
+
+// assembleLinkInfo writes the header + payload sections into a
+// single buffer. Pure formatting — no arithmetic, no error path.
+func assembleLinkInfo(o linkInfoOffsets, volumeID, pathBytes, suffixBytes []byte) []byte {
 	le := binary.LittleEndian
-	out := make([]byte, totalSize)
-	le.PutUint32(out[0:4], totalSize)
+	out := make([]byte, o.totalSize)
+	le.PutUint32(out[0:4], o.totalSize)
 	le.PutUint32(out[4:8], linkInfoHeaderSize)
 	le.PutUint32(out[8:12], linkInfoFlagVolumeID)
-	le.PutUint32(out[12:16], volOff)
-	le.PutUint32(out[16:20], pathOff)
+	le.PutUint32(out[12:16], o.volOff)
+	le.PutUint32(out[16:20], o.pathOff)
 	le.PutUint32(out[20:24], 0) // no CommonNetworkRelativeLink
-	le.PutUint32(out[24:28], suffixOff)
-	copy(out[volOff:], volumeID)
-	copy(out[pathOff:], pathBytes)
-	copy(out[suffixOff:], suffixBytes)
+	le.PutUint32(out[24:28], o.suffixOff)
+	copy(out[o.volOff:], volumeID)
+	copy(out[o.pathOff:], pathBytes)
+	copy(out[o.suffixOff:], suffixBytes)
 
-	return out, nil
+	return out
+}
+
+// safeUint32 narrows a non-negative int to uint32, refusing values
+// that would silently wrap on a 64-bit platform. Centralized so the
+// gosec G115 guard is uniform across every offset/size we compute.
+func safeUint32(n int) (uint32, error) {
+	if n < 0 || n > math.MaxUint32 {
+
+		return 0, fmt.Errorf("value %d out of uint32 range", n)
+	}
+
+	return uint32(n), nil
 }
 
 // buildVolumeID emits a minimal VolumeID block: 16-byte header,

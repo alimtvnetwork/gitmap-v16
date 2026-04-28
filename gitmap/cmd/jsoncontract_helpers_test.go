@@ -29,7 +29,6 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
-	"strings"
 	"testing"
 
 	"github.com/alimtvnetwork/gitmap-v8/gitmap/goldenguard"
@@ -81,18 +80,10 @@ func mustWriteGolden(t *testing.T, path string, got []byte) {
 		"GITMAP_UPDATE_GOLDEN to confirm", path)
 }
 
-// assertObjectKeyOrder parses `raw` as a JSON object (or as the
-// first object inside a top-level array — common for our list
-// outputs) and asserts the top-level keys appear in EXACTLY the
-// expected order. Goes through json.Decoder.Token() so the actual
-// on-the-wire ordering is checked, not a map-shuffled view of it.
-func assertObjectKeyOrder(t *testing.T, raw []byte, want []string) {
-	t.Helper()
-	got := readFirstObjectKeys(t, raw)
-	if !equalStringSlices(got, want) {
-		t.Fatalf("top-level key order drift\n  want: %v\n  got:  %v", want, got)
-	}
-}
+// assertObjectKeyOrder used to live here; removed once no test
+// referenced it. Snapshot suites pin shape via assertGoldenBytes
+// instead. Re-introduce alongside its first caller if structural-
+// only ordering checks are needed again.
 
 // readFirstObjectKeys streams tokens from `raw` and returns the keys
 // of the first top-level object encountered. Handles both shapes:
@@ -133,15 +124,7 @@ func skipUntilFirstObjectStart(dec *json.Decoder) error {
 
 // collectObjectKeys, equalStringSlices, and skipOneValue have been
 // consolidated into jsonsnapshot_helpers_test.go (canonical home
-// for shared JSON-test helpers). This file keeps only the helpers
-// unique to the contract suite. trimTrailingNewline stays here
-// because it's the only file that needs trailing-newline
-// normalization (snapshot helpers rely on golden files that
-// already have a stable terminator).
-
-// trimTrailingNewline normalizes encoder output for byte comparison.
-// json.Encoder.Encode always appends a trailing '\n'; some golden
-// files may omit it. This helper lets either form match.
-func trimTrailingNewline(b []byte) []byte {
-	return []byte(strings.TrimRight(string(b), "\n"))
-}
+// for shared JSON-test helpers). trimTrailingNewline used to live
+// here for byte-comparison normalization but was removed once no
+// test required it — snapshot helpers compare against goldens with
+// a stable trailing terminator.

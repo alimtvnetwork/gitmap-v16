@@ -3,10 +3,7 @@ package startup
 // .lnk Startup folder backend. Uses the in-process Shell Link
 // writer in winshortcut_writer.go + winshortcut_linkinfo.go — no
 // PowerShell shellout. Pure-Go, microsecond write, no powershell.exe
-// dependency, unit-testable on Linux CI. The legacy
-// createShortcutViaPowerShell helper in winshortcut_ps.go is
-// retained as a future fallback for non-trivial target shapes
-// (UNC, icons, args) but is not on the normal Add path.
+// dependency, unit-testable on Linux CI.
 //
 // Marker contract: the .lnk filename uses the `gitmap-` prefix
 // AND a tracking subkey under HKCU\Software\Gitmap\StartupFolder\
