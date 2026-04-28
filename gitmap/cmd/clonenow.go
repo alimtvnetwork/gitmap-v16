@@ -42,6 +42,23 @@ type cloneNowFlags struct {
 	// the positional file is supplied; --scan-root only steers the
 	// auto-pickup branch so the CLI never has competing roots.
 	scanRoot string
+	// assumeYes bypasses the pre-flight existing-destinations
+	// confirmation prompt. Required for non-TTY (CI) execution
+	// when any destination already exists; otherwise the run
+	// would block forever waiting on stdin.
+	assumeYes                       bool
+	execute                         bool
+	quiet                           bool
+	mode                            string
+	format                          string
+	cwd                             string
+	onExists                        string
+	output                          string
+	verifyCmdFaithful               bool
+	verifyCmdFaithfulExitOnMismatch bool
+	printCloneArgv                  bool
+	maxConcurrency                  int
+}
 	execute  bool
 	quiet    bool
 	mode     string
