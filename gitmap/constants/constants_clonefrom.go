@@ -131,21 +131,10 @@ const (
 		"(expected https://, http://, ssh://, git://, file://, or scp-style host:path)"
 	// %d = bad depth.
 	ErrCloneFromNegDepth = "depth %d is negative"
-	// %s = bad branch value. A branch name with whitespace, a leading
-	// dash (would be parsed as a git flag), or NUL bytes is rejected
-	// at parse time so the failure surfaces with row/column context
-	// instead of as an opaque `git checkout` error mid-clone.
-	ErrCloneFromBadBranch = "branch %q is not a valid git ref name " +
-		"(must not be empty after trim, contain whitespace, " +
-		"start with '-', or contain control characters)"
+	// ErrCloneFromBadBranch + CSVColumn* constants live in
+	// constants_clonefrom_csvcolumns.go to keep this file under the
+	// 200-line per-file budget.
 
-	// CSV column names — single source of truth for the names used
-	// in headers AND in row-error messages so the two cannot drift.
-	CSVColumnURL      = "url"
-	CSVColumnDest     = "dest"
-	CSVColumnBranch   = "branch"
-	CSVColumnDepth    = "depth"
-	CSVColumnCheckout = "checkout"
 
 	// CloneFromDepthFlagFmt is the SINGLE source of truth for how
 	// clone-from renders its shallow-clone flag, both in the executed
