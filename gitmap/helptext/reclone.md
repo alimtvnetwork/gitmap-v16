@@ -39,25 +39,30 @@ gitmap rc       <file> --execute                          # legacy short alias
 1. `--manifest <path>`  — explicit, highest priority. JSON or CSV;
    format is auto-detected from the extension (override with `--format`).
 2. Positional `<file>`  — legacy form, kept for back-compat.
-3. Auto-pickup          — searches `./.gitmap/output/gitmap.json` then
-   `./.gitmap/output/gitmap.csv` relative to the current directory.
+3. Auto-pickup          — searches `<root>/.gitmap/output/gitmap.json`
+   then `<root>/.gitmap/output/gitmap.csv`. `<root>` defaults to the
+   current directory and can be redirected with `--scan-root <dir>`.
 
 Passing **both** `--manifest` and a positional `<file>` is a usage error
-(exit `2`) so the chosen artifact is unambiguous.
+(exit `2`) so the chosen artifact is unambiguous. `--scan-root` is only
+consulted by the auto-pickup branch — it is silently ignored when an
+explicit path is supplied.
 
 
 ## Auto-pickup
 
-When `<file>` is omitted, `reclone` looks for a scan artifact in the
-conventional location relative to the current directory:
+When `<file>` and `--manifest` are both omitted, `reclone` looks for
+a scan artifact under:
 
-1. `./.gitmap/output/gitmap.json`  (preferred — richest schema)
-2. `./.gitmap/output/gitmap.csv`   (fallback)
+1. `<scan-root>/.gitmap/output/gitmap.json`  (preferred — richest schema)
+2. `<scan-root>/.gitmap/output/gitmap.csv`   (fallback)
 
-The first match is used and its path is echoed to stderr so the run
-stays reproducible. If neither file exists, `reclone` exits with code
-`2` and tells you to run `gitmap scan` first or pass an explicit
-path. Auto-pickup never walks parent directories.
+`<scan-root>` is the current directory by default, or the value of
+`--scan-root <dir>` when supplied. The first match is used and its
+path is echoed to stderr so the run stays reproducible. If neither
+file exists, `reclone` exits with code `2` and tells you to run
+`gitmap scan` first (or pass `--manifest` / a positional path).
+Auto-pickup never walks parent or sibling directories.
 
 ## Arguments
 
