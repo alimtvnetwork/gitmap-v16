@@ -1754,7 +1754,109 @@ gitmap clone ./.gitmap/output/gitmap.json --target-dir D:\restored --safe-pull
 gitmap clone ./.gitmap/output/gitmap.json --target-dir D:\restored --github-desktop
 ```
 
-#### One-shot single repo (no scan file needed)
+##### Accepted input schema
+
+`gitmap clone <file>` reads three formats. The dispatcher picks one
+from the file extension (`.json`, `.csv`, `.txt`); pass `--format
+json|csv|text` to override. JSON and CSV inputs are validated
+**before** cloning so a typo in a field name fails loudly with the
+exact row number instead of silently dropping repos.
+
+**JSON** — top-level array of objects. Every object key must be one
+of the fields below; unknown fields are rejected with the offending
+row number (1-based) and the full list of accepted fields. Each row
+must carry at least one of `httpsUrl` or `sshUrl`.
+
+| Field              | Type    | Required           | Notes |
+|--------------------|---------|--------------------|-------|
+| `id`               | number  | no                 | Scan-internal row id; ignored by clone. |
+| `slug`             | string  | no                 | Stable repo slug (e.g. `owner-repo`). |
+| `repoId`           | string  | no                 | Provider-side repo id. |
+| `repoName`         | string  | no                 | Display name; falls back to URL basename. |
+| `httpsUrl`         | string  | one of these two   | HTTPS clone URL. |
+| `sshUrl`           | string  | one of these two   | SSH clone URL (`ssh://` or `git@host:path`). |
+| `discoveredUrl`    | string  | no                 | URL as originally seen on disk. |
+| `branch`           | string  | no                 | Branch to check out after clone. |
+| `branchSource`     | string  | no                 | How the branch was determined (`HEAD`, `config`, ...). |
+| `relativePath`     | string  | recommended        | Destination folder, relative to `--target-dir`. |
+| `absolutePath`     | string  | no                 | Original absolute path on the source machine. |
+| `cloneInstruction` | string  | no                 | Pre-rendered `git clone ...` command (informational). |
+| `notes`            | string  | no                 | Free-form notes carried through from scan. |
+| `depth`            | number  | no                 | Shallow-clone depth; `0` means full history. |
+| `transport`        | string  | no                 | `ssh` / `https` / `other`; emitted by scan, ignored by clone. |
+
+**CSV** — first row is the header. Header column names use the
+exact same identifiers as the JSON fields above (case-sensitive).
+The header normalizer tolerates a UTF-8 BOM, surrounding
+double-quotes, and leading/trailing whitespace, so files saved by
+Excel or PowerShell `Out-File -Encoding utf8` work without manual
+cleanup. The header must include at least one of `httpsUrl` or
+`sshUrl`. Per-data-row errors report the **1-based data row number**
+(header is row 0; first data row is row 1).
+
+**Text** — one URL per line, blank lines and `#` comments allowed.
+No schema; the URL basename becomes the destination folder.
+
+##### HTTPS example (JSON)
+
+```json
+[
+  {
+    "repoName": "wp-onboarding",
+    "httpsUrl": "https://github.com/alimtvnetwork/wp-onboarding.git",
+    "branch": "main",
+    "relativePath": "wp-onboarding"
+  },
+  {
+    "repoName": "gitmap-v8",
+    "httpsUrl": "https://github.com/alimtvnetwork/gitmap-v8.git",
+    "relativePath": "gitmap-v8",
+    "depth": 1
+  }
+]
+```
+
+```bash
+gitmap clone repos.json --target-dir D:\restored
+```
+
+##### SSH example (CSV)
+
+```csv
+repoName,sshUrl,branch,relativePath
+wp-onboarding,git@github.com:alimtvnetwork/wp-onboarding.git,main,wp-onboarding
+gitmap-v8,git@github.com:alimtvnetwork/gitmap-v8.git,,gitmap-v8
+```
+
+```bash
+gitmap clone repos.csv --target-dir D:\restored
+```
+
+##### Mixed HTTPS + SSH (JSON)
+
+`httpsUrl` and `sshUrl` may both appear on the same row; the
+`--mode https|ssh` flag (default `https`) decides which one is used
+to clone. Rows that lack the chosen mode's URL fall back to the
+other URL automatically, so a mixed manifest "just works" under
+either mode.
+
+```json
+[
+  {
+    "repoName": "public-repo",
+    "httpsUrl": "https://github.com/acme/public.git",
+    "sshUrl":   "git@github.com:acme/public.git",
+    "relativePath": "public-repo"
+  },
+  {
+    "repoName": "ssh-only",
+    "sshUrl":   "git@gitlab.example.com:team/private.git",
+    "relativePath": "ssh-only"
+  }
+]
+```
+
+
 
 ```bash
 # Clone a single URL — versioned URLs (e.g. -v13) auto-flatten to <base>/
