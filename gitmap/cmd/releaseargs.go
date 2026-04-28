@@ -32,6 +32,11 @@ func reorderFlagsBeforeArgs(args []string) []string {
 		// the negation toggle would silently never fire.
 		"--strip": true, "--drop": true,
 		"--limit": true, "--since": true,
+		// reclone / scan unified manifest flag. Without this entry,
+		// `gitmap reclone --manifest path.json --execute` would treat
+		// `path.json` as a positional <file>, triggering the
+		// manifest-vs-positional conflict and exiting 2.
+		"--manifest": true,
 	}
 
 	for i := 0; i < len(args); i++ {
