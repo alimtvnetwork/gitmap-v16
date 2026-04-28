@@ -77,12 +77,15 @@ func wrapCSVRowErr(rowNum int, col string, err error) error {
 type csvIndex struct{ url, dest, branch, depth, checkout int }
 
 // indexCSVHeader walks the header row once and records each
-// column's position. Case-insensitive so spreadsheet exports with
-// "URL"/"Url" headers work without preprocessing.
+// column's position. Headers are normalized through
+// constants.CanonicalCSVColumn so common variations like "URL",
+// "httpsURL", "relpath", and "https_url" all map to their canonical
+// column. Unknown headers are ignored — extra spreadsheet columns
+// must not break parsing.
 func indexCSVHeader(header []string) csvIndex {
 	idx := csvIndex{url: -1, dest: -1, branch: -1, depth: -1, checkout: -1}
 	for i, name := range header {
-		switch strings.ToLower(strings.TrimSpace(name)) {
+		switch constants.CanonicalCSVColumn(name) {
 		case constants.CSVColumnURL:
 			idx.url = i
 		case constants.CSVColumnDest:
