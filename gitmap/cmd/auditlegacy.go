@@ -39,8 +39,7 @@ func runAuditLegacy(args []string) {
 	checkHelp(constants.CmdAuditLegacy, args)
 	opts, err := parseAuditLegacyArgs(args)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(2)
+		cliexit.Fail(constants.CmdAuditLegacy, "parse-args", "", err, 2)
 	}
 	hits, n, walkErr := scanAuditLegacy(opts)
 	if walkErr != nil {
