@@ -75,6 +75,7 @@ Auto-pickup never walks parent or sibling directories.
 | Flag | Default | Description |
 |---|---|---|
 | `--manifest` | (none) | Explicit path to the scan artifact (`.json` or `.csv`). Equivalent to the positional `<file>` argument; cannot be combined with one. |
+| `--scan-root` | current dir | Directory whose `.gitmap/output/` is probed during auto-pickup. Lets you `reclone` a tree scanned elsewhere without `cd`. Ignored when `--manifest` or a positional `<file>` is given. |
 | `--execute` | off | Actually run `git clone`. Without this flag, only the dry-run plan is printed. |
 | `--quiet` | off | Suppress per-row progress lines. The end-of-batch summary still prints. |
 | `--mode` | `https` | URL mode to clone with: `https` or `ssh`. Falls back to the other mode if the preferred URL is missing on a row. |
