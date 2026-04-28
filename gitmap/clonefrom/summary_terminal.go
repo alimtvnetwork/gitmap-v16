@@ -37,7 +37,7 @@ import (
 // callers can decide whether to surface the failure (they should:
 // the JSON path is shown in the terminal summary).
 func WriteReportJSON(results []Result) (string, error) {
-	dir := filepath.Join(".gitmap")
+	dir := ".gitmap"
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return "", fmt.Errorf(constants.ErrCloneFromReportMkdir, dir, err)
 	}

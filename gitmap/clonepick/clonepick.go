@@ -58,7 +58,7 @@ type Plan struct {
 	// means clone into the current directory (no shell handoff).
 	DestDir string
 	// Paths is the deduplicated, sorted list of repo-relative paths
-	// to materialise. Already validated by ParseArgs (no empty,
+	// to materialize. Already validated by ParseArgs (no empty,
 	// no absolute, no traversal, no oversized entries).
 	Paths []string
 	// UsedAsk records whether --ask was passed. Persisted so
@@ -78,9 +78,11 @@ type Plan struct {
 // Execute so the cmd layer can pick an exit code without
 // re-implementing success/failure heuristics.
 type Result struct {
-	// Status is one of "ok" | "failed" | "cancelled". Numeric exit
-	// code mapping lives in the cmd layer (cmd/clonepick.go) so the
-	// constants stay co-located with the user-facing strings.
+	// Status is one of "ok" | "failed" | "cancelled" (British "ll"
+	// kept on the wire for backwards compat with existing JSON
+	// consumers). Numeric exit code mapping lives in the cmd layer
+	// (cmd/clonepick.go) so the constants stay co-located with the
+	// user-facing strings.
 	Status string
 	// SelectionId is the DB row id assigned by the persist layer.
 	// 0 when DryRun was set (no row written) or when the run failed
@@ -97,5 +99,5 @@ type Result struct {
 const (
 	StatusOK        = "ok"
 	StatusFailed    = "failed"
-	StatusCancelled = "cancelled"
+	StatusCancelled = "cancelled" //nolint:misspell // stable JSON status value, do not rename.
 )

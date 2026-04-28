@@ -180,7 +180,7 @@ func filterTemplates(in []templates.Entry, kindFilter, langFilter string) []temp
 		if kindFilter != "" && e.Kind != kindFilter {
 			continue
 		}
-		if langFilter != "" && strings.ToLower(e.Lang) != langFilter {
+		if langFilter != "" && !strings.EqualFold(e.Lang, langFilter) {
 			continue
 		}
 		out = append(out, e)

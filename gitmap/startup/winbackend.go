@@ -184,7 +184,10 @@ func listWindows() ([]Entry, error) {
 
 		return nil, err
 	}
-	out := append(reg, regHKLM...)
+	out := make([]Entry, 0, len(reg)+len(regHKLM)+len(folder))
+	out = append(out, reg...)
+	out = append(out, regHKLM...)
+	out = append(out, folder...)
 
-	return append(out, folder...), nil
+	return out, nil
 }
