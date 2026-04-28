@@ -47,47 +47,11 @@ func mustEncodeStartupList(t *testing.T, entries []startup.Entry) []byte {
 	return append([]byte(nil), buf.Bytes()...)
 }
 
-// assertEveryObjectKeysExact parses `raw` as a top-level JSON array
-// and asserts that EVERY object in it has exactly `want` keys, in
-// `want` order. Reports per-object failures so a schema regression
-// in row 17 of a 100-row output points at row 17, not at the whole
-// blob. Uses the same json.Decoder.Token() path as the existing
-// assertObjectKeyOrder helper so on-the-wire ordering is checked,
-// never a map-shuffled view of it.
-func assertEveryObjectKeysExact(t *testing.T, raw []byte, want []string) {
-	t.Helper()
-	keysPerObject := readEveryObjectKeys(t, raw)
-	if len(keysPerObject) == 0 {
-		t.Fatalf("expected at least one object, got zero")
-	}
-	for i, got := range keysPerObject {
-		assertObjectKeysExactAt(t, i, got, want)
-	}
-}
-
-// assertObjectKeysExactAt does the per-object comparison with three
-// targeted failure modes (missing, unexpected, reordered) so the
-// test output tells the developer exactly what kind of schema drift
-// happened. Split out so assertEveryObjectKeysExact stays under the
-// 15-line function budget.
-func assertObjectKeysExactAt(t *testing.T, idx int, got, want []string) {
-	t.Helper()
-	wantSet := stringSet(want)
-	gotSet := stringSet(got)
-	for _, k := range want {
-		if !gotSet[k] {
-			t.Errorf("missing key %q in object[%d] (got keys %v)", k, idx, got)
-		}
-	}
-	for _, k := range got {
-		if !wantSet[k] {
-			t.Errorf("unexpected key %q in object[%d] (want keys %v)", k, idx, want)
-		}
-	}
-	if !equalStringSlices(got, want) && len(got) == len(want) {
-		t.Errorf("key order drift in object[%d]\n  want: %v\n  got:  %v", idx, want, got)
-	}
-}
+// Per-object key-set assertions (assertEveryObjectKeysExact /
+// assertObjectKeysExactAt) used to live here but were dropped once
+// no test referenced them — the live snapshot suites pin shape via
+// assertGoldenBytes instead. Re-introduce alongside their first
+// caller if a future test needs structural-only checks.
 
 // readEveryObjectKeys streams the entire top-level array and returns
 // one []string of keys per object. Returns an empty outer slice for
