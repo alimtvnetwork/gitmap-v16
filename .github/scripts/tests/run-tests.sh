@@ -146,11 +146,12 @@ echo "============================================================"
 # ---------------------------------------------------------------------
 CASE="$WORK/case01-empty-current"
 mkdir -p "$CASE"
-make_report "$CASE/current.json"
+make_report "$CASE/fixture.json"
 make_report "$CASE/baseline.json"
 export LINTER="unused" \
        BASELINE="$CASE/baseline.json" \
-       CURRENT_OUT="$CASE/current.json" \
+       CURRENT_OUT="$CASE/out.json" \
+       TEST_FIXTURE_CURRENT="$CASE/fixture.json" \
        TEXT_FILTER="" LABEL=""
 run_case "$CASE"
 assert_exit "case01 empty-current"   "$CASE" "0"
@@ -163,11 +164,12 @@ assert_stdout_has "case01 empty-current" "$CASE" "OK: no new"
 # ---------------------------------------------------------------------
 CASE="$WORK/case02-unchanged"
 mkdir -p "$CASE"
-make_report "$CASE/current.json"  "unused|pkg/a.go|10|1|func unusedFn is unused"
+make_report "$CASE/fixture.json"  "unused|pkg/a.go|10|1|func unusedFn is unused"
 make_report "$CASE/baseline.json" "unused|pkg/a.go|10|1|func unusedFn is unused"
 export LINTER="unused" \
        BASELINE="$CASE/baseline.json" \
-       CURRENT_OUT="$CASE/current.json" \
+       CURRENT_OUT="$CASE/out.json" \
+       TEST_FIXTURE_CURRENT="$CASE/fixture.json" \
        TEXT_FILTER="" LABEL=""
 run_case "$CASE"
 assert_exit "case02 unchanged"   "$CASE" "0"
@@ -179,14 +181,15 @@ assert_stdout_has "case02 unchanged" "$CASE" "+ NEW    : 0"
 # ---------------------------------------------------------------------
 CASE="$WORK/case03-new-finding"
 mkdir -p "$CASE"
-make_report "$CASE/current.json" \
+make_report "$CASE/fixture.json" \
   "unused|pkg/old.go|10|1|func oldFn is unused" \
   "unused|pkg/new.go|42|2|func newFn is unused"
 make_report "$CASE/baseline.json" \
   "unused|pkg/old.go|10|1|func oldFn is unused"
 export LINTER="unused" \
        BASELINE="$CASE/baseline.json" \
-       CURRENT_OUT="$CASE/current.json" \
+       CURRENT_OUT="$CASE/out.json" \
+       TEST_FIXTURE_CURRENT="$CASE/fixture.json" \
        TEXT_FILTER="" LABEL=""
 run_case "$CASE"
 assert_exit "case03 new-finding"   "$CASE" "1"
@@ -201,11 +204,12 @@ assert_stdout_lacks "case03 new-finding" "$CASE" "pkg/old.go"
 # ---------------------------------------------------------------------
 CASE="$WORK/case04-seeding"
 mkdir -p "$CASE"
-make_report "$CASE/current.json" \
+make_report "$CASE/fixture.json" \
   "unused|pkg/x.go|1|1|func x is unused"
 export LINTER="unused" \
        BASELINE="$CASE/does-not-exist.json" \
-       CURRENT_OUT="$CASE/current.json" \
+       CURRENT_OUT="$CASE/out.json" \
+       TEST_FIXTURE_CURRENT="$CASE/fixture.json" \
        TEXT_FILTER="" LABEL=""
 run_case "$CASE"
 assert_exit "case04 seeding"   "$CASE" "0"
@@ -220,13 +224,14 @@ assert_stdout_has "case04 seeding" "$CASE" "(seeding baseline)"
 # ---------------------------------------------------------------------
 CASE="$WORK/case05-text-filter"
 mkdir -p "$CASE"
-make_report "$CASE/current.json" \
+make_report "$CASE/fixture.json" \
   "gosec|pkg/a.go|10|1|G115: integer overflow conversion int -> uint32" \
   "gosec|pkg/b.go|20|1|G304: file path provided as taint input"
 make_report "$CASE/baseline.json"
 export LINTER="gosec" \
        BASELINE="$CASE/baseline.json" \
-       CURRENT_OUT="$CASE/current.json" \
+       CURRENT_OUT="$CASE/out.json" \
+       TEST_FIXTURE_CURRENT="$CASE/fixture.json" \
        TEXT_FILTER="G115" LABEL="gosec-G115"
 run_case "$CASE"
 assert_exit "case05 text-filter"   "$CASE" "1"
@@ -243,14 +248,15 @@ assert_stdout_lacks "case05 text-filter" "$CASE" "G304"
 # ---------------------------------------------------------------------
 CASE="$WORK/case06-filter-symmetry"
 mkdir -p "$CASE"
-make_report "$CASE/current.json" \
+make_report "$CASE/fixture.json" \
   "gosec|pkg/a.go|10|1|G115: integer overflow conversion int -> uint32" \
   "gosec|pkg/b.go|20|1|G304: file path provided as taint input"
 make_report "$CASE/baseline.json" \
   "gosec|pkg/a.go|10|1|G115: integer overflow conversion int -> uint32"
 export LINTER="gosec" \
        BASELINE="$CASE/baseline.json" \
-       CURRENT_OUT="$CASE/current.json" \
+       CURRENT_OUT="$CASE/out.json" \
+       TEST_FIXTURE_CURRENT="$CASE/fixture.json" \
        TEXT_FILTER="G115" LABEL="gosec-G115"
 run_case "$CASE"
 assert_exit "case06 filter-symmetry"   "$CASE" "0"
@@ -271,7 +277,8 @@ jq -n '{Issues: [
 make_report "$CASE/baseline.json"
 export LINTER="unused" \
        BASELINE="$CASE/baseline.json" \
-       CURRENT_OUT="$CASE/current.json" \
+       CURRENT_OUT="$CASE/out.json" \
+       TEST_FIXTURE_CURRENT="$CASE/fixture.json" \
        TEXT_FILTER="" LABEL=""
 run_case "$CASE"
 assert_exit "case07 pathless-dropped"   "$CASE" "0"
