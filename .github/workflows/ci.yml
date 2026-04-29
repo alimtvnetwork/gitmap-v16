@@ -1,8 +1,17 @@
 name: CI
 
 on:
+  # Run CI on every push to ANY branch — Lovable pushes commits straight
+  # to whichever branch the project is connected to (often not `main`),
+  # and we want feedback on every commit without requiring a PR.
+  # `release/**` and tag pushes are excluded because release.yml already
+  # handles those and we don't want duplicate runs.
   push:
-    branches: [main]
+    branches:
+      - '**'
+      - '!release/**'
+    tags-ignore:
+      - 'v*'
   pull_request:
     branches: [main]
   workflow_dispatch:
