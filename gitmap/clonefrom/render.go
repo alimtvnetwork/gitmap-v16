@@ -161,7 +161,15 @@ func DeriveDest(url string) string {
 		!strings.HasPrefix(url, "https://") && !strings.HasPrefix(url, "http://") {
 		url = url[i+1:]
 	}
-	base := path.Base(url)
+	// A trailing slash means the URL has no real path segment
+	// (e.g. "https://example.org/") — fall back to "repo" rather
+	// than letting path.Base return the host name.
+	trimmed := strings.TrimRight(url, "/")
+	if !strings.Contains(strings.TrimPrefix(strings.TrimPrefix(strings.TrimPrefix(trimmed, "https://"), "http://"), "ssh://"), "/") {
+
+		return "repo"
+	}
+	base := path.Base(trimmed)
 	base = strings.TrimSuffix(base, ".git")
 	if len(base) == 0 || base == "." || base == "/" {
 
