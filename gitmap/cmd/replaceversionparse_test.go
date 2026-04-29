@@ -61,14 +61,14 @@ func TestRemoteSlugRegex(t *testing.T) {
 // both a `-vN` and a `/vN` replacement so Go module import paths and
 // repo URLs are bumped in the same pass.
 func TestPairsForTarget(t *testing.T) {
-	got := pairsForTarget("gitmap", 4, 7)
+	got := pairsForTarget("gitmap", 4, 8)
 	if len(got) != 2 {
 		t.Fatalf("expected 2 pairs, got %d", len(got))
 	}
-	if got[0].old != "gitmap-v4" || got[0].new != "gitmap-v7" {
+	if got[0].old != "gitmap-v4" || got[0].new != "gitmap-v8" {
 		t.Errorf("dash form wrong: %+v", got[0])
 	}
-	if got[1].old != "gitmap/v4" || got[1].new != "gitmap/v7" {
+	if got[1].old != "gitmap/v4" || got[1].new != "gitmap/v8" {
 		t.Errorf("slash form wrong: %+v", got[1])
 	}
 }
