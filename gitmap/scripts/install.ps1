@@ -169,6 +169,72 @@ function Write-Err([string]$msg) {
     Write-Host "  $msg" -ForegroundColor Red
 }
 
+function Write-FatalError($record, [int]$exitCode = 1) {
+    $message = "Unknown PowerShell error"
+    if ($record) {
+        if ($record.Exception -and -not [string]::IsNullOrWhiteSpace($record.Exception.Message)) {
+            $message = $record.Exception.Message
+        }
+        elseif (-not [string]::IsNullOrWhiteSpace($record.ToString())) {
+            $message = $record.ToString()
+        }
+    }
+
+    Write-Host ""
+    Write-Err "FATAL: $message"
+
+    if ($record) {
+        if (-not [string]::IsNullOrWhiteSpace($record.ScriptStackTrace)) {
+            Write-Err ""
+            Write-Err "Script stack trace:"
+            foreach ($line in ($record.ScriptStackTrace -split "`r?`n")) {
+                if (-not [string]::IsNullOrWhiteSpace($line)) {
+                    Write-Err "  $line"
+                }
+            }
+        }
+
+        if ($record.InvocationInfo) {
+            $scriptName = $record.InvocationInfo.ScriptName
+            if ([string]::IsNullOrWhiteSpace($scriptName)) {
+                $scriptName = $PSCommandPath
+            }
+
+            Write-Err ""
+            Write-Err "Failure context:"
+            if (-not [string]::IsNullOrWhiteSpace($scriptName)) {
+                Write-Err "  Script: $scriptName"
+            }
+            Write-Err "  Line: $($record.InvocationInfo.ScriptLineNumber)"
+            if (-not [string]::IsNullOrWhiteSpace($record.InvocationInfo.Line)) {
+                Write-Err "  Code: $($record.InvocationInfo.Line.Trim())"
+            }
+        }
+
+        if ($record.CategoryInfo) {
+            Write-Err ""
+            Write-Err "CategoryInfo: $($record.CategoryInfo)"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($record.FullyQualifiedErrorId)) {
+            Write-Err "FullyQualifiedErrorId: $($record.FullyQualifiedErrorId)"
+        }
+
+        if ($record.Exception) {
+            Write-Err ""
+            Write-Err "Exception:"
+            foreach ($line in ($record.Exception.ToString() -split "`r?`n")) {
+                if (-not [string]::IsNullOrWhiteSpace($line)) {
+                    Write-Err "  $line"
+                }
+            }
+        }
+    }
+
+    Write-Host ""
+    exit $exitCode
+}
+
 # --- Resolve install directory ---
 
 function Resolve-InstallDir([string]$dir) {
@@ -915,39 +981,43 @@ if ($Uninstall) {
 }
 
 
-$installResult = Main
+try {
+    $installResult = Main
 
-if (-not $installResult) {
-    # Main failed gracefully — error already printed
-    return
-}
+    if (-not $installResult) {
+        exit 1
+    }
 
-# Set $env:PATH at the TOP-LEVEL script scope (not inside a function)
-# This ensures the change persists in the caller's session when run via iex
-$env:PATH = $installResult.NewPath
+    # Set $env:PATH at the TOP-LEVEL script scope (not inside a function)
+    # This ensures the change persists in the caller's session when run via iex
+    $env:PATH = $installResult.NewPath
 
-# Verify the binary works
-$binPath = Join-Path $installResult.InstallDir $BinaryName
-$installedVersion = $installResult.Version
-if (Test-Path $binPath) {
+    # Verify the binary works
+    $binPath = Join-Path $installResult.InstallDir $BinaryName
+    $installedVersion = $installResult.Version
+    if (Test-Path $binPath) {
+        Write-Host ""
+        try {
+            $versionOutput = & $binPath version 2>&1
+            $installedVersion = ($versionOutput | Out-String).Trim()
+            Write-OK "gitmap $installedVersion"
+        }
+        catch {
+            Write-Err "Binary found but failed to run: $_"
+        }
+    }
+    else {
+        Write-Err "Binary not found at $binPath"
+    }
+
+    Write-InstallSummary $installedVersion $binPath $installResult.InstallDir $installResult.PathResult $NoPath.IsPresent
+
+    Invoke-InstallVerification $binPath $installResult.InstallDir $NoPath.IsPresent
+
     Write-Host ""
-    try {
-        $versionOutput = & $binPath version 2>&1
-        $installedVersion = ($versionOutput | Out-String).Trim()
-        Write-OK "gitmap $installedVersion"
-    }
-    catch {
-        Write-Err "Binary found but failed to run: $_"
-    }
+    Write-OK "Done! Run 'gitmap --help' to get started."
+    Write-Host ""
 }
-else {
-    Write-Err "Binary not found at $binPath"
+catch {
+    Write-FatalError $_ 1
 }
-
-Write-InstallSummary $installedVersion $binPath $installResult.InstallDir $installResult.PathResult $NoPath.IsPresent
-
-Invoke-InstallVerification $binPath $installResult.InstallDir $NoPath.IsPresent
-
-Write-Host ""
-Write-OK "Done! Run 'gitmap --help' to get started."
-Write-Host ""
