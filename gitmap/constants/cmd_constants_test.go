@@ -208,8 +208,8 @@ func topLevelCmds() map[string]string {
 		"CmdCloneRecloneAlias": CmdCloneRecloneAlias,
 		"CmdCloneNow":          CmdCloneNow,
 		"CmdCloneNowAlias":     CmdCloneNowAlias,
-		"CmdCloneRel":      CmdCloneRel,
-		"CmdCloneRelAlias": CmdCloneRelAlias,
+		"CmdCloneRel":          CmdCloneRel,
+		"CmdCloneRelAlias":     CmdCloneRelAlias,
 		// Audit / inject / replace / regoldens / templates aliases:
 		// each pairs with its canonical command and dispatches via
 		// rootcore.go.
