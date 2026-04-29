@@ -370,7 +370,7 @@ function Get-Asset([string]$version, [string]$arch) {
             Stop-Strict "download failed: $($_.Exception.Message)"
         }
         Write-Err "Download failed: $_"
-        exit 1
+        throw [InstallerFailure]::new("Download failed", 1)
     }
 
     # Verify checksum
@@ -382,7 +382,7 @@ function Get-Asset([string]$version, [string]$arch) {
             Stop-Strict "asset $assetName not listed in checksums.txt for $version"
         }
         Write-Err "Asset not found in checksums.txt"
-        exit 1
+        throw [InstallerFailure]::new("Asset not found in checksums.txt", 1)
     }
 
     $expectedHash = ($expectedLine -split '\s+')[0]
@@ -396,7 +396,7 @@ function Get-Asset([string]$version, [string]$arch) {
         Write-Err "Checksum mismatch!"
         Write-Err "  Expected: $expectedHash"
         Write-Err "  Got:      $actualHash"
-        exit 1
+        throw [InstallerFailure]::new("Checksum mismatch", 1)
     }
 
     Write-OK "Checksum verified."
