@@ -525,6 +525,51 @@ function Install-SeedData([string]$version, [string]$installDir) {
     }
 }
 
+# --- Post-install self-check ---
+# Verifies that the critical downloader-config.json seed file landed on
+# disk after Install-SeedData. The binary refuses to read its downloader
+# settings without this file and prints a confusing "Could not read
+# downloader seed" warning on every subsequent run, so we fail loudly
+# here with an actionable message instead of letting the user discover
+# the problem 10 minutes later.
+function Assert-InstallSelfCheck([string]$installDir) {
+    Write-Step "Running install self-check..."
+
+    $seedPath = Join-Path (Join-Path $installDir "data") "downloader-config.json"
+
+    if (-not (Test-Path $seedPath)) {
+        Write-Err ""
+        Write-Err "Install self-check FAILED: required seed file is missing."
+        Write-Err "  Expected: $seedPath"
+        Write-Err ""
+        Write-Err "  Why this matters:"
+        Write-Err "    gitmap reads downloader-config.json on every run to"
+        Write-Err "    configure parallel downloads, split sizes, and the"
+        Write-Err "    Aria2C/GoDownloader fallback chain. Without it the"
+        Write-Err "    binary will warn 'Could not read downloader seed'"
+        Write-Err "    and operate with reduced functionality."
+        Write-Err ""
+        Write-Err "  How to fix:"
+        Write-Err "    1) Re-run the installer with a working network connection, OR"
+        Write-Err "    2) Manually download the file from:"
+        Write-Err "         https://raw.githubusercontent.com/$Repo/main/gitmap/data/downloader-config.json"
+        Write-Err "       and save it to:"
+        Write-Err "         $seedPath"
+        Write-Err ""
+        throw [InstallerFailure]::new("Install self-check failed: downloader-config.json missing at $seedPath", 1)
+    }
+
+    # Sanity-check the file is non-empty JSON; a 0-byte file would
+    # parse as a different "missing seed" error inside the binary.
+    $info = Get-Item $seedPath
+    if ($info.Length -le 0) {
+        Write-Err "Install self-check FAILED: downloader-config.json is empty at $seedPath"
+        throw [InstallerFailure]::new("Install self-check failed: downloader-config.json is empty at $seedPath", 1)
+    }
+
+    Write-OK "Self-check passed: downloader-config.json present ($($info.Length) bytes)."
+}
+
 # --- Download and extract docs-site.zip release asset ---
 # Required for `gitmap help-dashboard` (hd). Best-effort: skip silently
 # if the release does not bundle docs-site.zip (older versions).
@@ -903,6 +948,9 @@ function Main {
         # Seed data files (downloader-config.json, etc.) so the binary
         # does not warn about a missing seed on first run.
         Install-SeedData $resolvedVersion $resolvedDir
+
+        # Verify the seed actually landed before we declare success.
+        Assert-InstallSelfCheck $resolvedDir
 
         # Bundle the docs site so `gitmap help-dashboard` works after install.
         Install-DocsSite $resolvedVersion $resolvedDir
