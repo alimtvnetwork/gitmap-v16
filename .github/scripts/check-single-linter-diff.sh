@@ -89,16 +89,20 @@ mkdir -p "$(dirname "$CURRENT_OUT")"
 )
 
 # Normalize a JSON report to a stable set of "file|line|text" keys,
-# refusing entries with empty file paths. Emits one key per line.
+# refusing entries with empty file paths. When TEXT_FILTER is set, only
+# findings whose .Text matches the regex are kept (applied to BOTH
+# current and baseline so the diff stays apples-to-apples). Emits one
+# key per line.
 normalize() {
   local path="$1"
   if [ -z "$path" ] || [ ! -s "$path" ]; then
     return 0
   fi
-  jq -r --arg linter "$LINTER" '
+  jq -r --arg linter "$LINTER" --arg filter "$TEXT_FILTER" '
     .Issues // []
     | map(select(.FromLinter == $linter))
     | map(select((.Pos.Filename // "") | length > 0))
+    | map(select($filter == "" or (.Text | test($filter))))
     | .[]
     | "\(.Pos.Filename)|\(.Pos.Line)|\(.Text)"
   ' "$path"
@@ -121,7 +125,7 @@ NEW_KEYS=$(comm -23 \
 NEW_COUNT=$(printf '%s\n' "$NEW_KEYS" | sed '/^$/d' | wc -l | tr -d ' ')
 
 echo "========================================================================"
-echo "  ${LINTER^^} DIFF (hard-gate, full-path only)"
+echo "  ${LABEL^^} DIFF (baseline-diff, full-path only)"
 echo "========================================================================"
 echo "  current  : $CURRENT_OUT"
 echo "  baseline : ${BASELINE:-<none — seeding mode>}"
@@ -129,7 +133,7 @@ echo "  + NEW    : $NEW_COUNT"
 echo "========================================================================"
 
 if [ "$NEW_COUNT" = "0" ]; then
-  echo "OK: no new $LINTER findings."
+  echo "OK: no new $LABEL findings."
   exit 0
 fi
 
