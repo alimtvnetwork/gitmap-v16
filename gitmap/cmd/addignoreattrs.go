@@ -210,16 +210,25 @@ func dedupeLines(body []byte) []byte {
 	return []byte(strings.Join(out, "\n"))
 }
 
-// collapseBlankRuns trims any run of blank lines longer than maxBlank
-// down to exactly maxBlank consecutive blanks. Non-blank lines pass
-// through unchanged.
+// collapseBlankRuns trims any INTERIOR run of blank lines longer than
+// maxBlank down to exactly maxBlank consecutive blanks. A run that
+// extends to the end of the slice is preserved as-is so trailing
+// spacing introduced by dedup'd duplicates survives untouched.
 func collapseBlankRuns(lines []string, maxBlank int) []string {
+	// Find the index of the last non-blank line. Anything after it is
+	// the trailing run and is left alone.
+	lastNonBlank := -1
+	for i, line := range lines {
+		if strings.TrimSpace(line) != "" {
+			lastNonBlank = i
+		}
+	}
 	out := make([]string, 0, len(lines))
 	run := 0
-	for _, line := range lines {
+	for i, line := range lines {
 		if strings.TrimSpace(line) == "" {
 			run++
-			if run <= maxBlank {
+			if i > lastNonBlank || run <= maxBlank {
 				out = append(out, line)
 			}
 
