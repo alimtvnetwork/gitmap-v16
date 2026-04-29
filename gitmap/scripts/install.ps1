@@ -949,6 +949,9 @@ function Main {
         # does not warn about a missing seed on first run.
         Install-SeedData $resolvedVersion $resolvedDir
 
+        # Verify the seed actually landed before we declare success.
+        Assert-InstallSelfCheck $resolvedDir
+
         # Bundle the docs site so `gitmap help-dashboard` works after install.
         Install-DocsSite $resolvedVersion $resolvedDir
 
