@@ -818,7 +818,7 @@ function Invoke-InstallVerification([string]$binPath, [string]$installDir, [bool
         Write-Host ("    WARN  PATH skipped (-NoPath); invoke with full path: {0}" -f $binPath) -ForegroundColor Yellow
     }
     else {
-        Write-Host ("    WARN  {0} not on PATH yet — open a new terminal or reload `$PROFILE." -f $BinaryName) -ForegroundColor Yellow
+        Write-Host ("    WARN  {0} not on PATH yet - open a new terminal or reload `$PROFILE." -f $BinaryName) -ForegroundColor Yellow
     }
 
     # 3. Data folder
