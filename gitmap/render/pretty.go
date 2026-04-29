@@ -41,8 +41,13 @@ func Render(md string) string {
 	doc := parse(lines)
 
 	var out strings.Builder
+	prevBlank := false
 	for _, b := range doc {
+		if b.kind == bkBlank && prevBlank {
+			continue
+		}
 		emitBlock(&out, b)
+		prevBlank = b.kind == bkBlank
 	}
 
 	return strings.TrimRight(out.String(), "\n") + "\n"
