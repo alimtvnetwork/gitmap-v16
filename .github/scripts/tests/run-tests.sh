@@ -39,21 +39,26 @@ WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
 
 # ---------------------------------------------------------------------
-# PATH shim: a fake `golangci-lint` that does NOTHING. The script under
-# test expects its invocation to write $CURRENT_OUT, but we pre-seed
-# that file ourselves before each case so we control the "current
-# findings" exactly. The shim simply exits 0, leaving our fixture in
-# place. `cd "$LINT_DIR"` inside the script also needs $LINT_DIR to
-# exist — we create $WORK/repo as a no-op stand-in.
+# PATH shim: a fake `golangci-lint` whose stdout is sourced from the
+# fixture file at $TEST_FIXTURE_CURRENT (set per-case). The script
+# under test redirects `golangci-lint ... > $CURRENT_OUT`, so whatever
+# the shim writes to stdout becomes the "current" report. This keeps
+# the contract test-controlled without touching the script under test.
+# `cd "$LINT_DIR"` inside the script also needs $LINT_DIR to exist —
+# we create $WORK/repo as a no-op stand-in.
 # ---------------------------------------------------------------------
 SHIM_DIR="$WORK/shim"
 mkdir -p "$SHIM_DIR" "$WORK/repo"
 cat > "$SHIM_DIR/golangci-lint" <<'SHIM'
 #!/usr/bin/env bash
-# Test shim — does nothing. Real script writes $CURRENT_OUT here, but
-# the test harness has already pre-seeded that file with the desired
-# fixture. Exit 0 so the script's `(cd ... && golangci-lint ...)`
-# subshell succeeds.
+# Test shim — emits the pre-seeded current-report fixture on stdout so
+# the script-under-test's `> $CURRENT_OUT` redirect captures it. The
+# fixture path is passed via env to keep the shim stateless.
+if [ -n "${TEST_FIXTURE_CURRENT:-}" ] && [ -f "$TEST_FIXTURE_CURRENT" ]; then
+  cat "$TEST_FIXTURE_CURRENT"
+else
+  echo '{"Issues": []}'
+fi
 exit 0
 SHIM
 chmod +x "$SHIM_DIR/golangci-lint"
