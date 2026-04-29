@@ -41,16 +41,16 @@ irm https://raw.githubusercontent.com/alimtvnetwork/gitmap-v9/main/gitmap/script
 curl -fsSL https://raw.githubusercontent.com/alimtvnetwork/gitmap-v9/main/gitmap/scripts/install.sh | sh
 ```
 
-### 📌 Pinned version (`v3.69.0`)
+### 📌 Pinned version (`v3.180.0`)
 
 ```powershell
 # Windows · PowerShell
-irm https://github.com/alimtvnetwork/gitmap-v9/releases/download/v3.69.0/release-version-v3.69.0.ps1 | iex
+irm https://github.com/alimtvnetwork/gitmap-v9/releases/download/v3.180.0/release-version-v3.180.0.ps1 | iex
 ```
 
 ```bash
 # macOS · Linux · Bash
-curl -fsSL https://github.com/alimtvnetwork/gitmap-v9/releases/download/v3.69.0/release-version-v3.69.0.sh | bash
+curl -fsSL https://github.com/alimtvnetwork/gitmap-v9/releases/download/v3.180.0/release-version-v3.180.0.sh | bash
 ```
 
 ### 🎯 Install — Quick (pick your install drive)

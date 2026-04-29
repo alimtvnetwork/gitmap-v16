@@ -1,5 +1,12 @@
 # Changelog
 
+## v3.180.0 — (2026-04-29) — Fix release: sync package-lock.json, pin README to v3.180.0
+
+- Regenerated `package-lock.json` to include `@testing-library/user-event@14.6.1`
+  so the docs-site `npm ci` step in the release workflow stops failing.
+- Bumped CLI `constants.Version`, internal docs UI `VERSION`, and README pinned
+  install version to `v3.180.0`.
+
 ## v3.179.0 — (2026-04-29) — Minor version bump rolling up recent CI fixes
 
 Routine minor bump rolling up recent CI fixes:
