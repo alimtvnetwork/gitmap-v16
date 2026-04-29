@@ -76,6 +76,72 @@ function Write-OK([string]$msg)   { if (-not $Quiet) { Write-Host "  OK $msg"  -
 function Write-Warn2([string]$m)  { if (-not $Quiet) { Write-Host "  !  $m"    -ForegroundColor Yellow } }
 function Write-Err2([string]$m)   { Write-Host "  X  $m" -ForegroundColor Red }
 
+function Write-FatalError($record, [int]$exitCode = 1) {
+    $message = "Unknown PowerShell error"
+    if ($record) {
+        if ($record.Exception -and -not [string]::IsNullOrWhiteSpace($record.Exception.Message)) {
+            $message = $record.Exception.Message
+        }
+        elseif (-not [string]::IsNullOrWhiteSpace($record.ToString())) {
+            $message = $record.ToString()
+        }
+    }
+
+    Write-Host ""
+    Write-Err2 "FATAL: $message"
+
+    if ($record) {
+        if (-not [string]::IsNullOrWhiteSpace($record.ScriptStackTrace)) {
+            Write-Err2 ""
+            Write-Err2 "Script stack trace:"
+            foreach ($line in ($record.ScriptStackTrace -split "`r?`n")) {
+                if (-not [string]::IsNullOrWhiteSpace($line)) {
+                    Write-Err2 "  $line"
+                }
+            }
+        }
+
+        if ($record.InvocationInfo) {
+            $scriptName = $record.InvocationInfo.ScriptName
+            if ([string]::IsNullOrWhiteSpace($scriptName)) {
+                $scriptName = $PSCommandPath
+            }
+
+            Write-Err2 ""
+            Write-Err2 "Failure context:"
+            if (-not [string]::IsNullOrWhiteSpace($scriptName)) {
+                Write-Err2 "  Script: $scriptName"
+            }
+            Write-Err2 "  Line: $($record.InvocationInfo.ScriptLineNumber)"
+            if (-not [string]::IsNullOrWhiteSpace($record.InvocationInfo.Line)) {
+                Write-Err2 "  Code: $($record.InvocationInfo.Line.Trim())"
+            }
+        }
+
+        if ($record.CategoryInfo) {
+            Write-Err2 ""
+            Write-Err2 "CategoryInfo: $($record.CategoryInfo)"
+        }
+
+        if (-not [string]::IsNullOrWhiteSpace($record.FullyQualifiedErrorId)) {
+            Write-Err2 "FullyQualifiedErrorId: $($record.FullyQualifiedErrorId)"
+        }
+
+        if ($record.Exception) {
+            Write-Err2 ""
+            Write-Err2 "Exception:"
+            foreach ($line in ($record.Exception.ToString() -split "`r?`n")) {
+                if (-not [string]::IsNullOrWhiteSpace($line)) {
+                    Write-Err2 "  $line"
+                }
+            }
+        }
+    }
+
+    Write-Host ""
+    exit $exitCode
+}
+
 # ---------------------------------------------------------------------------
 # Version validation
 # ---------------------------------------------------------------------------
@@ -401,38 +467,43 @@ function Test-Version([string]$binPath, [string]$expectedVersion) {
 # ---------------------------------------------------------------------------
 # main
 # ---------------------------------------------------------------------------
-if ([string]::IsNullOrWhiteSpace($Version)) {
-    Write-Err2 "Required: -Version vMAJOR.MINOR.PATCH"
-    Write-Err2 "Example:  .\release-version.ps1 -Version v3.36.0"
-    exit $EXIT_VERSION_MISSING
+try {
+    if ([string]::IsNullOrWhiteSpace($Version)) {
+        Write-Err2 "Required: -Version vMAJOR.MINOR.PATCH"
+        Write-Err2 "Example:  .\release-version.ps1 -Version v3.36.0"
+        exit $EXIT_VERSION_MISSING
+    }
+
+    $os = Resolve-OS
+    $arch = Resolve-Arch $Arch
+    Write-Step "Target: $os/$arch"
+
+    $resolvedVersion = Resolve-RequestedVersion $Version
+    Write-Step "Resolving release $resolvedVersion ..."
+    $release = Invoke-GitHubAPI "/releases/tags/$resolvedVersion"
+    if ($null -eq $release) {
+        Write-Err2 "Release vanished after resolution: $resolvedVersion"
+        exit $EXIT_VERSION_MISSING
+    }
+
+    $asset = Select-Asset $release $os $arch
+    $checksumFile = Get-Checksums $release
+    $dl = Save-Asset $asset
+    Test-Checksum $dl.Path $asset.name $checksumFile
+
+    $installDir = Resolve-InstallDir $InstallDir
+    $binPath = Install-Binary $dl.Path $installDir
+    Add-ToPath $installDir
+    Test-Version $binPath $resolvedVersion
+    Invoke-SelfInstall $binPath $resolvedVersion
+
+    # Cleanup temp
+    try { Remove-Item $dl.Dir -Recurse -Force -ErrorAction SilentlyContinue } catch {}
+
+    Write-Host ""
+    Write-OK "gitmap $resolvedVersion installed to $installDir"
+    exit $EXIT_OK
 }
-
-$os = Resolve-OS
-$arch = Resolve-Arch $Arch
-Write-Step "Target: $os/$arch"
-
-$resolvedVersion = Resolve-RequestedVersion $Version
-Write-Step "Resolving release $resolvedVersion ..."
-$release = Invoke-GitHubAPI "/releases/tags/$resolvedVersion"
-if ($null -eq $release) {
-    Write-Err2 "Release vanished after resolution: $resolvedVersion"
-    exit $EXIT_VERSION_MISSING
+catch {
+    Write-FatalError $_ $EXIT_NETWORK
 }
-
-$asset = Select-Asset $release $os $arch
-$checksumFile = Get-Checksums $release
-$dl = Save-Asset $asset
-Test-Checksum $dl.Path $asset.name $checksumFile
-
-$installDir = Resolve-InstallDir $InstallDir
-$binPath = Install-Binary $dl.Path $installDir
-Add-ToPath $installDir
-Test-Version $binPath $resolvedVersion
-Invoke-SelfInstall $binPath $resolvedVersion
-
-# Cleanup temp
-try { Remove-Item $dl.Dir -Recurse -Force -ErrorAction SilentlyContinue } catch {}
-
-Write-Host ""
-Write-OK "gitmap $resolvedVersion installed to $installDir"
-exit $EXIT_OK
