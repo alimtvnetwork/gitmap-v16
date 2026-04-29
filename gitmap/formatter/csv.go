@@ -136,8 +136,8 @@ func rowToRecordWithSource(row []string) model.ScanRecord {
 		Branch: row[3], BranchSource: row[4],
 		RelativePath: row[5], AbsolutePath: row[6],
 		CloneInstruction: row[7], Notes: row[8],
-		Depth:     depth,
-		RepoID:    repoID,
+		Depth:         depth,
+		RepoID:        repoID,
 		DiscoveredURL: discovered,
 		Transport:     transport,
 	}
