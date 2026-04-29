@@ -900,6 +900,10 @@ function Main {
             Remove-Item $result.TmpDir -Recurse -Force -ErrorAction SilentlyContinue
         }
 
+        # Seed data files (downloader-config.json, etc.) so the binary
+        # does not warn about a missing seed on first run.
+        Install-SeedData $resolvedVersion $resolvedDir
+
         # Bundle the docs site so `gitmap help-dashboard` works after install.
         Install-DocsSite $resolvedVersion $resolvedDir
 
