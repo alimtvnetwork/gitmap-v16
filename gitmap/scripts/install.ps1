@@ -49,6 +49,14 @@ param(
 $ErrorActionPreference = "Stop"
 $ProgressPreference = "SilentlyContinue"
 
+# Force UTF-8 output so glyphs like the warning sign render correctly
+# instead of cp437/Windows-1252 mojibake (e.g. "ΓÜá" for "⚠").
+try {
+    [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+    $OutputEncoding = [System.Text.Encoding]::UTF8
+    if ($PSStyle) { $PSStyle.OutputRendering = 'PlainText' }
+} catch {}
+
 $Repo = "alimtvnetwork/gitmap-v9"
 $BinaryName = "gitmap.exe"
 $InstallerVersion = "1.0.0"
@@ -475,6 +483,48 @@ function Install-Binary([string]$zipPath, [string]$installDir) {
     Write-OK "Installed $BinaryName to $installDir"
 }
 
+# --- Download seed data files (downloader-config.json, etc.) ---
+# The release zip only contains the binary, but the binary expects
+# ./data/downloader-config.json to exist next to it. Fetch the seed
+# files from the pinned tag on GitHub so the first run does not
+# print "Could not read downloader seed".
+function Install-SeedData([string]$version, [string]$installDir) {
+    $dataDir = Join-Path $installDir "data"
+    if (-not (Test-Path $dataDir)) {
+        New-Item -ItemType Directory -Path $dataDir -Force | Out-Null
+    }
+
+    $seedFiles = @(
+        "downloader-config.json",
+        "config.json",
+        "git-setup.json",
+        "seo-templates.json"
+    )
+
+    Write-Step "Downloading seed data files ($version)..."
+
+    $installed = 0
+    foreach ($name in $seedFiles) {
+        $rawUrl = "https://raw.githubusercontent.com/$Repo/$version/gitmap/data/$name"
+        $dest = Join-Path $dataDir $name
+        try {
+            Invoke-WebRequest -Uri $rawUrl -OutFile $dest -UseBasicParsing -ErrorAction Stop
+            $installed++
+        }
+        catch {
+            # Best-effort: some files may not exist in older tags.
+            Write-Host ("    skip  {0} (not in {1})" -f $name, $version) -ForegroundColor DarkGray
+        }
+    }
+
+    if ($installed -gt 0) {
+        Write-OK ("Installed {0} seed file(s) to {1}" -f $installed, $dataDir)
+    }
+    else {
+        Write-Host ("    WARN  No seed files downloaded; gitmap will use built-in defaults") -ForegroundColor Yellow
+    }
+}
+
 # --- Download and extract docs-site.zip release asset ---
 # Required for `gitmap help-dashboard` (hd). Best-effort: skip silently
 # if the release does not bundle docs-site.zip (older versions).
@@ -810,7 +860,7 @@ function Invoke-InstallVerification([string]$binPath, [string]$installDir, [bool
         Write-Host ("    WARN  PATH skipped (-NoPath); invoke with full path: {0}" -f $binPath) -ForegroundColor Yellow
     }
     else {
-        Write-Host ("    WARN  {0} not on PATH yet — open a new terminal or reload `$PROFILE." -f $BinaryName) -ForegroundColor Yellow
+        Write-Host ("    WARN  {0} not on PATH yet - open a new terminal or reload `$PROFILE." -f $BinaryName) -ForegroundColor Yellow
     }
 
     # 3. Data folder
@@ -849,6 +899,10 @@ function Main {
         finally {
             Remove-Item $result.TmpDir -Recurse -Force -ErrorAction SilentlyContinue
         }
+
+        # Seed data files (downloader-config.json, etc.) so the binary
+        # does not warn about a missing seed on first run.
+        Install-SeedData $resolvedVersion $resolvedDir
 
         # Bundle the docs site so `gitmap help-dashboard` works after install.
         Install-DocsSite $resolvedVersion $resolvedDir
