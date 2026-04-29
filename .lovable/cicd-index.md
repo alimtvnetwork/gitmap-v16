@@ -12,7 +12,7 @@ Tracks every CI/CD pipeline failure or hardening decision encountered, its root 
 | # | Title | Tool / Stage | Status | File |
 |---|-------|--------------|--------|------|
 | 01 | misspell: `labelled` → `labeled` | golangci-lint (misspell) | ✅ Resolved | [01-misspell-labelled.md](cicd-issues/01-misspell-labelled.md) |
-| 02 | `lint-regression-guard` semantics split (hard-floor vs baseline-diff) | golangci-lint (regression-guard job) | 🔄 In Progress | [02-lint-regression-guard-semantics.md](cicd-issues/02-lint-regression-guard-semantics.md) |
+| 02 | `lint-regression-guard` renamed → `lint-hard-floor` (semantics now match name) | golangci-lint (hard-floor job) | ✅ Resolved | [02-lint-regression-guard-semantics.md](cicd-issues/02-lint-regression-guard-semantics.md) |
 
 ## Patterns Learned
 - **US-English everywhere in Go**: `misspell` flags British spellings in comments and identifiers. Avoid `labelled`, `cancelled`, `behaviour`, `colour`, `occured`, `recieve`, `seperate`.
