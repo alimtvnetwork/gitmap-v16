@@ -119,7 +119,7 @@ const (
 	// (e.g. gitmap-v5/v6/v7) and exits non-zero on any hit. Used as a // gitmap-legacy-ref-allow
 	// regression guard for remixes / rename commits. Help: audit-legacy.md.
 	CmdAuditLegacy       = "audit-legacy"
-	CmdAuditLegacyAlias  = "al"
+	CmdAuditLegacyAlias  = "aul"
 	CmdAuditLegacyAlias2 = "audit"
 )
 
