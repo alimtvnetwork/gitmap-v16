@@ -41,6 +41,11 @@ func reorderFlagsBeforeArgs(args []string) []string {
 		// Same reordering hazard as --manifest — without this entry
 		// the directory would land in the positional slot.
 		"--scan-root": true,
+		// templates list filter flags: without these, `--kind ignore`
+		// would split into `--kind` (parsed as a bare bool-style flag,
+		// value left empty) and `ignore` (re-classified as positional),
+		// which is why TestParseTemplatesListFlagsLowersValues failed.
+		"--kind": true, "--lang": true,
 	}
 
 	for i := 0; i < len(args); i++ {
