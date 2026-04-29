@@ -53,6 +53,14 @@ $Repo = "alimtvnetwork/gitmap-v9"
 $BinaryName = "gitmap.exe"
 $InstallerVersion = "1.0.0"
 
+class InstallerFailure : System.Exception {
+    [int]$ExitCode
+
+    InstallerFailure([string]$message, [int]$exitCode) : base($message) {
+        $this.ExitCode = $exitCode
+    }
+}
+
 # ---------------------------------------------------------------------------
 # Versioned repo discovery (spec/01-app/95-installer-script-find-latest-repo.md)
 # ---------------------------------------------------------------------------
@@ -312,7 +320,7 @@ function Resolve-Version([string]$version) {
         Write-Err "    - Repository name has changed"
         Write-Err ""
         Write-Err "  Try: https://github.com/$Repo/releases"
-        exit 1
+        throw [InstallerFailure]::new("Failed to fetch latest release", 1)
     }
 }
 
@@ -326,7 +334,7 @@ function Stop-Strict([string]$detail) {
     Write-Err "       refusing to fall back per strict-tag contract."
     Write-Err "       See spec/07-generic-release/09-generic-install-script-behavior.md `$3."
     if ($detail) { Write-Err "       Detail: $detail" }
-    exit 1
+    throw [InstallerFailure]::new("Strict version install failed", 1)
 }
 
 # --- Download asset ---
