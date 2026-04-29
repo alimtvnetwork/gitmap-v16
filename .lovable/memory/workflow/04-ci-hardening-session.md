@@ -57,8 +57,8 @@
 
 - **Pin every tool**: `goimports@v0.24.0`, `golangci-lint@v1.64.8`. Never `@latest` in CI.
 - **Compute `-local` from `go.mod`**: avoids hardcoding the module path in CI.
-- **Don't conflate floor vs diff**: Resolved 2026-04-29 — job renamed `lint-regression-guard` → `lint-hard-floor`, with the misleading umbrella label dropped and per-step model documented inline. The misspell/gocritic/exhaustive baseline-diff sub-steps stay co-located for cache-key locality.
+- **Don't conflate floor vs diff**: Final resolution 2026-04-29 — job renamed `lint-regression-guard` → `lint-hard-floor` → `lint-baseline-guard`, all guarded linters now use the same baseline-diff contract via `check-single-linter-diff.sh`. Hard-floor mechanism (`check-lint-regressions.sh`) deleted entirely. If a true hard-floor is ever needed again, give it its own dedicated job — never mix models inside one.
 
 ## Next AI Pickup Point
 
-If continuing CI work: ask the user the pending decision on `unused`/`G115` semantics, then either flip the script to baseline-diff or rename the job. Otherwise next logical step is wiring `gofmt`/`goimports` into `hooks/pre-commit`.
+CI guard work is complete and uniform. Branch protection (if used) needs the required-check name updated to `Lint Baseline Guard (unused, gosec G115, misspell, gocritic, exhaustive)`. Otherwise next logical step is wiring `gofmt`/`goimports` into `hooks/pre-commit` for local parity, or moving on to other CI improvements (test coverage gates, release pipeline hardening, etc.).
