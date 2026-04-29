@@ -136,7 +136,7 @@ func writeCloneNowManifest(t *testing.T, root string) string {
 	body := strings.Join([]string{
 		`[`,
 		`  {`,
-		`    "name": "alpha",`,
+		`    "repoName": "alpha",`,
 		`    "httpsUrl": "https://example.invalid/alpha.git",`,
 		`    "sshUrl": "git@example.invalid:alpha.git",`,
 		`    "relativePath": "alpha",`,

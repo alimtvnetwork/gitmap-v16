@@ -13,20 +13,14 @@
 // the per-test trigger AND a dedicated allow-env-var are BOTH set.
 // CI must never set the allow-env-var; humans set it explicitly when
 // they intend to rewrite fixtures. If the trigger is on but the allow
-// var is off, AllowUpdate panics with a clear remediation message so
-// the CI failure points straight at the misconfiguration.
+// var is off, AllowUpdate fails the test with a clear remediation
+// message so the CI failure points straight at the misconfiguration.
 //
 // Usage from any golden test:
 //
 //	if goldenguard.AllowUpdate(t, *updateFlag) {
 //	    os.WriteFile(path, got, 0o644)
 //	    return
-//	}
-//
-// or for env-only triggers:
-//
-//	if goldenguard.AllowUpdate(t, os.Getenv("GITMAP_UPDATE_GOLDEN") == "1") {
-//	    ...
 //	}
 package goldenguard
 
@@ -45,9 +39,18 @@ const AllowUpdateEnv = "GITMAP_ALLOW_GOLDEN_UPDATE"
 // allowUpdateValue is the literal value AllowUpdateEnv must hold to
 // unlock regenerate mode. "1" is intentionally narrow — "true",
 // "yes", "y" etc. are all treated as OFF so a typo can't accidentally
-// flip the gate on. Mirrors the existing GITMAP_UPDATE_GOLDEN=="1"
-// convention used across the codebase.
+// flip the gate on.
 const allowUpdateValue = "1"
+
+// fatalReporter is the minimal subset of *testing.T that AllowUpdate
+// needs. Defined as an interface so internal tests can supply a
+// recorder that captures the Fatalf invocation without aborting the
+// outer test goroutine via runtime.Goexit. Production callers pass
+// a real *testing.T, which satisfies this interface.
+type fatalReporter interface {
+	Helper()
+	Fatalf(format string, args ...any)
+}
 
 // AllowUpdate reports whether the caller may rewrite golden fixtures.
 // Returns true ONLY when the per-test trigger is on AND the dedicated
@@ -59,6 +62,15 @@ const allowUpdateValue = "1"
 // package, os.Getenv("GITMAP_UPDATE_GOLDEN")=="1" for the formatter
 // package). Caller computes it.
 func AllowUpdate(t *testing.T, trigger bool) bool {
+	t.Helper()
+
+	return allowUpdate(t, trigger)
+}
+
+// allowUpdate is the interface-typed core so internal tests can
+// inject a fake reporter; production code keeps the *testing.T
+// signature on AllowUpdate to avoid changing every caller.
+func allowUpdate(t fatalReporter, trigger bool) bool {
 	t.Helper()
 	if !trigger {
 
