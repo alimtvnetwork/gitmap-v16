@@ -483,6 +483,48 @@ function Install-Binary([string]$zipPath, [string]$installDir) {
     Write-OK "Installed $BinaryName to $installDir"
 }
 
+# --- Download seed data files (downloader-config.json, etc.) ---
+# The release zip only contains the binary, but the binary expects
+# ./data/downloader-config.json to exist next to it. Fetch the seed
+# files from the pinned tag on GitHub so the first run does not
+# print "Could not read downloader seed".
+function Install-SeedData([string]$version, [string]$installDir) {
+    $dataDir = Join-Path $installDir "data"
+    if (-not (Test-Path $dataDir)) {
+        New-Item -ItemType Directory -Path $dataDir -Force | Out-Null
+    }
+
+    $seedFiles = @(
+        "downloader-config.json",
+        "config.json",
+        "git-setup.json",
+        "seo-templates.json"
+    )
+
+    Write-Step "Downloading seed data files ($version)..."
+
+    $installed = 0
+    foreach ($name in $seedFiles) {
+        $rawUrl = "https://raw.githubusercontent.com/$Repo/$version/gitmap/data/$name"
+        $dest = Join-Path $dataDir $name
+        try {
+            Invoke-WebRequest -Uri $rawUrl -OutFile $dest -UseBasicParsing -ErrorAction Stop
+            $installed++
+        }
+        catch {
+            # Best-effort: some files may not exist in older tags.
+            Write-Host ("    skip  {0} (not in {1})" -f $name, $version) -ForegroundColor DarkGray
+        }
+    }
+
+    if ($installed -gt 0) {
+        Write-OK ("Installed {0} seed file(s) to {1}" -f $installed, $dataDir)
+    }
+    else {
+        Write-Host ("    WARN  No seed files downloaded; gitmap will use built-in defaults") -ForegroundColor Yellow
+    }
+}
+
 # --- Download and extract docs-site.zip release asset ---
 # Required for `gitmap help-dashboard` (hd). Best-effort: skip silently
 # if the release does not bundle docs-site.zip (older versions).
