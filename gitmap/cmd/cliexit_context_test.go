@@ -1,49 +1,11 @@
 package cmd
 
 import (
-	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
 )
 
-// runGitmap executes the gitmap binary with the given args.
-// It returns the exit code, stdout, and stderr.
-func runGitmap(t *testing.T, args []string, stdin string) (int, string, string) {
-	t.Helper()
-	bin := filepath.Join(t.TempDir(), "gitmap")
-	
-	// Build the binary for the current test run
-	cmd := exec.Command("go", "build", "-o", bin, ".")
-	if out, err := cmd.CombinedOutput(); err != nil {
-		t.Fatalf("failed to build gitmap: %v\n%s", err, out)
-	}
-
-	cmd = exec.Command(bin, args...)
-	cmd.Stdin = strings.NewReader(stdin)
-	
-	var stdout, stderr strings.Builder
-	cmd.Stdout = &stdout
-	cmd.Stderr = &stderr
-	
-	err := cmd.Run()
-	exitCode := 0
-	if err != nil {
-		if exitErr, ok := err.(*exec.ExitError); ok {
-			exitCode = exitErr.ExitCode()
-		} else {
-			t.Fatalf("failed to run gitmap: %v", err)
-		}
-	}
-	
-	return exitCode, stdout.String(), stderr.String()
-}
-
-// containsCI checks if haystack contains needle (case-insensitive).
-func containsCI(haystack, needle string) bool {
-	return strings.Contains(strings.ToLower(haystack), strings.ToLower(needle))
-}
 
 // Integration tests asserting that user-facing failure stderr from
 // scan and clone-family commands carries the standardized context
