@@ -133,12 +133,97 @@ func parseCSVWithSchema(f io.Reader) ([]Row, error) {
 	if err := validateCSVSchema(bytes.NewReader(data)); err != nil {
 		return nil, err
 	}
-	recs, err := formatter.ParseCSV(bytes.NewReader(data))
+	recs, err := parseCSVByHeaderName(bytes.NewReader(data))
 	if err != nil {
 		return nil, fmt.Errorf(constants.ErrCloneNowCSVRead, err)
 	}
+	if len(recs) == 0 {
+		// Fall back to the legacy positional parser for full 8+ col
+		// scan exports whose header names are not normalized cleanly.
+		recs, err = formatter.ParseCSV(bytes.NewReader(data))
+		if err != nil {
+			return nil, fmt.Errorf(constants.ErrCloneNowCSVRead, err)
+		}
+	}
 
 	return rowsFromRecords(recs), nil
+}
+
+// parseCSVByHeaderName reads a CSV using the header row as the
+// authoritative column-name → ScanRecord-field mapping. Tolerates
+// any subset of known fields (minimum: at least one URL column),
+// in any order, and survives BOM / quoted / padded header cells via
+// normalizeHeaderName. Returns nil records on a header that maps no
+// fields so the caller can fall back to the positional parser.
+func parseCSVByHeaderName(r io.Reader) ([]model.ScanRecord, error) {
+	cr := csv.NewReader(r)
+	cr.FieldsPerRecord = -1
+	rows, err := cr.ReadAll()
+	if err != nil {
+		return nil, err
+	}
+	if len(rows) < 2 {
+		return nil, nil
+	}
+	idx := buildHeaderIndex(rows[0])
+	if !headerHasURL(idx) {
+		return nil, nil
+	}
+	out := make([]model.ScanRecord, 0, len(rows)-1)
+	for _, row := range rows[1:] {
+		out = append(out, recordFromIndexedRow(row, idx))
+	}
+
+	return out, nil
+}
+
+// buildHeaderIndex maps each known field name to its column index
+// in the header row. Unknown / empty cells are ignored.
+func buildHeaderIndex(header []string) map[string]int {
+	idx := make(map[string]int, len(header))
+	for i, col := range header {
+		name := normalizeHeaderName(col)
+		if len(name) > 0 && knownScanFields[name] {
+			idx[name] = i
+		}
+	}
+
+	return idx
+}
+
+// headerHasURL reports whether the indexed header includes at least
+// one URL column, matching validateCSVHeader's contract.
+func headerHasURL(idx map[string]int) bool {
+	_, hasHTTPS := idx["httpsUrl"]
+	_, hasSSH := idx["sshUrl"]
+
+	return hasHTTPS || hasSSH
+}
+
+// recordFromIndexedRow assembles a ScanRecord by pulling each known
+// field from its mapped column. Missing columns yield zero values.
+func recordFromIndexedRow(row []string, idx map[string]int) model.ScanRecord {
+	get := func(name string) string {
+		i, ok := idx[name]
+		if !ok || i >= len(row) {
+			return ""
+		}
+		return row[i]
+	}
+	depth := 0
+	if d, err := strconv.Atoi(get("depth")); err == nil {
+		depth = d
+	}
+	return model.ScanRecord{
+		RepoName: get("repoName"), HTTPSUrl: get("httpsUrl"), SSHUrl: get("sshUrl"),
+		Branch: get("branch"), BranchSource: get("branchSource"),
+		RelativePath: get("relativePath"), AbsolutePath: get("absolutePath"),
+		CloneInstruction: get("cloneInstruction"), Notes: get("notes"),
+		Depth:         depth,
+		RepoID:        get("repoId"),
+		DiscoveredURL: get("discoveredUrl"),
+		Transport:     get("transport"),
+	}
 }
 
 // rowsFromRecords lifts a slice of scan records into clone-now Rows,
