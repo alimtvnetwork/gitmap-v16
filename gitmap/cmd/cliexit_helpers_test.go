@@ -125,9 +125,7 @@ func runGitmap(t *testing.T, args []string, stdin string) (int, string, string) 
 	cmd := exec.Command(bin, args...)
 	cmd.Dir = t.TempDir()
 	cmd.Env = hermeticEnv()
-	if stdin != "" {
-		cmd.Stdin = strings.NewReader(stdin)
-	}
+	cmd.Stdin = strings.NewReader(stdin)
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
