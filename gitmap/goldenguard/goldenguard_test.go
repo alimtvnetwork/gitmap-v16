@@ -5,12 +5,12 @@ package goldenguard
 // every branch is pinned: trigger-off, trigger-on+allow-on, and
 // trigger-on+allow-bad cases that MUST fail loudly.
 //
-// Failure-path tests use t.Run + subT.Failed(): when the inner sub-
-// test calls Fatalf, the parent observes a failure flag without the
-// outer test itself failing — the standard idiom for testing code
-// that calls *testing.T.Fatalf.
+// Failure-path tests use a fake fatalReporter to capture the Fatalf
+// invocation without aborting the outer test goroutine via
+// runtime.Goexit (which would happen with a real *testing.T).
 
 import (
+	"fmt"
 	"os"
 	"testing"
 )
@@ -41,11 +41,12 @@ func TestAllowUpdate_BothOn_IsTrue(t *testing.T) {
 // catches a stray -update flag or GITMAP_UPDATE_GOLDEN=1 in CI when
 // the dedicated allow var was (correctly) NOT set.
 func TestAllowUpdate_TriggerOnAllowMissing_Fails(t *testing.T) {
-	// Clear inherited value so the sub-test sees a truly-empty env.
 	_ = os.Unsetenv(AllowUpdateEnv)
-	if !expectFatal(t, true) {
-		t.Fatalf("AllowUpdate(true, allow=<unset>) did NOT fail — "+
-			"missing %s must abort the regenerate path", AllowUpdateEnv)
+	rec := &fakeFatalReporter{}
+	_ = allowUpdate(rec, true)
+	if !rec.fatalCalled {
+		t.Fatalf("AllowUpdate(true, allow=<unset>) did NOT call Fatalf — " +
+			"missing allow env var must abort the regenerate path")
 	}
 }
 
@@ -56,28 +57,27 @@ func TestAllowUpdate_TriggerOnAllowWrongValue_Fails(t *testing.T) {
 	for _, bad := range []string{"true", "yes", "y", "TRUE", "0", " 1 "} {
 		t.Run(bad, func(tt *testing.T) {
 			tt.Setenv(AllowUpdateEnv, bad)
-			if !expectFatal(tt, true) {
+			rec := &fakeFatalReporter{}
+			_ = allowUpdate(rec, true)
+			if !rec.fatalCalled {
 				tt.Fatalf("AllowUpdate accepted bogus allow=%q "+
-					"(only literal \"1\" must unlock the gate)",
-					bad)
+					"(only literal \"1\" must unlock the gate)", bad)
 			}
 		})
 	}
 }
 
-// expectFatal runs AllowUpdate(_, trigger) inside a sub-test and
-// reports whether AllowUpdate marked that sub-test as failed. Idiomatic
-// pattern for asserting that a helper calls t.Errorf/t.Fatalf without
-// aborting the outer test.
-//
-// AllowUpdate uses t.Errorf (not Fatalf) on the gate-failure path, so
-// the sub-test goroutine completes normally and child.Failed() reflects
-// the failure. parent.Run returns false in that case, which we invert.
-func expectFatal(parent *testing.T, trigger bool) bool {
-	parent.Helper()
-	passed := parent.Run("expect-fatal", func(child *testing.T) {
-		_ = AllowUpdate(child, trigger)
-	})
+// fakeFatalReporter records Fatalf invocations without calling
+// runtime.Goexit, so a single test goroutine can exercise the
+// failure path many times without aborting itself.
+type fakeFatalReporter struct {
+	fatalCalled bool
+	lastMessage string
+}
 
-	return !passed
+func (f *fakeFatalReporter) Helper() {}
+
+func (f *fakeFatalReporter) Fatalf(format string, args ...any) {
+	f.fatalCalled = true
+	f.lastMessage = fmt.Sprintf(format, args...)
 }
