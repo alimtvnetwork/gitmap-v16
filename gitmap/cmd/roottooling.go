@@ -69,5 +69,6 @@ func toolingDispatchEntries() []dispatchEntry {
 			[]string{constants.CmdAuditLegacy, constants.CmdAuditLegacyAlias, constants.CmdAuditLegacyAlias2},
 			func() { runAuditLegacy(argsTail()) },
 		},
+		{[]string{constants.CmdFixRepo, constants.CmdFixRepoAlias}, func() { runFixRepo(argsTail()) }},
 	}
 }

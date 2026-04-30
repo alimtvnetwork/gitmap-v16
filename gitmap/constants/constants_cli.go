@@ -121,6 +121,11 @@ const (
 	CmdAuditLegacy       = "audit-legacy"
 	CmdAuditLegacyAlias  = "aul"
 	CmdAuditLegacyAlias2 = "audit"
+	// CmdFixRepo rewrites prior `{base}-vN` tokens in tracked files to
+	// the current version, mirroring fix-repo.ps1 / fix-repo.sh exit
+	// codes and config schema. Spec: spec/04-generic-cli/27-fix-repo-command.md.
+	CmdFixRepo      = "fix-repo"
+	CmdFixRepoAlias = "fr"
 )
 
 // Audit-legacy defaults + flag names. Patterns are comma-separated regexes.
