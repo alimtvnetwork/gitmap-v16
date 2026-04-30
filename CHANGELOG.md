@@ -1,5 +1,15 @@
 # Changelog
 
+## v3.181.0 — (2026-04-30) — `gitmap fix-repo` / `fr`: Go-native rewriter of `{base}-vN` tokens
+
+- New command `gitmap fix-repo` (alias `fr`) replaces the `fix-repo.ps1` script
+  with a cross-platform Go implementation. Same exit codes (0–8), same
+  `fix-repo.config.json` schema, same `--dry-run` / `--verbose` / `--config` flags.
+- Spec: `spec/04-generic-cli/27-fix-repo-command.md`.
+- Lint cleanup: removed unused `//nolint:gosec` directives flagged by `nolintlint`.
+- Installer warning fix: `downloaderconfig.LoadFile` now wraps errors with `%w`
+  so `errors.Is(err, fs.ErrNotExist)` works on fresh installs.
+
 ## v3.180.0 — (2026-04-29) — Fix release: sync package-lock.json, pin README to v3.180.0
 
 - Regenerated `package-lock.json` to include `@testing-library/user-event@14.6.1`
