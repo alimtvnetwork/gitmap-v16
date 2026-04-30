@@ -1245,15 +1245,36 @@ try {
     # This ensures the change persists in the caller's session when run via iex
     $env:PATH = $installResult.NewPath
 
-    # Verify the binary works
+    # Verify the binary works.
+    #
+    # NOTE: We deliberately discard the binary's stderr (`2>$null`) and only
+    # parse stdout. Reasons:
+    #   1. First-run side effects like `SeedDownloaderConfig` print info
+    #      lines (e.g. "◦ Downloader config already customized …") to
+    #      stderr. With `2>&1` and `$ErrorActionPreference='Stop'`, PowerShell
+    #      wraps those into ErrorRecords and throws, falsely tripping the
+    #      "Binary found but failed to run" branch.
+    #   2. Even when not throwing, those bytes were rendered as cp1252
+    #      mojibake ("Γùª", "ΓÇö") in the user's session because PowerShell
+    #      decodes child stderr via `[Console]::OutputEncoding` which is not
+    #      always honored across hosts (`irm | iex`, ConEmu, ISE).
+    # We then filter to the canonical `gitmap vX.Y.Z` line only.
     $binPath = Join-Path $installResult.InstallDir $BinaryName
     $installedVersion = $installResult.Version
     if (Test-Path $binPath) {
         Write-Host ""
         try {
-            $versionOutput = & $binPath version 2>&1
-            $installedVersion = ($versionOutput | Out-String).Trim()
-            Write-OK "gitmap $installedVersion"
+            $versionOutput = & $binPath version 2>$null
+            $versionLine = $versionOutput |
+                ForEach-Object { $_.ToString() } |
+                Where-Object { $_ -match '^gitmap v[0-9]' } |
+                Select-Object -First 1
+            if ($versionLine) {
+                $installedVersion = $versionLine.Trim()
+                Write-OK $installedVersion
+            } else {
+                Write-OK "gitmap $installedVersion"
+            }
         }
         catch {
             Write-Err "Binary found but failed to run: $_"
