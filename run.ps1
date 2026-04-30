@@ -1667,7 +1667,13 @@ Resolve-Dependencies
 $binaryPath = Build-Binary -Config $config
 
 # Show built version
-$versionOutput = & $binaryPath version 2>&1
+$prevEAP = $ErrorActionPreference
+$ErrorActionPreference = 'Continue'
+try {
+    $versionOutput = & $binaryPath version 2>$null
+} finally {
+    $ErrorActionPreference = $prevEAP
+}
 Write-Info "Version: $versionOutput"
 
 $deployedBinaryPath = $null
