@@ -74,7 +74,7 @@ func resolveFixRepoConfigPath(explicit, repoRoot string) (string, error) {
 
 // readFixRepoConfig reads + decodes the JSON config file.
 func readFixRepoConfig(path string) (fixRepoConfig, error) {
-	raw, err := os.ReadFile(path) //nolint:gosec // path comes from explicit user flag or repo root
+	raw, err := os.ReadFile(path)
 	if err != nil {
 		return fixRepoConfig{}, err
 	}

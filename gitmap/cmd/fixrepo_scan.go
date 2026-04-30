@@ -142,7 +142,7 @@ func isFixRepoBinaryExt(fullPath string) bool {
 // in early bytes is the standard "this is binary" heuristic used by
 // git, grep, etc., and matches the PowerShell script's behavior.
 func hasFixRepoNullByte(fullPath string) bool {
-	f, err := os.Open(fullPath) //nolint:gosec // tracked-file path from git ls-files
+	f, err := os.Open(fullPath)
 	if err != nil {
 		return true
 	}

@@ -20,7 +20,7 @@ import (
 // replacement count across all targets, or an error on read/write
 // failure.
 func rewriteFixRepoFile(fullPath, base string, current int, targets []int, dryRun bool) (int, error) {
-	original, err := os.ReadFile(fullPath) //nolint:gosec // tracked-file path from git ls-files
+	original, err := os.ReadFile(fullPath)
 	if err != nil {
 		return 0, err
 	}
@@ -31,7 +31,7 @@ func rewriteFixRepoFile(fullPath, base string, current int, targets []int, dryRu
 	if dryRun {
 		return count, nil
 	}
-	if err := os.WriteFile(fullPath, []byte(updated), 0o644); err != nil { //nolint:gosec // preserve scripts' write mode
+	if err := os.WriteFile(fullPath, []byte(updated), 0o644); err != nil {
 		return 0, err
 	}
 
