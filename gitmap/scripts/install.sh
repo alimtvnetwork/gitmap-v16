@@ -353,6 +353,19 @@ download_asset() {
     local archive_path="${TMP_DIR}/${asset_name}"
     local checksum_path="${TMP_DIR}/checksums.txt"
 
+    # Pre-flight asset-existence check. Emits a clearly-formatted
+    # error block when the expected release-asset pattern is missing,
+    # so users see WHAT was expected, WHERE we looked, and the
+    # release page to inspect — not just "Download failed".
+    if ! preflight_asset_exists "${asset_url}"; then
+        emit_missing_asset_error "${version}" "${os}" "${arch}" \
+            "${asset_name}" "${asset_url}"
+        if [ "${strict}" = "1" ]; then
+            strict_fail "expected asset ${asset_name} not found at ${asset_url}"
+        fi
+        exit 1
+    fi
+
     step "Downloading ${asset_name} (${version})..."
     if ! download "${asset_url}" "${archive_path}"; then
         if [ "${strict}" = "1" ]; then
