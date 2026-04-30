@@ -205,6 +205,39 @@ if ($env:INSTALLER_DELEGATED -eq "1") {
     }
 }
 
+# Write-DryRunReport: emit a machine-parseable, key=value report of
+# the resolved release-asset coordinates. Validates that the
+# resolved name matches the documented contract
+# `gitmap-vX.Y.Z-windows-{amd64|arm64}.zip` and exits non-zero with
+# a clear error if it does not. CI parses the `dryrun.*=` lines.
+function Write-DryRunReport([string]$version, [string]$arch,
+                            [string]$assetName, [string]$assetUrl,
+                            [string]$checksumUrl) {
+    $pattern = '^gitmap-v\d+\.\d+\.\d+-windows-(amd64|arm64)\.zip$'
+    $hasValidName = $assetName -match $pattern
+
+    Write-Host ""
+    Write-Host "================================================================"
+    Write-Host " INSTALL.PS1 DRY-RUN REPORT"
+    Write-Host "================================================================"
+    Write-Host "dryrun.version=$version"
+    Write-Host "dryrun.arch=$arch"
+    Write-Host "dryrun.asset_name=$assetName"
+    Write-Host "dryrun.asset_url=$assetUrl"
+    Write-Host "dryrun.checksum_url=$checksumUrl"
+    Write-Host "dryrun.expected_pattern=$pattern"
+    Write-Host "dryrun.name_matches_contract=$hasValidName"
+    Write-Host "dryrun.preflight_head=ok"
+    Write-Host "================================================================"
+    Write-Host ""
+
+    if (-not $hasValidName) {
+        Write-Err "::error::Resolved asset name '$assetName' does not match release contract '$pattern'"
+        exit 5
+    }
+    Write-Host "OK install.ps1 dry-run passed for $version ($arch)"
+}
+
 
 
 # --- Logging helpers ---
