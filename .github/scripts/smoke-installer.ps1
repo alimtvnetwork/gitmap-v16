@@ -68,12 +68,25 @@ try {
                 Write-Error "::error::install.ps1 failed (exit $LASTEXITCODE)"
                 exit 3
             }
-            # install.ps1 nests the binary under <dest>\gitmap-cli\
-            $nested = Join-Path (Join-Path $dest 'gitmap-cli') 'gitmap.exe'
-            $flat   = Join-Path $dest 'gitmap.exe'
-            if (Test-Path $nested) { $bin = $nested }
-            elseif (Test-Path $flat) { $bin = $flat }
-            else { $bin = $nested }
+            # install.ps1 nests the binary under <dest>\gitmap-cli\.
+            # Search defensively in case the layout changes.
+            $candidates = @(
+                (Join-Path (Join-Path $dest 'gitmap-cli') 'gitmap.exe'),
+                (Join-Path $dest 'gitmap.exe'),
+                (Join-Path (Join-Path (Join-Path $dest 'gitmap-cli') 'bin') 'gitmap.exe')
+            )
+            $bin = $candidates | Where-Object { Test-Path $_ } | Select-Object -First 1
+            if (-not $bin) {
+                Write-Host "▶ Searching for gitmap.exe under $dest"
+                $found = Get-ChildItem -Path $dest -Recurse -Filter 'gitmap.exe' -ErrorAction SilentlyContinue | Select-Object -First 1
+                if ($found) { $bin = $found.FullName }
+            }
+            if (-not $bin) {
+                Write-Error "::error::Could not locate installed gitmap.exe under $dest"
+                Get-ChildItem -Path $dest -Recurse -Depth 4 -ErrorAction SilentlyContinue | ForEach-Object { Write-Host $_.FullName }
+                exit 3
+            }
+            Write-Host "▶ Located binary: $bin"
         }
     }
 
