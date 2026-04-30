@@ -1,7 +1,9 @@
 package store
 
 import (
+	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 
@@ -71,7 +73,10 @@ func loadSeedOrDefaults(seedPath string) (downloaderconfig.Document, string) {
 	resolved := resolveSeedPath(seedPath)
 	doc, err := downloaderconfig.LoadFile(resolved)
 	if err != nil {
-		if !os.IsNotExist(err) {
+		// A missing optional seed is the normal first-run state on a fresh
+		// install — silently fall back to defaults. Anything else is a real
+		// I/O / parse failure worth surfacing.
+		if !errors.Is(err, fs.ErrNotExist) {
 			fmt.Fprintf(os.Stderr, constants.WarnDownloaderSeedRead+"\n", resolved, err)
 		}
 		fallback := downloaderconfig.Defaults()
