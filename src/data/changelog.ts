@@ -8,6 +8,17 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: "v4.6.0",
+    date: "2026-05-01",
+    subtitle: "Lint fixes: `errors.As` for wrapped `*exec.ExitError`, gocritic param combine, misspell",
+    items: [
+      "`gitmap/cmd/clonefixrepo.go`: replaced direct type assertion `runErr.(*exec.ExitError)` with `errors.As(runErr, &exitErr)` so wrapped exec errors still propagate the child exit code through the `clone-fix-repo` / `clone-fix-repo-pub` pipelines. Satisfies golangci-lint `errorlint` and keeps exit-code fidelity for chained steps.",
+      "`gitmap/cmd/visibilityapply.go`: collapsed `func parseVisibilityOutput(_ string, out string) string` to `func parseVisibilityOutput(_, out string) string` per gocritic `paramTypeCombine`.",
+      "`gitmap/constants/constants_visibility.go`: spelling fix `centralised` → `centralized` per misspell linter.",
+      "Files: `gitmap/cmd/clonefixrepo.go`, `gitmap/cmd/visibilityapply.go`, `gitmap/constants/constants_visibility.go`, `src/constants/index.ts` (VERSION → v4.6.0), `src/data/changelog.ts` (this entry).",
+    ],
+  },
+  {
     version: "v4.5.0",
     date: "2026-05-01",
     subtitle: "`clone-fix-repo` (cfr) and `clone-fix-repo-pub` (cfrp): one-shot clone → fix-repo → (optional) make-public",
