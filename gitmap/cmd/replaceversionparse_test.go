@@ -34,7 +34,7 @@ func TestRemoteSlugRegex(t *testing.T) {
 		num     string
 	}
 	cases := map[string]want{
-		"gitmap-v12":         {true, "gitmap", "9"},
+		"gitmap-v12":         {true, "gitmap", "12"},
 		"my-tool-v123":       {true, "my-tool", "123"},
 		"some-app-prefix-v0": {true, "some-app-prefix", "0"},
 		"gitmap":             {false, "", ""},
