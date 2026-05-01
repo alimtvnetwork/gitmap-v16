@@ -661,6 +661,43 @@ export const commands: CommandDef[] = [
       { name: "clone-next", description: "Clone the next versioned iteration of the current repo" },
     ],
   },
+  {
+    category: "tools",
+    name: "make-public", description: "Make the current repo public on GitHub or GitLab. Wraps the host CLI (gh or glab) so authentication uses your existing `gh auth login` / `glab auth login` session — no tokens stored in gitmap. Prompts for explicit `yes` confirmation before exposing a private repo (skip with --yes for CI). Idempotent: exits 0 if the repo is already public.",
+    usage: "gitmap make-public [--yes] [--dry-run] [--verbose]",
+    flags: [
+      { flag: "--yes, -y", description: "Skip the private→public confirmation prompt (required for non-interactive use)." },
+      { flag: "--dry-run", description: "Print the provider command that would run; do not invoke it." },
+      { flag: "--verbose", description: "Echo every shell command to stderr before running it." },
+    ],
+    examples: [
+      { command: "gitmap make-public", description: "Interactive — prompts for `yes` before exposing the repo" },
+      { command: "gitmap make-public --yes", description: "Non-interactive (CI / scripts)" },
+      { command: "gitmap make-public --dry-run", description: "Preview without touching the API" },
+      { command: "gitmap make-public --yes --verbose", description: "Debug auth or argv issues" },
+    ],
+    seeAlso: [
+      { name: "make-private", description: "The opposite direction — hide a public repo (no confirmation needed)" },
+    ],
+  },
+  {
+    category: "tools",
+    name: "make-private", description: "Make the current repo private on GitHub or GitLab. Wraps the host CLI (gh or glab) so authentication uses your existing `gh auth login` / `glab auth login` session — no tokens stored in gitmap. No confirmation prompt: hiding a public repo is the safe direction. Idempotent: exits 0 if the repo is already private.",
+    usage: "gitmap make-private [--dry-run] [--verbose]",
+    flags: [
+      { flag: "--dry-run", description: "Print the provider command that would run; do not invoke it." },
+      { flag: "--verbose", description: "Echo every shell command to stderr before running it." },
+      { flag: "--yes, -y", description: "Accepted but ignored — kept for symmetry with make-public so the same script works for both." },
+    ],
+    examples: [
+      { command: "gitmap make-private", description: "Standard — flips visibility to private and verifies" },
+      { command: "gitmap make-private --dry-run", description: "Preview without touching the API" },
+      { command: "gitmap make-private --verbose", description: "Debug auth or argv issues" },
+    ],
+    seeAlso: [
+      { name: "make-public", description: "The opposite direction — expose a private repo (with confirmation)" },
+    ],
+  },
 
   {
     category: "changelog",
