@@ -16,7 +16,7 @@ package constants
 
 // Visibility command IDs live in constants_cli.go (CmdMakePublic /
 // CmdMakePrivate) per the project-wide rule that all CLI tokens are
-// centralised there. This file owns everything else (target tokens,
+// centralized there. This file owns everything else (target tokens,
 // flags, messages, exit codes).
 
 // Visibility target tokens — what the provider CLI expects, what the

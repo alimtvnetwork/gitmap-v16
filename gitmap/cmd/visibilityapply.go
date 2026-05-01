@@ -49,7 +49,7 @@ func readVisibilityArgs(provider, slug string) []string {
 // gh emits {"visibility":"PUBLIC"} (uppercase); glab emits
 // {"visibility":"public"} (lowercase). We lowercase + substring-match
 // to be tolerant of either form and of any extra fields.
-func parseVisibilityOutput(_ string, out string) string {
+func parseVisibilityOutput(_, out string) string {
 	lower := strings.ToLower(out)
 	switch {
 	case strings.Contains(lower, `"visibility":"public"`):
