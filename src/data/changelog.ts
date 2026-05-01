@@ -8,6 +8,18 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: "v4.11.0",
+    date: "2026-05-01",
+    subtitle: "CI: targeted `fix-repo gofmt audit` step in `lint` job — fails fast with actionable RCA on fix-repo formatting regressions",
+    items: [
+      "Added a new `fix-repo gofmt audit (affected .go files only)` step to `.github/workflows/ci.yml` (`lint` job), placed BEFORE the existing global `gofmt -l .` hard-gate. It diffs `gitmap/**/*.go` against the PR base (`github.event.pull_request.base.sha`) or `HEAD~1` for pushes, filters changed files to those containing the canonical fix-repo signature `[A-Za-z0-9._-]+-v[0-9]+`, and runs `gofmt -l` on ONLY that subset.",
+      "On a hit it emits an annotated GitHub error (`::error title=fix-repo gofmt regression::…`) that names the root cause explicitly — \"the v4.8.0+ post-rewrite gofmt step did not run on them\" — followed by the file list, the full `gofmt -d` diff, and three labeled fix recipes: (1) local `gofmt -w .` + amend, (2) re-run `gitmap fix-repo --all` (auto-formats since v4.8.0), or (3) re-run `pwsh -File fix-repo.ps1 -All` (auto-formats since v4.9.0). This narrows the failure mode from \"some file isn't gofmt-clean, look around\" to \"a fix-repo bump bypassed the auto-format step, here's how to recover\" — readable in a single scroll.",
+      "Read-only by design: the step never runs `gofmt -w`, never auto-commits, and never pushes. CI auto-fixes were considered and rejected because they would mask the upstream bug (someone running a pre-v4.8.0 binary or a stale `fix-repo.ps1` from a different clone) instead of forcing the real fix. The existing global `gofmt -l .` gate remains in place as the catch-all for non-fix-repo formatting drift.",
+      "Edge cases handled: shallow checkouts / first push to a new branch (no diff base) → step exits 0 with `no .go files changed`; PRs that don't touch any Go file with a `-vN` token → step exits 0 with `no fix-repo-shaped tokens in changed .go files`; both keep the gate from false-positiving on plain refactors. The global `gofmt -l .` step still catches anything the targeted audit skipped.",
+      "Files: `.github/workflows/ci.yml`, `src/constants/index.ts` (VERSION → v4.11.0), `src/data/changelog.ts` (this entry).",
+    ],
+  },
+  {
     version: "v4.10.0",
     date: "2026-05-01",
     subtitle: "E2E test for the fix-repo gofmt step: aligned-map fixture + `gofmt -l .` regression assertion",
