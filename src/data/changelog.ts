@@ -8,6 +8,17 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: "v4.4.0",
+    date: "2026-05-01",
+    subtitle: "`release-pull` gains `--rebase` / `--merge` modes; help & UI surface `fix-repo`, `replace`, `release-pull`",
+    items: [
+      "`gitmap release-pull` (alias `relp`) now accepts three pull modes — `--ff-only` (default, preserves the original safety guarantee), `--rebase` (with auto-abort on conflict so the working tree is never left mid-rebase), and `--merge` (creates a merge commit when fast-forward isn't possible). Modes are mutually exclusive; passing more than one fails fast with a precise error listing the conflicting flags. All other args after the mode flag are forwarded verbatim to `gitmap release`, including `--dry-run` and `--verbose`.",
+      "Top-level `gitmap help` now renders a dedicated **Fix-repo flags** section listing `-2` (default), `-3`, `-5`, `--all`, `--dry-run`, `--verbose`, `--config`, plus the full exit-code legend (`0 ok | 2 not-a-repo | 3 no-remote | 4 no-vN-suffix | 5 bad-version | 6 bad-flag | 7 write-failed | 8 bad-config`). New constants live in `gitmap/constants/constants_fixrepohelp.go`; rendering is wired through `printUsageFixRepoFlags()` in `gitmap/cmd/rootusageflags.go`.",
+      "Web docs (`src/data/commands.ts`) now surface `replace` (alias `rpl`, release group), `fix-repo` (alias `fr`, tools group), and `release-pull` (alias `relp`, release group) with full flag tables, mode-specific examples, and `seeAlso` cross-links between the three so users land on the right command from any starting point.",
+      "Files: `src/constants/index.ts` (VERSION → v4.4.0), `src/data/changelog.ts` (this entry), plus the prior-step changes to `gitmap/cmd/releasepull.go`, `gitmap/helptext/release-pull.md`, `gitmap/cmd/rootusageflags.go`, `gitmap/constants/constants_fixrepohelp.go`, and `src/data/commands.ts`.",
+    ],
+  },
+  {
     version: "v3.119.0",
     date: "2026-04-24",
     subtitle: "`gitmap inject` / `inj`: register an existing folder with Desktop + VS Code (+ DB)",
