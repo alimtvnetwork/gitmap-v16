@@ -14,18 +14,48 @@ import (
 
 // TestBuildAuditNeedles verifies the dual-form contract for the audit
 // scanner: every target version produces exactly two needles
-// (`<base>-vN` and `<base>/vN`) in deterministic order.
+// (`<base>-vN` and `<base>/vN`) in deterministic order. Expected
+// needles are derived from the targets slice (NOT hard-coded) so a
+// width-crossing bump (v9 -> v10/v12) cannot silently desync the
+// fixture from the code under test.
 func TestBuildAuditNeedles(t *testing.T) {
-	got := buildAuditNeedles("gitmap", []int{4, 9})
-	want := [][]byte{
-		[]byte("gitmap-v4"), []byte("gitmap/v4"),
-		[]byte("gitmap-v12"), []byte("gitmap/v9"),
+	targets := []int{4, 9}
+	got := buildAuditNeedles("gitmap", targets)
+	want := make([][]byte, 0, len(targets)*2)
+	for _, n := range targets {
+		want = append(want,
+			[]byte(fmt.Sprintf("gitmap-v%d", n)),
+			[]byte(fmt.Sprintf("gitmap/v%d", n)),
+		)
 	}
 	if len(got) != len(want) {
 		t.Fatalf("len = %d, want %d", len(got), len(want))
 	}
 	for i := range got {
 		if !bytes.Equal(got[i], want[i]) {
+			t.Errorf("needle[%d] = %q, want %q", i, got[i], want[i])
+		}
+	}
+}
+
+// TestBuildAuditNeedlesWidthCrossing exercises the v9 -> v10/v12 width
+// boundary directly. Audit needles are OLD tokens, so the boundary
+// affects targets[i] (not current). Regression guard against the
+// historical desync where fixtures hard-coded `gitmap-v12` next to
+// a single-digit input.
+func TestBuildAuditNeedlesWidthCrossing(t *testing.T) {
+	got := buildAuditNeedles("gitmap", []int{8, 9, 10, 12})
+	want := []string{
+		"gitmap-v8", "gitmap/v8",
+		"gitmap-v9", "gitmap/v9",
+		"gitmap-v10", "gitmap/v10",
+		"gitmap-v12", "gitmap/v12",
+	}
+	if len(got) != len(want) {
+		t.Fatalf("len = %d, want %d", len(got), len(want))
+	}
+	for i := range got {
+		if string(got[i]) != want[i] {
 			t.Errorf("needle[%d] = %q, want %q", i, got[i], want[i])
 		}
 	}

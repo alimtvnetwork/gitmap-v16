@@ -1,6 +1,9 @@
 package cmd
 
-import "testing"
+import (
+	"fmt"
+	"testing"
+)
 
 // TestSlugFromRemote covers every remote-URL shape we care about: HTTPS,
 // SSH (git@host:path), bare slug, with and without trailing `.git`. The
@@ -59,16 +62,45 @@ func TestRemoteSlugRegex(t *testing.T) {
 
 // TestPairsForTarget locks the dual-form contract: every target produces
 // both a `-vN` and a `/vN` replacement so Go module import paths and
-// repo URLs are bumped in the same pass.
+// repo URLs are bumped in the same pass. Both pairs MUST use the same
+// `current` value — historically this test pinned `gitmap-v12` next to
+// `gitmap/v9`, a width-crossing desync that drifted whenever the
+// project's own version was bumped.
 func TestPairsForTarget(t *testing.T) {
-	got := pairsForTarget("gitmap", 4, 9)
+	const target, current = 4, 9
+	got := pairsForTarget("gitmap", target, current)
 	if len(got) != 2 {
 		t.Fatalf("expected 2 pairs, got %d", len(got))
 	}
-	if got[0].old != "gitmap-v4" || got[0].new != "gitmap-v12" {
-		t.Errorf("dash form wrong: %+v", got[0])
+	wantDashOld := fmt.Sprintf("gitmap-v%d", target)
+	wantDashNew := fmt.Sprintf("gitmap-v%d", current)
+	if got[0].old != wantDashOld || got[0].new != wantDashNew {
+		t.Errorf("dash form: got %+v, want {old:%q new:%q}",
+			got[0], wantDashOld, wantDashNew)
 	}
-	if got[1].old != "gitmap/v4" || got[1].new != "gitmap/v9" {
-		t.Errorf("slash form wrong: %+v", got[1])
+	wantSlashOld := fmt.Sprintf("gitmap/v%d", target)
+	wantSlashNew := fmt.Sprintf("gitmap/v%d", current)
+	if got[1].old != wantSlashOld || got[1].new != wantSlashNew {
+		t.Errorf("slash form: got %+v, want {old:%q new:%q}",
+			got[1], wantSlashOld, wantSlashNew)
+	}
+}
+
+// TestPairsForTargetWidthCrossing locks the v9 -> v10/v12 boundary
+// where the captured digit goes from 1 char to 2. Regression guard
+// against the historical desync where test fixtures hard-coded
+// `gitmap-v12` next to a `current=9` argument.
+func TestPairsForTargetWidthCrossing(t *testing.T) {
+	cases := []struct{ target, current int }{
+		{9, 10}, {9, 12}, {1, 100}, {99, 100},
+	}
+	for _, c := range cases {
+		got := pairsForTarget("gitmap", c.target, c.current)
+		wantDash := fmt.Sprintf("gitmap-v%d", c.current)
+		wantSlash := fmt.Sprintf("gitmap/v%d", c.current)
+		if got[0].new != wantDash || got[1].new != wantSlash {
+			t.Errorf("target=%d current=%d: dash.new=%q slash.new=%q, want %q / %q",
+				c.target, c.current, got[0].new, got[1].new, wantDash, wantSlash)
+		}
 	}
 }

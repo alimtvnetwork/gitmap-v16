@@ -8,6 +8,19 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: "v4.12.0",
+    date: "2026-05-01",
+    subtitle: "Fix-repo tests: kill the v9→v10/v12 width-crossing digit-capture desync; assertions now derive expected tokens from inputs",
+    items: [
+      "Closed a long-standing test desync in `gitmap/cmd/replaceversionparse_test.go::TestPairsForTarget` and `gitmap/cmd/replaceaudit_test.go::TestBuildAuditNeedles`. Both tests passed `current=9` (or implied a 1-digit current) into the function under test, but their hard-coded `want` slices included the literal string `\"gitmap-v12\"` next to a `\"gitmap/v9\"` neighbor — an internally contradictory expectation that drifted whenever the project's own version was bumped past v9. After every width-crossing release the same 4-line edit had to be re-applied by hand; if the edit was missed, the test silently locked in the wrong contract.",
+      "Root cause (per `mem://` issue note `2026-05-01-fixrepo-digit-capture-desync.md`): when a test fixture pairs a `{base}-vN` input with the captured digit as a SEPARATE string literal, the two strings must be kept in sync manually across width-crossing bumps (1→2 chars at v9→v10, 2→3 at v99→v100). There is no compile-time link between them, so the failure mode is silent.",
+      "Fix: both tests now (1) bind `target` and `current` to named local constants, (2) build the expected `want` slice with `fmt.Sprintf(\"gitmap-v%d\", current)` / `fmt.Sprintf(\"gitmap/v%d\", current)` instead of hard-coded literals, and (3) assert via the derived values. The captured digit and the input version are now structurally the same variable — desync is no longer expressible.",
+      "Added two new regression guards: `TestPairsForTargetWidthCrossing` exercises (target,current) pairs `{9,10}`, `{9,12}`, `{1,100}`, `{99,100}` against `pairsForTarget` and asserts both dash and slash forms use the supplied `current`; `TestBuildAuditNeedlesWidthCrossing` feeds `[]int{8, 9, 10, 12}` into `buildAuditNeedles` and asserts every needle pair widens correctly across the 1→2-digit boundary. Both lock the contract that the captured digit MUST come from the input, not a sibling literal.",
+      "Verified the production rewrite engine (`gitmap/cmd/fixrepo_rewrite.go::applyAllTargets`) is already width-safe: it folds targets sequentially with a single-pass byte scan and an ASCII-digit lookahead in `writeOneTokenHit`, so a v9-pass on a `-v12` token correctly skips (next byte `2` is a digit) and the v12-pass replaces. No production code change needed — the bug was purely in test expectations.",
+      "Files: `gitmap/cmd/replaceversionparse_test.go` (TestPairsForTarget rewritten + new TestPairsForTargetWidthCrossing, `fmt` import added), `gitmap/cmd/replaceaudit_test.go` (TestBuildAuditNeedles rewritten + new TestBuildAuditNeedlesWidthCrossing), `src/constants/index.ts` (VERSION → v4.12.0), `src/data/changelog.ts` (this entry).",
+    ],
+  },
+  {
     version: "v4.11.0",
     date: "2026-05-01",
     subtitle: "CI: targeted `fix-repo gofmt audit` step in `lint` job — fails fast with actionable RCA on fix-repo formatting regressions",
