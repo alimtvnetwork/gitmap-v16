@@ -34,6 +34,7 @@ type fixRepoSweepResult struct {
 	changed      int
 	replacements int
 	failed       bool
+	goFiles      []string // absolute paths of modified .go files (for gofmt)
 }
 
 // runFixRepoSweep enumerates tracked files and rewrites each.
