@@ -128,6 +128,8 @@ var generatedCommands = []string{
 	"merge-right",
 	"mg",
 	"ml",
+	"make-private",
+	"make-public",
 	"move",
 	"mr",
 	"multi-group",

@@ -224,6 +224,8 @@ func topLevelCmds() map[string]string {
 		"CmdCloneFromAlias":     CmdCloneFromAlias,
 		"CmdInject":             CmdInject,
 		"CmdInjectAlias":        CmdInjectAlias,
+		"CmdMakePublic":         CmdMakePublic,
+		"CmdMakePrivate":        CmdMakePrivate,
 		"CmdRegoldens":          CmdRegoldens,
 		"CmdRegoldensAlias":     CmdRegoldensAlias,
 		"CmdReplace":            CmdReplace,
