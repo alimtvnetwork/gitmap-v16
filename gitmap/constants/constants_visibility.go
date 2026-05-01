@@ -16,7 +16,7 @@ package constants
 
 // Visibility command IDs live in constants_cli.go (CmdMakePublic /
 // CmdMakePrivate) per the project-wide rule that all CLI tokens are
-// centralised there. This file owns everything else (target tokens,
+// centralized there. This file owns everything else (target tokens,
 // flags, messages, exit codes).
 
 // Visibility target tokens — what the provider CLI expects, what the
@@ -64,12 +64,12 @@ const (
 
 // Visibility user-facing messages.
 const (
-	MsgVisAlreadyFmt   = "visibility: already %s on %s\n"
-	MsgVisChangedFmt   = "visibility: %s → %s on %s (%s)\n"
-	MsgVisDryRunFmt    = "[dry-run] visibility: %s → %s on %s (%s)\n"
-	MsgVisConfirmFmt   = "Make %s PUBLIC on %s? Type 'yes' to confirm: "
-	MsgVisVerboseExec  = "+ %s %s\n"
-	MsgVisVerifyOK     = "  ✓ verified: visibility is now %s\n"
+	MsgVisAlreadyFmt  = "visibility: already %s on %s\n"
+	MsgVisChangedFmt  = "visibility: %s → %s on %s (%s)\n"
+	MsgVisDryRunFmt   = "[dry-run] visibility: %s → %s on %s (%s)\n"
+	MsgVisConfirmFmt  = "Make %s PUBLIC on %s? Type 'yes' to confirm: "
+	MsgVisVerboseExec = "+ %s %s\n"
+	MsgVisVerifyOK    = "  ✓ verified: visibility is now %s\n"
 )
 
 // Visibility error messages.
@@ -88,12 +88,12 @@ const (
 // Visibility exit codes (mirrored from visibility-change.ps1 so wrappers
 // and CI can branch on the same numbers).
 const (
-	ExitVisOK            = 0
-	ExitVisNotARepo      = 2
-	ExitVisNoOrigin      = 3
-	ExitVisBadProvider   = 4
-	ExitVisAuthFailed    = 5
-	ExitVisBadFlag       = 6
-	ExitVisConfirmReq    = 7
-	ExitVisVerifyFailed  = 8
+	ExitVisOK           = 0
+	ExitVisNotARepo     = 2
+	ExitVisNoOrigin     = 3
+	ExitVisBadProvider  = 4
+	ExitVisAuthFailed   = 5
+	ExitVisBadFlag      = 6
+	ExitVisConfirmReq   = 7
+	ExitVisVerifyFailed = 8
 )
