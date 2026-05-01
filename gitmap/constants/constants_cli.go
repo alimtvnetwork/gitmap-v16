@@ -126,6 +126,12 @@ const (
 	// codes and config schema. Spec: spec/04-generic-cli/27-fix-repo-command.md.
 	CmdFixRepo      = "fix-repo"
 	CmdFixRepoAlias = "fr"
+	// CmdReleasePull is sugar for `release` that first runs
+	// `git pull --ff-only` in the current repo, then delegates to
+	// the regular release pipeline. Hard-fails on non-fast-forward
+	// so we never tag on top of a divergent tree.
+	CmdReleasePull      = "release-pull"
+	CmdReleasePullAlias = "relp"
 )
 
 // Audit-legacy defaults + flag names. Patterns are comma-separated regexes.
