@@ -22,6 +22,7 @@ func printGroupUtilities() {
 	fmt.Println(constants.HelpGoMod)
 	fmt.Println(constants.HelpSEOWrite)
 	fmt.Println(constants.HelpLLMDocs)
+	fmt.Println(constants.HelpFixRepo)
 	fmt.Println(constants.HelpHelp)
 }
 

@@ -164,6 +164,8 @@ func topLevelCmds() map[string]string {
 		"CmdReleaseAliasPull":      CmdReleaseAliasPull,
 		"CmdReleaseAliasPullShort": CmdReleaseAliasPullShort,
 		"CmdReleaseAliasShort":     CmdReleaseAliasShort,
+		"CmdReleasePull":           CmdReleasePull,
+		"CmdReleasePullAlias":      CmdReleasePullAlias,
 		"CmdSEOWrite":              CmdSEOWrite,
 		"CmdSEOWriteAlias":         CmdSEOWriteAlias,
 		"CmdSSH":                   CmdSSH,

@@ -37,7 +37,7 @@ const (
 	CompactCloning    = "  clone (c), clone-next (cn), desktop-sync (ds), github-desktop (gd)"
 	CompactGitOps     = "  pull (p), exec (x), status (st), watch (w), has-any-updates, latest-branch (lb)"
 	CompactNavigation = "  cd (go), group (g), multi-group (mg), alias (a), diff-profiles (dp)"
-	CompactRelease    = "  release (r), release-self (rs), release-branch (rb), temp-release"
+	CompactRelease    = "  release (r), release-pull (relp), release-self (rs), release-branch (rb), temp-release"
 	CompactRelInfo    = "  changelog (cl), changelog-generate, list-versions (lv), list-releases (lr), release-pending (rp), revert, clear-release-json (crj), prune"
 	CompactData       = "  export (ex), import (im), profile (pf), bookmark (bk), db-reset"
 	CompactHistory    = "  history (hi), history-reset (hr), stats (ss)"
@@ -49,7 +49,7 @@ const (
 	CompactTasks      = "  task"
 	CompactVisualize  = "  dashboard (db)"
 	CompactCommitXfer = "  commit-right (cmr) — LIVE,  commit-left (cml), commit-both (cmb) — scaffolds"
-	CompactUtilities  = "  setup, doctor, update, update-cleanup, version (v), completion (cmp), interactive (i), docs (d), help-dashboard (hd), gomod (gm), seo-write (sw), help"
+	CompactUtilities  = "  setup, doctor, update, update-cleanup, version (v), completion (cmp), interactive (i), docs (d), help-dashboard (hd), gomod (gm), seo-write (sw), fix-repo (fr), help"
 
 	CompactNoMatchFmt = "  No group matching '%s'. Showing all groups:\n"
 )

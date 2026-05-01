@@ -126,6 +126,12 @@ const (
 	// codes and config schema. Spec: spec/04-generic-cli/27-fix-repo-command.md.
 	CmdFixRepo      = "fix-repo"
 	CmdFixRepoAlias = "fr"
+	// CmdReleasePull is sugar for `release` that first runs
+	// `git pull --ff-only` in the current repo, then delegates to
+	// the regular release pipeline. Hard-fails on non-fast-forward
+	// so we never tag on top of a divergent tree.
+	CmdReleasePull      = "release-pull"
+	CmdReleasePullAlias = "relp"
 )
 
 // Audit-legacy defaults + flag names. Patterns are comma-separated regexes.
@@ -232,8 +238,10 @@ const (
 	HelpStatus           = "  status (st)         Show dirty/clean, ahead/behind, stash for all repos"
 	HelpExec             = "  exec (x) <args...>  Run any git command across all repos"
 	HelpRelease          = "  release (r) [ver]   Create release branch, tag, and push"
+	HelpReleasePull      = "  release-pull (relp) [ver]  git pull --ff-only, then release the current repo"
 	HelpReleaseBr        = "  release-branch (rb) Complete release from existing release branch"
 	HelpReleasePend      = "  release-pending (rp) Release all pending branches without tags"
+	HelpFixRepo          = "  fix-repo (fr)       Rewrite prior {base}-vN tokens (-2/-3/-5/--all/--dry-run)"
 	HelpChangelog        = "  changelog (cl) [ver] Show concise release notes (use --open, --source)"
 	HelpDoctor           = "  doctor [--fix-path] Diagnose PATH, deploy, and version issues"
 	HelpLatestBr         = "  latest-branch (lb)  Find most recently updated remote branch"
