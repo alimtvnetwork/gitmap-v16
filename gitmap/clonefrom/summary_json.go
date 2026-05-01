@@ -23,7 +23,7 @@ import (
 	"encoding/json"
 	"io"
 
-	"github.com/alimtvnetwork/gitmap-v9/gitmap/constants"
+	"github.com/alimtvnetwork/gitmap-v11/gitmap/constants"
 )
 
 // reportRowJSON is the on-disk JSON shape per result. Field names

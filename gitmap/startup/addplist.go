@@ -44,7 +44,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/alimtvnetwork/gitmap-v9/gitmap/constants"
+	"github.com/alimtvnetwork/gitmap-v11/gitmap/constants"
 )
 
 // prefixedFilenamePlist returns "<gitmap.prefix><clean>.plist".

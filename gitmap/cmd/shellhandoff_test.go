@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/alimtvnetwork/gitmap-v9/gitmap/constants"
+	"github.com/alimtvnetwork/gitmap-v11/gitmap/constants"
 )
 
 // TestWriteShellHandoffNoEnvIsNoop verifies that without the wrapper env

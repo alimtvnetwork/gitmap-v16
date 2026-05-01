@@ -6,8 +6,8 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/alimtvnetwork/gitmap-v9/gitmap/constants"
-	"github.com/alimtvnetwork/gitmap-v9/gitmap/model"
+	"github.com/alimtvnetwork/gitmap-v11/gitmap/constants"
+	"github.com/alimtvnetwork/gitmap-v11/gitmap/model"
 )
 
 // runListReleases handles the "list-releases" command.

@@ -9,8 +9,8 @@ import (
 	"path/filepath"
 	"runtime"
 
-	"github.com/alimtvnetwork/gitmap-v9/gitmap/constants"
-	"github.com/alimtvnetwork/gitmap-v9/gitmap/verbose"
+	"github.com/alimtvnetwork/gitmap-v11/gitmap/constants"
+	"github.com/alimtvnetwork/gitmap-v11/gitmap/verbose"
 )
 
 // runUpdate handles the "update" subcommand.

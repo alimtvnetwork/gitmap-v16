@@ -25,7 +25,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/alimtvnetwork/gitmap-v9/gitmap/constants"
+	"github.com/alimtvnetwork/gitmap-v11/gitmap/constants"
 )
 
 // TestEffectiveCheckout_DefaultsToAuto pins the resolution rule:
