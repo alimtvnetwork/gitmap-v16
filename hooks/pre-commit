@@ -18,6 +18,7 @@ fi
 REPO_ROOT="$(git rev-parse --show-toplevel)"
 CMD_GUARD="$REPO_ROOT/.github/scripts/check-cmd-naming.sh"
 CONST_GUARD="$REPO_ROOT/.github/scripts/check-constants-naming.sh"
+DEPLOY_GUARD="$REPO_ROOT/.github/scripts/check-deploy-layout.sh"
 
 # 1. cmd/ naming guard — only when staged files touch gitmap/cmd/
 if echo "$STAGED" | grep -qE '^gitmap/cmd/'; then
