@@ -10,6 +10,7 @@ const (
 	GitDirFlag         = "-C"
 	GitFFOnlyFlag      = "--ff-only"
 	GitPullRebaseFlag  = "--rebase"
+	GitNoRebaseFlag    = "--no-rebase"
 	GitRebaseAbortFlag = "--abort"
 	GitConfigCmd       = "config"
 	GitGetFlag         = "--get"
