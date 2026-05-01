@@ -49,7 +49,7 @@ const (
 	CompactTasks      = "  task"
 	CompactVisualize  = "  dashboard (db)"
 	CompactCommitXfer = "  commit-right (cmr) — LIVE,  commit-left (cml), commit-both (cmb) — scaffolds"
-	CompactUtilities  = "  setup, doctor, update, update-cleanup, version (v), completion (cmp), interactive (i), docs (d), help-dashboard (hd), gomod (gm), seo-write (sw), fix-repo (fr), make-public, make-private, help"
+	CompactUtilities  = "  setup, doctor, update, update-cleanup, version (v), completion (cmp), interactive (i), docs (d), help-dashboard (hd), gomod (gm), seo-write (sw), fix-repo (fr), make-public, make-private, clone-fix-repo (cfr), clone-fix-repo-pub (cfrp), help"
 
 	CompactNoMatchFmt = "  No group matching '%s'. Showing all groups:\n"
 )
