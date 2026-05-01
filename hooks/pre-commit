@@ -48,7 +48,19 @@ if echo "$STAGED" | grep -qE '^gitmap/constants/'; then
   fi
 fi
 
-# 3. golangci-lint — full suite
+# 3. deploy-layout guard — always run (cheap, repo-wide grep)
+if [ -x "$DEPLOY_GUARD" ]; then
+  echo "Running deploy-layout guard (gitmap-cli/ enforcement)..."
+  if ! bash "$DEPLOY_GUARD" "$REPO_ROOT"; then
+    echo ""
+    echo "✗ Pre-commit blocked: replace hardcoded 'gitmap/' deploy paths"
+    echo "  with constants.GitMapCliSubdir (sourced from deploy-manifest.json)."
+    exit 1
+  fi
+  echo "  ✓ deploy-layout guard passed"
+fi
+
+# 4. golangci-lint — full suite
 if ! command -v golangci-lint &>/dev/null; then
   echo "⚠ golangci-lint not found — skipping lint check."
   echo "  Install: go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.64.8"
