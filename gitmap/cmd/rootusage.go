@@ -95,6 +95,7 @@ func printGroupRelease() {
 	fmt.Println()
 	fmt.Println(constants.HelpGroupRelease)
 	fmt.Println(constants.HelpRelease)
+	fmt.Println(constants.HelpReleasePull)
 	fmt.Println(constants.HelpReleaseSelf)
 	fmt.Println(constants.HelpReleaseBr)
 	fmt.Println(constants.HelpTempRelease)
