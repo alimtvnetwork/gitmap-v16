@@ -71,6 +71,9 @@ func processFixRepoFile(rel string, identity fixRepoIdentity, targets []int,
 	if reps > 0 {
 		result.changed++
 		result.replacements += reps
+		if isGoSourceFile(rel) {
+			result.goFiles = append(result.goFiles, full)
+		}
 		if opts.isVerbose {
 			fmt.Printf(constants.FixRepoMsgModified, rel, reps)
 		}
