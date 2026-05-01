@@ -14,12 +14,10 @@
 // (PowerShell reference: visibility-change.ps1).
 package constants
 
-// Visibility command IDs (mirrored from constants_cli.go to keep
-// related strings co-located with their messages).
-const (
-	CmdMakePublic  = "make-public"
-	CmdMakePrivate = "make-private"
-)
+// Visibility command IDs live in constants_cli.go (CmdMakePublic /
+// CmdMakePrivate) per the project-wide rule that all CLI tokens are
+// centralised there. This file owns everything else (target tokens,
+// flags, messages, exit codes).
 
 // Visibility target tokens — what the provider CLI expects, what the
 // user can type for the (optional) explicit-target form, and what we
