@@ -1,6 +1,9 @@
 package cmd
 
-import "testing"
+import (
+	"fmt"
+	"testing"
+)
 
 // TestSlugFromRemote covers every remote-URL shape we care about: HTTPS,
 // SSH (git@host:path), bare slug, with and without trailing `.git`. The
