@@ -36,6 +36,23 @@ func printUsageFlagSections() {
 	printUsageGoModFlags()
 	printUsageInteractiveFlags()
 	printUsageCloneNextFlags()
+	printUsageFixRepoFlags()
+}
+
+// printUsageFixRepoFlags prints the fix-repo flags section so the
+// -2 / -3 / -5 / --all / --dry-run family is discoverable from the
+// top-level `gitmap help` output (not only `gitmap help fix-repo`).
+func printUsageFixRepoFlags() {
+	fmt.Println()
+	fmt.Println(constants.HelpFixRepoFlags)
+	fmt.Println(constants.HelpFRMode2)
+	fmt.Println(constants.HelpFRMode3)
+	fmt.Println(constants.HelpFRMode5)
+	fmt.Println(constants.HelpFRAll)
+	fmt.Println(constants.HelpFRDryRun)
+	fmt.Println(constants.HelpFRVerbose)
+	fmt.Println(constants.HelpFRConfig)
+	fmt.Println(constants.HelpFixRepoExitCodes)
 }
 
 // printUsageCloneNextFlags prints the clone-next flags section.
