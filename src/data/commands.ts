@@ -698,6 +698,34 @@ export const commands: CommandDef[] = [
       { name: "make-public", description: "The opposite direction — expose a private repo (with confirmation)" },
     ],
   },
+  {
+    category: "tools",
+    name: "clone-fix-repo", alias: "cfr", description: "Clone a repo, then immediately run `fix-repo --all` inside the new folder. One-shot replacement for the manual sequence `gitmap clone <url>` → `cd <folder>` → `gitmap fix-repo --all`. Versioned URLs auto-flatten to the base name (e.g. `myrepo-v13.git` → `myrepo/`). Internally re-execs the gitmap binary for the fix-repo step so each step's exit code is propagated as-is; the pipeline halts on first failure.",
+    usage: "gitmap clone-fix-repo <url> [folder]",
+    examples: [
+      { command: "gitmap clone-fix-repo https://github.com/acme/myrepo-v13.git", description: "Clone (auto-flatten to `myrepo/`) and rewrite all prior `myrepo-vN` tokens" },
+      { command: "gitmap cfr git@github.com:acme/myrepo-v13.git myrepo-fresh", description: "SSH clone into an explicit folder, then fix-repo" },
+    ],
+    seeAlso: [
+      { name: "clone-fix-repo-pub", description: "Same pipeline plus `make-public --yes` at the end" },
+      { name: "clone", description: "The underlying clone step on its own" },
+      { name: "fix-repo", description: "The underlying rewrite step on its own" },
+    ],
+  },
+  {
+    category: "tools",
+    name: "clone-fix-repo-pub", alias: "cfrp", description: "Clone a repo, run `fix-repo --all`, then flip its visibility to public on GitHub or GitLab — all in one shot. Equivalent to `gitmap clone <url>` → `cd <folder>` → `gitmap fix-repo --all` → `gitmap make-public --yes`. Requires `gh` or `glab` installed and authenticated. Each step's exit code is propagated; the pipeline halts on the first non-zero exit.",
+    usage: "gitmap clone-fix-repo-pub <url> [folder]",
+    examples: [
+      { command: "gitmap clone-fix-repo-pub https://github.com/acme/myrepo-v13.git", description: "Clone, fix prior version tokens, then expose publicly" },
+      { command: "gitmap cfrp git@github.com:acme/myrepo-v13.git myrepo-fresh", description: "Same pipeline with explicit destination folder" },
+    ],
+    seeAlso: [
+      { name: "clone-fix-repo", description: "Same pipeline without the visibility flip" },
+      { name: "make-public", description: "The visibility step on its own (with confirmation)" },
+      { name: "fix-repo", description: "The underlying rewrite step on its own" },
+    ],
+  },
 
   {
     category: "changelog",
