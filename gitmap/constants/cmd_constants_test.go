@@ -217,25 +217,25 @@ func topLevelCmds() map[string]string {
 		// Audit / inject / replace / regoldens / templates aliases:
 		// each pairs with its canonical command and dispatches via
 		// rootcore.go.
-		"CmdAuditLegacy":        CmdAuditLegacy,
-		"CmdAuditLegacyAlias":   CmdAuditLegacyAlias,
-		"CmdAuditLegacyAlias2":  CmdAuditLegacyAlias2,
-		"CmdCloneFrom":          CmdCloneFrom,
-		"CmdCloneFromAlias":     CmdCloneFromAlias,
-		"CmdInject":             CmdInject,
-		"CmdInjectAlias":        CmdInjectAlias,
+		"CmdAuditLegacy":          CmdAuditLegacy,
+		"CmdAuditLegacyAlias":     CmdAuditLegacyAlias,
+		"CmdAuditLegacyAlias2":    CmdAuditLegacyAlias2,
+		"CmdCloneFrom":            CmdCloneFrom,
+		"CmdCloneFromAlias":       CmdCloneFromAlias,
+		"CmdInject":               CmdInject,
+		"CmdInjectAlias":          CmdInjectAlias,
 		"CmdMakePublic":           CmdMakePublic,
 		"CmdMakePrivate":          CmdMakePrivate,
 		"CmdCloneFixRepo":         CmdCloneFixRepo,
 		"CmdCloneFixRepoAlias":    CmdCloneFixRepoAlias,
 		"CmdCloneFixRepoPub":      CmdCloneFixRepoPub,
 		"CmdCloneFixRepoPubAlias": CmdCloneFixRepoPubAlias,
-		"CmdRegoldens":          CmdRegoldens,
-		"CmdRegoldensAlias":     CmdRegoldensAlias,
-		"CmdReplace":            CmdReplace,
-		"CmdReplaceAlias":       CmdReplaceAlias,
-		"CmdTemplatesDiffAlias": CmdTemplatesDiffAlias,
-		"CmdTemplatesInitAlias": CmdTemplatesInitAlias,
+		"CmdRegoldens":            CmdRegoldens,
+		"CmdRegoldensAlias":       CmdRegoldensAlias,
+		"CmdReplace":              CmdReplace,
+		"CmdReplaceAlias":         CmdReplaceAlias,
+		"CmdTemplatesDiffAlias":   CmdTemplatesDiffAlias,
+		"CmdTemplatesInitAlias":   CmdTemplatesInitAlias,
 	}
 }
 
