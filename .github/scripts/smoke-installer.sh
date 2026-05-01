@@ -110,6 +110,7 @@ case "$MODE" in
       --no-discovery
     # Resolve from the deploy manifest so the smoke test tracks the
     # installer's canonical layout instead of stale hardcoded paths.
+    echo "▶ Manifest: APP_SUBDIR=$APP_SUBDIR BINARY_NAME_UNIX=$BINARY_NAME_UNIX LEGACY_APP_SUBDIRS=[${LEGACY_APP_SUBDIRS[*]}]"
     BIN=""
     for candidate in \
       "$DEST/$APP_SUBDIR/$BINARY_NAME_UNIX" \
@@ -128,8 +129,10 @@ case "$MODE" in
         fi
       done
     fi
+    # ALWAYS run the find fallback if direct paths missed — guards against
+    # any future layout drift between install.sh and the manifest reader.
     if [ -z "$BIN" ]; then
-      echo "▶ Searching for $BINARY_NAME_UNIX under $DEST"
+      echo "▶ Direct paths missed; searching for $BINARY_NAME_UNIX under $DEST"
       BIN="$(find "$DEST" -type f -name "$BINARY_NAME_UNIX" -perm -u+x 2>/dev/null | head -n1 || true)"
     fi
     if [ -z "$BIN" ]; then
