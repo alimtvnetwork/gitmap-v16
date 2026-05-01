@@ -215,5 +215,7 @@ $result = Invoke-RewriteSweep -RepoRoot $identity.Root -Base $identity.Base -Cur
 
 Write-Summary -Scanned $result.Scanned -Changed $result.Changed -Replacements $result.Reps -DryRun $parsed.DryRun
 
+if (-not (Invoke-PostRewriteGofmt -GoFiles $result.GoFiles -DryRun $parsed.DryRun)) { $result.Failed = $true }
+
 if ($result.Failed) { exit $Script:ExitWriteFailed }
 exit $Script:ExitOk
