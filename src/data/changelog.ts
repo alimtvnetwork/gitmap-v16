@@ -8,6 +8,18 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: "v4.10.0",
+    date: "2026-05-01",
+    subtitle: "E2E test for the fix-repo gofmt step: aligned-map fixture + `gofmt -l .` regression assertion",
+    items: [
+      "New end-to-end test `gitmap/tests/fixrepo_test/TestFixRepoGofmtCleanAfterRewrite` builds the gitmap binary, materializes a throwaway git repo whose origin URL ends in `repo-v9.git` containing two Go files with column-aligned `map[string]string` and `const (...)` blocks straddling the v8/v9/v10 width boundary, runs `gitmap fix-repo --all --verbose` against it, and asserts both that the output contains a `gofmt:` summary line (proving the v4.8.0 step ran) AND that `gofmt -l .` is silent afterward (proving alignment is preserved).",
+      "Pre-v4.8.0 this test would fail because the byte-level token rewriter widens `repo-v9` → `repo-v12` by 2 chars without re-padding the surrounding rows, which gofmt rejects. Post-v4.8.0 the post-rewrite `gofmt -w` step reformats the file in place and gofmt -l . returns empty.",
+      "Test layout: `gofmt_e2e_test.go` (the headline test + binary build helpers, 151 lines) and `fixture_helpers_test.go` (fixture builder, source generators, gofmt invocation, dump helpers, 149 lines) — both well under the 200-line per-file cap. `requireToolsOrSkip(t, \"go\", \"gofmt\", \"git\")` skips the test in environments without a Go toolchain so it never false-fails on minimal CI runners; standard `ubuntu-latest` has all three.",
+      "Fixture URL is generated as `<tempdir>/repo-v12.git` (current=12) and the work-tree contains `repo-v9` tokens. fix-repo's identity resolver picks v12 from the remote and rewrites every `repo-v8`/`repo-v9` to `repo-v12` across both source files; the `aligned_map.go` keys span 9 and 10 chars (`repo-v9 ` vs `repo-v10`) so the column-padding bug is exercised in exactly the same shape as the original gitmap regression.",
+      "Files: `gitmap/tests/fixrepo_test/gofmt_e2e_test.go` (new), `gitmap/tests/fixrepo_test/fixture_helpers_test.go` (new), `src/constants/index.ts` (VERSION → v4.10.0), `src/data/changelog.ts` (this entry).",
+    ],
+  },
+  {
     version: "v4.9.0",
     date: "2026-05-01",
     subtitle: "`fix-repo.ps1` gains the same post-rewrite `gofmt -w` step as the Go binary (parity with v4.8.0)",
