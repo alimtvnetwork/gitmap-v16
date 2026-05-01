@@ -23,10 +23,10 @@ const (
 
 // Clone-fix-repo user-facing messages and errors.
 const (
-	MsgCloneFixRepoDone        = "clone-fix-repo: pipeline completed in %s\n"
-	ErrCloneFixRepoUsage       = "clone-fix-repo: ERROR <url> is required\n  usage: gitmap clone-fix-repo <url> [folder]\n  usage: gitmap clone-fix-repo-pub <url> [folder]\n"
-	ErrCloneFixRepoChdirFmt    = "clone-fix-repo: ERROR cannot cd into %q: %v\n"
-	ErrCloneFixRepoExecFmt     = "clone-fix-repo: ERROR could not run chained step: %v\n"
+	MsgCloneFixRepoDone     = "clone-fix-repo: pipeline completed in %s\n"
+	ErrCloneFixRepoUsage    = "clone-fix-repo: ERROR <url> is required\n  usage: gitmap clone-fix-repo <url> [folder]\n  usage: gitmap clone-fix-repo-pub <url> [folder]\n"
+	ErrCloneFixRepoChdirFmt = "clone-fix-repo: ERROR cannot cd into %q: %v\n"
+	ErrCloneFixRepoExecFmt  = "clone-fix-repo: ERROR could not run chained step: %v\n"
 )
 
 // Clone-fix-repo exit codes.
