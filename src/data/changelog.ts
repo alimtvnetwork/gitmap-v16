@@ -8,6 +8,19 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: "v4.7.0",
+    date: "2026-05-01",
+    subtitle: "CI: harden `installer-smoke` (release) — JSON manifest now parsed with jq/python3, never `awk -F'\"'`",
+    items: [
+      "`installer-smoke` job in `.github/workflows/release.yml` was failing post-release with `Error: Binary not found or not executable at $DEST/gitmap` even though `install.sh` had correctly written the binary to `$DEST/gitmap-cli/gitmap` (canonical layout per `gitmap/constants/deploy-manifest.json`).",
+      "Root cause: `.github/scripts/smoke-installer.sh#load_deploy_manifest` parsed `appSubdir`, `binaryName.unix`, and `legacyAppSubdirs` out of `deploy-manifest.json` using `awk -F'\"'`. On the GitHub `ubuntu-latest` runner the embedded double-quote field separator combined with `set -euo pipefail` and process substitution intermittently returned the empty string for `APP_SUBDIR`, collapsing the candidate loop to look for `$DEST//gitmap` and `$DEST/gitmap` — both nonexistent — and reporting a phantom `$BIN=$DEST/gitmap` path.",
+      "Fix: rewrote `load_deploy_manifest` with a tiered JSON parser — `jq` (always present on `ubuntu-latest`) → `python3` (always present) → awk fallback (last resort, default-on-miss). Added a one-line manifest diagnostic (`▶ Manifest: APP_SUBDIR=… BINARY_NAME_UNIX=… LEGACY_APP_SUBDIRS=[…]`) before candidate resolution so any future drift is debuggable from the CI log alone. Made the recursive `find` fallback unconditional after direct candidates miss, instead of only triggering when both legacy and direct candidates returned empty.",
+      "PowerShell counterpart `.github/scripts/smoke-installer.ps1` already used `ConvertFrom-Json` plus a recursive `Get-ChildItem` fallback — no change needed there.",
+      "RCA: `.lovable/memory/issues/2026-05-01-smoke-installer-awk-empty.md`. New project rule (memory): JSON config files in CI shell scripts must be parsed with `jq` or `python3`, never `awk -F'\"'` as the primary path.",
+      "Files: `.github/scripts/smoke-installer.sh`, `.lovable/memory/issues/2026-05-01-smoke-installer-awk-empty.md`, `src/constants/index.ts` (VERSION → v4.7.0), `src/data/changelog.ts` (this entry).",
+    ],
+  },
+  {
     version: "v4.6.0",
     date: "2026-05-01",
     subtitle: "Lint fixes: `errors.As` for wrapped `*exec.ExitError`, gocritic param combine, misspell",
