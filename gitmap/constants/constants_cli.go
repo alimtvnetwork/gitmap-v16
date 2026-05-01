@@ -132,6 +132,12 @@ const (
 	// so we never tag on top of a divergent tree.
 	CmdReleasePull      = "release-pull"
 	CmdReleasePullAlias = "relp"
+	// CmdMakePublic / CmdMakePrivate toggle the current repo's
+	// visibility on GitHub or GitLab via `gh` / `glab`. No alias —
+	// the long forms are the spec-mandated UX. Spec:
+	// spec-authoring/23-visibility-change/01-spec.md.
+	CmdMakePublic  = "make-public"
+	CmdMakePrivate = "make-private"
 )
 
 // Audit-legacy defaults + flag names. Patterns are comma-separated regexes.

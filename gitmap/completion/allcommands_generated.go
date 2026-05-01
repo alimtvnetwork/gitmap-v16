@@ -122,6 +122,8 @@ var generatedCommands = []string{
 	"lr",
 	"ls",
 	"lv",
+	"make-private",
+	"make-public",
 	"mb",
 	"merge-both",
 	"merge-left",

@@ -39,5 +39,7 @@ func coreDispatchEntries() []dispatchEntry {
 			func() { runCloneNow(argsTail()) },
 		},
 		{[]string{constants.CmdClonePick, constants.CmdClonePickAlias}, func() { runClonePick(argsTail()) }},
+		{[]string{constants.CmdMakePublic}, func() { runMakePublic(argsTail()) }},
+		{[]string{constants.CmdMakePrivate}, func() { runMakePrivate(argsTail()) }},
 	}
 }

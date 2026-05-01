@@ -23,6 +23,8 @@ func printGroupUtilities() {
 	fmt.Println(constants.HelpSEOWrite)
 	fmt.Println(constants.HelpLLMDocs)
 	fmt.Println(constants.HelpFixRepo)
+	fmt.Println(constants.HelpMakePublic)
+	fmt.Println(constants.HelpMakePrivate)
 	fmt.Println(constants.HelpHelp)
 }
 
