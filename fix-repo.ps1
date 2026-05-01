@@ -123,24 +123,49 @@ function _Process-OneFile {
         $reps = Invoke-FileRewrite -FullPath $full -Base $Base -Targets $Targets -Current $Current -DryRun $DryRun
     } catch {
         Write-Host ("fix-repo: ERROR write failed for {0}: {1}" -f $Rel, $_.Exception.Message)
-        return [pscustomobject]@{ Reps=0; Failed=$true }
+        return [pscustomobject]@{ Reps=0; Failed=$true; FullPath=$full }
     }
     if ($reps -gt 0 -and $Verbose) { Write-Host ("modified: {0} ({1} replacements)" -f $Rel, $reps) }
-    return [pscustomobject]@{ Reps=$reps; Failed=$false }
+    return [pscustomobject]@{ Reps=$reps; Failed=$false; FullPath=$full }
 }
 
 function Invoke-RewriteSweep {
     param([string]$RepoRoot, [string]$Base, [int]$Current, [int[]]$Targets, [bool]$DryRun, [bool]$Verbose)
     $files = Get-TrackedFiles -RepoRoot $RepoRoot
     $scanned = 0; $changed = 0; $totalReps = 0; $failed = $false
+    $goFiles = New-Object System.Collections.Generic.List[string]
     foreach ($rel in $files) {
         $r = _Process-OneFile -RepoRoot $RepoRoot -Rel $rel -Base $Base -Current $Current -Targets $Targets -DryRun $DryRun -Verbose $Verbose
         if (-not $r) { continue }
         $scanned++
         if ($r.Failed) { $failed = $true; continue }
-        if ($r.Reps -gt 0) { $changed++; $totalReps += $r.Reps }
+        if ($r.Reps -gt 0) {
+            $changed++; $totalReps += $r.Reps
+            if ([System.IO.Path]::GetExtension($rel).ToLowerInvariant() -eq '.go') { $goFiles.Add($r.FullPath) | Out-Null }
+        }
     }
-    return [pscustomobject]@{ Scanned=$scanned; Changed=$changed; Reps=$totalReps; Failed=$failed }
+    return [pscustomobject]@{ Scanned=$scanned; Changed=$changed; Reps=$totalReps; Failed=$failed; GoFiles=$goFiles }
+}
+
+# Post-rewrite gofmt step. Mirrors the Go binary's runFixRepoGofmt
+# (gitmap/cmd/fixrepo_gofmt.go) so script users get the same CI-clean
+# output. Guarded by Get-Command so non-Go environments degrade
+# gracefully. See .lovable/memory/issues/2026-05-01-fixrepo-no-gofmt.md.
+function Invoke-PostRewriteGofmt {
+    param([System.Collections.Generic.List[string]]$GoFiles, [bool]$DryRun)
+    if ($DryRun)              { Write-Host 'gofmt:   skipped (dry-run)';      return $true }
+    if ($GoFiles.Count -eq 0) { Write-Host 'gofmt:   no .go files modified';  return $true }
+    if (-not (Get-Command gofmt -ErrorAction SilentlyContinue)) {
+        [Console]::Error.WriteLine('fix-repo: WARN  gofmt not found on PATH; skipping post-rewrite formatting')
+        return $true
+    }
+    $out = & gofmt -w @($GoFiles) 2>&1
+    if ($LASTEXITCODE -ne 0) {
+        [Console]::Error.WriteLine(("fix-repo: ERROR gofmt failed: exit {0}`n{1}" -f $LASTEXITCODE, ($out -join "`n")))
+        return $false
+    }
+    Write-Host ("gofmt:   {0} .go file(s) reformatted" -f $GoFiles.Count)
+    return $true
 }
 
 function Resolve-Identity {
@@ -189,6 +214,8 @@ $result = Invoke-RewriteSweep -RepoRoot $identity.Root -Base $identity.Base -Cur
     -Targets $targets -DryRun $parsed.DryRun -Verbose $parsed.Verbose
 
 Write-Summary -Scanned $result.Scanned -Changed $result.Changed -Replacements $result.Reps -DryRun $parsed.DryRun
+
+if (-not (Invoke-PostRewriteGofmt -GoFiles $result.GoFiles -DryRun $parsed.DryRun)) { $result.Failed = $true }
 
 if ($result.Failed) { exit $Script:ExitWriteFailed }
 exit $Script:ExitOk

@@ -8,6 +8,19 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: "v4.9.0",
+    date: "2026-05-01",
+    subtitle: "`fix-repo.ps1` gains the same post-rewrite `gofmt -w` step as the Go binary (parity with v4.8.0)",
+    items: [
+      "`fix-repo.ps1` now mirrors `gitmap fix-repo`'s v4.8.0 behavior: after the token sweep, every modified `.go` file is collected and passed in a single `gofmt -w @($GoFiles)` invocation, guarded by `Get-Command gofmt -ErrorAction SilentlyContinue` so non-Go environments degrade gracefully with a stderr WARN instead of a hard failure.",
+      "Behavior contract (identical to the Go binary): `--DryRun` prints `gofmt:   skipped (dry-run)` and runs nothing; sweeps with no modified `.go` files print `gofmt:   no .go files modified`; `gofmt` not on `PATH` writes `fix-repo: WARN  gofmt not found on PATH; skipping post-rewrite formatting` to stderr and the run still succeeds; non-zero `gofmt` exit writes `fix-repo: ERROR gofmt failed: exit <N>` plus the combined output to stderr, marks the run as failed, and exits `$Script:ExitWriteFailed` (7).",
+      "Implementation: `_Process-OneFile` now returns `FullPath` alongside `Reps`/`Failed` so the sweep can track absolute paths. `Invoke-RewriteSweep` builds a `System.Collections.Generic.List[string] $goFiles` and appends to it whenever a rewritten file's extension (`[System.IO.Path]::GetExtension($rel).ToLowerInvariant()`) equals `.go`. New `Invoke-PostRewriteGofmt` function (15 lines, well under the strict cap) handles the dry-run / empty / lookup / exec branches. Main calls it immediately after `Write-Summary` and ORs its boolean result into `$result.Failed` before the exit decision.",
+      "Why this matters for CI: width-crossing version bumps (e.g. `gitmap-v9` → `gitmap-v12`) silently broke column alignment in Go map literals / const blocks because the byte-level token rewriter doesn't understand Go syntax. The Go binary closed this gap in v4.8.0; the `.ps1` helper kept the gap open whenever someone (or a bootstrap script) invoked the script path. Both engines now produce gofmt-clean output by default, so the `cd gitmap && gofmt -w .` manual step is no longer needed regardless of which entry point you use.",
+      "Memory updated: `mem://index.md` Core rule rewritten to drop the `.ps1` caveat. `mem://features/fix-repo-command` already documented the gofmt step; the parity note now applies to both engines.",
+      "Files: `fix-repo.ps1`, `src/constants/index.ts` (VERSION → v4.9.0), `src/data/changelog.ts` (this entry).",
+    ],
+  },
+  {
     version: "v4.8.0",
     date: "2026-05-01",
     subtitle: "`fix-repo` now auto-runs `gofmt -w` on every modified `.go` file as a post-rewrite step",
