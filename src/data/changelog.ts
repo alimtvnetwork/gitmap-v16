@@ -8,6 +8,20 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: "v4.8.0",
+    date: "2026-05-01",
+    subtitle: "`fix-repo` now auto-runs `gofmt -w` on every modified `.go` file as a post-rewrite step",
+    items: [
+      "`gitmap fix-repo` (alias `fr`) gains a post-rewrite gofmt pass: after the byte-level token sweep finishes, every modified `.go` file is collected and passed in a single batched `gofmt -w <files...>` invocation. This closes the long-standing gap where width-crossing version bumps (e.g. `gitmap-v9` → `gitmap-v12`) silently broke column alignment in Go map literals / const blocks and tripped CI's `gofmt -l .` gate.",
+      "Behavior contract: `--dry-run` prints `gofmt:   skipped (dry-run)` and runs nothing; sweeps with no modified `.go` files print `gofmt:   no .go files modified`; if `gofmt` is not on `PATH` a WARN is written to stderr and the run still succeeds (graceful degradation for non-Go users); a non-zero `gofmt` exit writes the combined output to stderr, marks the run as failed, and exits `FixRepoExitWriteFailed` (7).",
+      "Implementation: new `gitmap/cmd/fixrepo_gofmt.go` with `runFixRepoGofmt` (orchestrator + dry-run / empty / lookup guards), `invokeGofmt` (batched exec), and `isGoSourceFile` (extension check). `fixRepoSweepResult` (in `gitmap/cmd/fixrepo_scan.go`) gained a `goFiles []string` field that the per-file branch in `processFixRepoFile` appends to whenever a rewrite landed in a `.go` source. `runFixRepo` (in `gitmap/cmd/fixrepo.go`) now calls `runFixRepoGofmt(result.goFiles, opts)` immediately after `emitFixRepoSummary` and before the exit decision.",
+      "New constants in `gitmap/constants/constants_fixrepo.go`: `FixRepoMsgGofmtFmt`, `FixRepoMsgGofmtSkip`, `FixRepoMsgGofmtNoneFmt`, `FixRepoErrGofmtFmt`, `FixRepoErrGofmtMissing` — keeps the no-magic-strings rule honored.",
+      "The PowerShell helper `fix-repo.ps1` is intentionally left unchanged because the Go binary is canonical; the legacy `.ps1` path stays a bootstrap-only escape hatch.",
+      "Memory updated: `mem://features/fix-repo-command` documents the new step under \"Post-rewrite gofmt (v4.8.0+)\"; the project Core rule was rewritten from \"FIX-REPO GOFMT GAP\" to \"FIX-REPO GOFMT\" reflecting that the gap is closed (manual `gofmt -w .` is only needed if you invoke `fix-repo.ps1` directly).",
+      "Files: `gitmap/cmd/fixrepo.go`, `gitmap/cmd/fixrepo_scan.go`, `gitmap/cmd/fixrepo_gofmt.go` (new), `gitmap/constants/constants_fixrepo.go`, `gitmap/constants/constants.go` (Version → 4.4.0), `src/constants/index.ts` (VERSION → v4.8.0), `src/data/changelog.ts` (this entry).",
+    ],
+  },
+  {
     version: "v4.7.0",
     date: "2026-05-01",
     subtitle: "CI: harden `installer-smoke` (release) — JSON manifest now parsed with jq/python3, never `awk -F'\"'`",
