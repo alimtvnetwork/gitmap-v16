@@ -679,6 +679,14 @@ jobs:
     needs: release
     steps:
       - uses: actions/checkout@v6
+        with:
+          # Tag-triggered reruns check out the historical tag snapshot, which
+          # can contain stale smoke scripts (for example the legacy
+          # /install/gitmap assertion after the deploy layout moved to
+          # /install/gitmap-cli). Validation jobs should always use the latest
+          # harness from the default branch to test the freshly-published
+          # assets, not an old test script baked into the tag.
+          ref: ${{ github.event.repository.default_branch }}
 
       - name: Wait briefly for release assets to propagate
         run: sleep 15
@@ -703,6 +711,8 @@ jobs:
     needs: release
     steps:
       - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.repository.default_branch }}
 
       - name: Wait briefly for release assets to propagate
         shell: pwsh
@@ -731,6 +741,8 @@ jobs:
     needs: release
     steps:
       - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.repository.default_branch }}
 
       - name: Wait briefly for release assets to propagate
         shell: pwsh
