@@ -29,24 +29,44 @@ load_deploy_manifest() {
     return
   fi
 
-  APP_SUBDIR="$(awk -F'"' '/"appSubdir"/ {print $4; exit}' "$manifest_path")"
-  BINARY_NAME_UNIX="$(awk -F'"' '/"unix"/ {print $4; exit}' "$manifest_path")"
-
-  mapfile -t LEGACY_APP_SUBDIRS < <(
-    awk '
+  # Prefer jq (always available on ubuntu-latest GitHub runners), fall back to
+  # python3 (always available too), then awk as last resort. The previous
+  # awk-only path silently produced empty values when the runner's awk locale
+  # mishandled the embedded double-quote field separator, which left the
+  # post-install path resolution searching for $DEST/gitmap (legacy layout)
+  # instead of $DEST/gitmap-cli/gitmap and tripping the "Binary not found"
+  # exit-3 even though install.sh wrote the binary correctly.
+  local parsed_app="" parsed_bin="" parsed_legacy=""
+  if command -v jq >/dev/null 2>&1; then
+    parsed_app="$(jq -r '.appSubdir // empty' "$manifest_path" 2>/dev/null || true)"
+    parsed_bin="$(jq -r '.binaryName.unix // empty' "$manifest_path" 2>/dev/null || true)"
+    parsed_legacy="$(jq -r '(.legacyAppSubdirs // []) | .[]' "$manifest_path" 2>/dev/null || true)"
+  elif command -v python3 >/dev/null 2>&1; then
+    parsed_app="$(python3 -c 'import json,sys;print(json.load(open(sys.argv[1])).get("appSubdir",""))' "$manifest_path" 2>/dev/null || true)"
+    parsed_bin="$(python3 -c 'import json,sys;print(json.load(open(sys.argv[1])).get("binaryName",{}).get("unix",""))' "$manifest_path" 2>/dev/null || true)"
+    parsed_legacy="$(python3 -c 'import json,sys
+[print(x) for x in json.load(open(sys.argv[1])).get("legacyAppSubdirs",[])]' "$manifest_path" 2>/dev/null || true)"
+  else
+    parsed_app="$(awk -F'"' '/"appSubdir"/ {print $4; exit}' "$manifest_path")"
+    parsed_bin="$(awk -F'"' '/"unix"/ {print $4; exit}' "$manifest_path")"
+    parsed_legacy="$(awk '
       /"legacyAppSubdirs"/ { in_block=1 }
       in_block {
         while (match($0, /"[^"]+"/)) {
           value = substr($0, RSTART + 1, RLENGTH - 2)
-          if (value != "legacyAppSubdirs") {
-            print value
-          }
+          if (value != "legacyAppSubdirs") { print value }
           $0 = substr($0, RSTART + RLENGTH)
         }
       }
       in_block && /\]/ { exit }
-    ' "$manifest_path"
-  )
+    ' "$manifest_path")"
+  fi
+
+  [ -n "$parsed_app" ] && APP_SUBDIR="$parsed_app"
+  [ -n "$parsed_bin" ] && BINARY_NAME_UNIX="$parsed_bin"
+  if [ -n "$parsed_legacy" ]; then
+    mapfile -t LEGACY_APP_SUBDIRS <<< "$parsed_legacy"
+  fi
 
   if [ -z "$APP_SUBDIR" ]; then
     APP_SUBDIR="gitmap-cli"
@@ -90,6 +110,7 @@ case "$MODE" in
       --no-discovery
     # Resolve from the deploy manifest so the smoke test tracks the
     # installer's canonical layout instead of stale hardcoded paths.
+    echo "▶ Manifest: APP_SUBDIR=$APP_SUBDIR BINARY_NAME_UNIX=$BINARY_NAME_UNIX LEGACY_APP_SUBDIRS=[${LEGACY_APP_SUBDIRS[*]}]"
     BIN=""
     for candidate in \
       "$DEST/$APP_SUBDIR/$BINARY_NAME_UNIX" \
@@ -108,8 +129,10 @@ case "$MODE" in
         fi
       done
     fi
+    # ALWAYS run the find fallback if direct paths missed — guards against
+    # any future layout drift between install.sh and the manifest reader.
     if [ -z "$BIN" ]; then
-      echo "▶ Searching for $BINARY_NAME_UNIX under $DEST"
+      echo "▶ Direct paths missed; searching for $BINARY_NAME_UNIX under $DEST"
       BIN="$(find "$DEST" -type f -name "$BINARY_NAME_UNIX" -perm -u+x 2>/dev/null | head -n1 || true)"
     fi
     if [ -z "$BIN" ]; then
