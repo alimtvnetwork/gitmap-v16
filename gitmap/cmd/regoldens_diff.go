@@ -15,7 +15,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/alimtvnetwork/gitmap-v11/gitmap/constants"
+	"github.com/alimtvnetwork/gitmap-v12/gitmap/constants"
 )
 
 // goldenDiffEntry captures one changed testdata/ file. Status uses

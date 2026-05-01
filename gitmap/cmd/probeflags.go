@@ -21,7 +21,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/alimtvnetwork/gitmap-v11/gitmap/constants"
+	"github.com/alimtvnetwork/gitmap-v12/gitmap/constants"
 )
 
 // probeOptions captures the parsed CLI flags for `gitmap probe`.

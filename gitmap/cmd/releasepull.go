@@ -7,8 +7,8 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/alimtvnetwork/gitmap-v11/gitmap/constants"
-	"github.com/alimtvnetwork/gitmap-v11/gitmap/release"
+	"github.com/alimtvnetwork/gitmap-v12/gitmap/constants"
+	"github.com/alimtvnetwork/gitmap-v12/gitmap/release"
 )
 
 // runReleasePull implements `gitmap release-pull` (alias `relp`).

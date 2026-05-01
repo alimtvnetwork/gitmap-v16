@@ -10,7 +10,7 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/alimtvnetwork/gitmap-v11/gitmap/constants"
+	"github.com/alimtvnetwork/gitmap-v12/gitmap/constants"
 )
 
 // Pair is one (rootPath, name, paths, tags) tuple to upsert into

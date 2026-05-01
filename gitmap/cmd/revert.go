@@ -5,8 +5,8 @@ import (
 	"os"
 	"os/exec"
 
-	"github.com/alimtvnetwork/gitmap-v11/gitmap/constants"
-	"github.com/alimtvnetwork/gitmap-v11/gitmap/release"
+	"github.com/alimtvnetwork/gitmap-v12/gitmap/constants"
+	"github.com/alimtvnetwork/gitmap-v12/gitmap/release"
 )
 
 // runRevert handles the "revert" command.

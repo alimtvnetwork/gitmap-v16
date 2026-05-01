@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/alimtvnetwork/gitmap-v11/gitmap/constants"
+	"github.com/alimtvnetwork/gitmap-v12/gitmap/constants"
 )
 
 // runAlias handles the "alias" subcommand and routes to sub-handlers.

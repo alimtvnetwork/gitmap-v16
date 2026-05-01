@@ -3,7 +3,7 @@ package release
 import (
 	"fmt"
 
-	"github.com/alimtvnetwork/gitmap-v11/gitmap/constants"
+	"github.com/alimtvnetwork/gitmap-v12/gitmap/constants"
 )
 
 // discoverMetadataPending finds .gitmap/release/v*.json files where neither

@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/alimtvnetwork/gitmap-v11/gitmap/constants"
+	"github.com/alimtvnetwork/gitmap-v12/gitmap/constants"
 )
 
 // TestBuildAuditNeedles verifies the dual-form contract for the audit
@@ -19,7 +19,7 @@ func TestBuildAuditNeedles(t *testing.T) {
 	got := buildAuditNeedles("gitmap", []int{4, 9})
 	want := [][]byte{
 		[]byte("gitmap-v4"), []byte("gitmap/v4"),
-		[]byte("gitmap-v11"), []byte("gitmap/v9"),
+		[]byte("gitmap-v12"), []byte("gitmap/v9"),
 	}
 	if len(got) != len(want) {
 		t.Fatalf("len = %d, want %d", len(got), len(want))

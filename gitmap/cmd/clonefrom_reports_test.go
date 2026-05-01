@@ -16,8 +16,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/alimtvnetwork/gitmap-v11/gitmap/clonefrom"
-	"github.com/alimtvnetwork/gitmap-v11/gitmap/constants"
+	"github.com/alimtvnetwork/gitmap-v12/gitmap/clonefrom"
+	"github.com/alimtvnetwork/gitmap-v12/gitmap/constants"
 )
 
 // TestValidateCloneFromResults_PassesWhenComplete locks the happy

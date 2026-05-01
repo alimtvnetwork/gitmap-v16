@@ -4,8 +4,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/alimtvnetwork/gitmap-v11/gitmap/gitutil"
-	"github.com/alimtvnetwork/gitmap-v11/gitmap/model"
+	"github.com/alimtvnetwork/gitmap-v12/gitmap/gitutil"
+	"github.com/alimtvnetwork/gitmap-v12/gitmap/model"
 )
 
 // TestApplyDefaultBranchFallback_EmptyFallbackIsNoop pins the

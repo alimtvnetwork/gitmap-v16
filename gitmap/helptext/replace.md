@@ -41,14 +41,14 @@ $ gitmap replace "old-name" "new-name"
   replace: applied 3 replacements across 2 files
 ```
 
-### Version bump (`-3` on a `gitmap-v11` repo)
+### Version bump (`-3` on a `gitmap-v12` repo)
 
 ```
 $ gitmap replace -3
 
   replace: scanning 412 files in /repo
-  replace: go.mod: 1 match (gitmap-v4 -> gitmap-v11)
-  replace: docs/upgrade.md: 4 matches (gitmap-v11 -> gitmap-v11)
+  replace: go.mod: 1 match (gitmap-v4 -> gitmap-v12)
+  replace: docs/upgrade.md: 4 matches (gitmap-v12 -> gitmap-v12)
   replace: 2 files, 5 replacements
   Apply replacements for versions v4..v6 -> v7? [y/N]: y
   replace: applied 5 replacements across 2 files
@@ -59,8 +59,8 @@ $ gitmap replace -3
 ```
 $ gitmap replace --audit
 
-  README.md:42: see https://github.com/x/gitmap-v11 for the legacy guide
-  go.mod:3: module github.com/x/gitmap-v11
+  README.md:42: see https://github.com/x/gitmap-v12 for the legacy guide
+  go.mod:3: module github.com/x/gitmap-v12
 ```
 
 ## Excluded paths

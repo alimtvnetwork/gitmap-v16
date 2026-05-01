@@ -33,7 +33,7 @@ const meta: Record<Direction, {
       </>
     ),
     example: `# Replay RIGHT's commits since divergence onto LEFT
-gitmap commit-left ./gitmap-v11 ./gitmap-v11-experimental
+gitmap commit-left ./gitmap-v12 ./gitmap-v12-experimental
 
 # Bypass the preview prompt
 gitmap cl ./mine ./theirs -y`,

@@ -24,8 +24,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/alimtvnetwork/gitmap-v11/gitmap/goldenguard"
-	"github.com/alimtvnetwork/gitmap-v11/gitmap/render"
+	"github.com/alimtvnetwork/gitmap-v12/gitmap/goldenguard"
+	"github.com/alimtvnetwork/gitmap-v12/gitmap/render"
 )
 
 // updateGolden, when true, rewrites .golden files instead of asserting.

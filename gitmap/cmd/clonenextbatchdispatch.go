@@ -3,7 +3,7 @@ package cmd
 import (
 	"os"
 
-	"github.com/alimtvnetwork/gitmap-v11/gitmap/clonenext"
+	"github.com/alimtvnetwork/gitmap-v12/gitmap/clonenext"
 )
 
 // shouldRunBatch decides whether `gitmap cn` should fan out across

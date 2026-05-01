@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/alimtvnetwork/gitmap-v11/gitmap/cloneconcurrency"
-	"github.com/alimtvnetwork/gitmap-v11/gitmap/constants"
+	"github.com/alimtvnetwork/gitmap-v12/gitmap/cloneconcurrency"
+	"github.com/alimtvnetwork/gitmap-v12/gitmap/constants"
 )
 
 // CloneNextFlags bundles every parsed flag from the clone-next command so

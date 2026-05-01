@@ -3,8 +3,8 @@ package cloner
 import (
 	"testing"
 
-	"github.com/alimtvnetwork/gitmap-v11/gitmap/gitutil"
-	"github.com/alimtvnetwork/gitmap-v11/gitmap/model"
+	"github.com/alimtvnetwork/gitmap-v12/gitmap/gitutil"
+	"github.com/alimtvnetwork/gitmap-v12/gitmap/model"
 )
 
 func TestPickCloneStrategy(t *testing.T) {

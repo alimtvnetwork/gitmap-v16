@@ -6,10 +6,10 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/alimtvnetwork/gitmap-v11/gitmap/completion"
-	"github.com/alimtvnetwork/gitmap-v11/gitmap/constants"
-	"github.com/alimtvnetwork/gitmap-v11/gitmap/release"
-	"github.com/alimtvnetwork/gitmap-v11/gitmap/setup"
+	"github.com/alimtvnetwork/gitmap-v12/gitmap/completion"
+	"github.com/alimtvnetwork/gitmap-v12/gitmap/constants"
+	"github.com/alimtvnetwork/gitmap-v12/gitmap/release"
+	"github.com/alimtvnetwork/gitmap-v12/gitmap/setup"
 )
 
 // runSetup handles the "setup" subcommand.
