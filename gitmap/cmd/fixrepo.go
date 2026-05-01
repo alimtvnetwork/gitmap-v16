@@ -42,6 +42,9 @@ func runFixRepo(args []string) {
 	}
 	result := runFixRepoSweep(identity, targets, opts)
 	emitFixRepoSummary(result.scanned, result.changed, result.replacements, opts.isDryRun)
+	if !runFixRepoGofmt(result.goFiles, opts) {
+		result.failed = true
+	}
 	if result.failed {
 		os.Exit(constants.FixRepoExitWriteFailed)
 	}
