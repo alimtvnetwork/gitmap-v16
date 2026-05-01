@@ -8,6 +8,18 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: "v4.5.0",
+    date: "2026-05-01",
+    subtitle: "`clone-fix-repo` (cfr) and `clone-fix-repo-pub` (cfrp): one-shot clone → fix-repo → (optional) make-public",
+    items: [
+      "New `gitmap clone-fix-repo` (alias `cfr`) chains `clone <url>` → `cd <folder>` → `fix-repo --all` in a single command. Versioned URLs auto-flatten to base name (`myrepo-v13.git` → `myrepo/`), and an optional second positional arg overrides the destination folder. Replaces the three-step manual sequence most users run after every `clone-next`-style bump.",
+      "New `gitmap clone-fix-repo-pub` (alias `cfrp`) extends the pipeline with a final `make-public --yes` step, flipping the freshly cloned + rewritten repo to public on GitHub/GitLab via `gh`/`glab`. Each step's exit code is propagated as-is and the pipeline halts on the first non-zero exit, so partial failures are surfaced precisely.",
+      "Implementation: in-process `executeDirectClone` for the clone step, then `os.Chdir` into the resolved folder, then `os.Executable()` re-exec for the `fix-repo` and `make-public` steps. Re-exec is used because both downstream commands call `os.Exit` at the end of their normal success path — re-exec gives each step a clean process lifecycle without refactoring 4 unrelated commands.",
+      "Help & UI: top-level `gitmap help` now lists `clone-fix-repo` and `clone-fix-repo-pub` in the Utilities group; the `--compact` line is updated; web docs (`src/data/commands.ts`) gain full entries with examples and bidirectional `seeAlso` cross-links between `cfr`, `cfrp`, `clone`, `fix-repo`, and `make-public`. Shell completion's generated list (`gitmap/completion/allcommands_generated.go`) picks up `cfr`, `cfrp`, `clone-fix-repo`, and `clone-fix-repo-pub`.",
+      "New files: `gitmap/cmd/clonefixrepo.go`, `gitmap/constants/constants_clonefixrepo.go`, `gitmap/helptext/clone-fix-repo.md`, `gitmap/helptext/clone-fix-repo-pub.md`. Edited: `gitmap/cmd/rootcore.go` (dispatch), `gitmap/cmd/rootusageflags.go` (utilities help), `gitmap/constants/constants_helpgroups.go` (compact line), `gitmap/constants/cmd_constants_test.go` (uniqueness test entries), `src/constants/index.ts` (VERSION → v4.5.0), `src/data/commands.ts` (UI entries), `src/data/changelog.ts` (this entry).",
+    ],
+  },
+  {
     version: "v4.4.0",
     date: "2026-05-01",
     subtitle: "`release-pull` gains `--rebase` / `--merge` modes; help & UI surface `fix-repo`, `replace`, `release-pull`",
