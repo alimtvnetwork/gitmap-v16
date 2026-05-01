@@ -57,4 +57,9 @@ const (
 	FixRepoErrBadFlagFmt   = "fix-repo: ERROR %s (E_BAD_FLAG)\n"
 	FixRepoErrBadConfigFmt = "fix-repo: ERROR %s (E_BAD_CONFIG)\n"
 	FixRepoErrWriteFmt     = "fix-repo: ERROR write failed for %s: %v\n"
+	FixRepoMsgGofmtFmt     = "gofmt:   %d .go file(s) reformatted\n"
+	FixRepoMsgGofmtSkip    = "gofmt:   skipped (dry-run)\n"
+	FixRepoMsgGofmtNoneFmt = "gofmt:   no .go files modified\n"
+	FixRepoErrGofmtFmt     = "fix-repo: ERROR gofmt failed: %v\n%s"
+	FixRepoErrGofmtMissing = "fix-repo: WARN  gofmt not found on PATH; skipping post-rewrite formatting\n"
 )
