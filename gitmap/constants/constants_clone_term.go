@@ -109,4 +109,40 @@ const (
 		"one or more cmd: lines did not match the executor's argv " +
 		"(see per-row reports above); exiting with code 3 because " +
 		"--verify-cmd-faithful-exit-on-mismatch was set"
+
+	// CmdFaithfulReportSeverityTag is the severity prefix used on every
+	// line of a mismatch report. Picked to be unambiguous in CI logs:
+	// "[FAIL]" reads as a real failure even when the surrounding
+	// context is missing (e.g. log truncation, single-line scrapers).
+	// Paired with CmdFaithfulReportTestPrefix so test-emitted reports
+	// can be visually separated from production-emitted ones.
+	CmdFaithfulReportSeverityTag = "[FAIL]"
+
+	// CmdFaithfulReportHeaderFmt is the multi-arg format string for
+	// the report banner. Order: severity tag, repo name, divergence
+	// count, exit-flag hint. The trailing hint tells the reader which
+	// CLI flag would turn the report into a hard failure — without it,
+	// users routinely ask "did this fail the build?" when the answer
+	// depends on whether --verify-cmd-faithful-exit-on-mismatch was
+	// passed. Verb tense is past ("did not match") to match the
+	// printed report's role as a post-hoc diagnostic.
+	CmdFaithfulReportHeaderFmt = "%s verify-cmd-faithful: %s — " +
+		"%d divergence(s); displayed cmd: did not match executor argv " +
+		"(non-fatal unless --verify-cmd-faithful-exit-on-mismatch is set)\n"
+
+	// CmdFaithfulReportTestPrefix wraps a mismatch report when the
+	// caller is a Go test that INTENTIONALLY drives a divergent input
+	// to exercise the printer. Without this banner, a successful
+	// `go test ./...` run prints lines that look identical to a real
+	// regression — burying genuine failures and training engineers to
+	// ignore "[FAIL]" in test logs. The matching close-tag below makes
+	// the bracketed region trivially grep-able and easy for humans
+	// scanning a wall of test output.
+	CmdFaithfulReportTestPrefix = "--- expected mismatch (test fixture; " +
+		"not a real failure) ---\n"
+
+	// CmdFaithfulReportTestSuffix closes the test-fixture banner. Kept
+	// as a separate constant (vs. embedding both in one block) so
+	// callers can wrap multi-line content without string surgery.
+	CmdFaithfulReportTestSuffix = "--- end expected mismatch ---\n"
 )
