@@ -38,6 +38,7 @@ $Script:HereDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 . (Join-Path $Script:HereDir 'scripts/fix-repo/File-Scan.ps1')
 . (Join-Path $Script:HereDir 'scripts/fix-repo/Rewrite-Engine.ps1')
 . (Join-Path $Script:HereDir 'scripts/fix-repo/Config-Loader.ps1')
+. (Join-Path $Script:HereDir 'scripts/fix-repo/Paired-Literal-Audit.ps1')
 
 $Script:ExitOk              = 0
 $Script:ExitNotARepo        = 2
@@ -52,6 +53,11 @@ $Script:ExitBadConfig       = 8
 # so CI can tell "rewrite produced semantically broken code" apart from
 # "the file system rejected the write".
 $Script:ExitTestsFailed     = 9
+# ExitPairedLiteral fires when the post-rewrite audit catches a
+# {base}-v{Current} token next to a stale sibling literal of the
+# previous version (typically in *_test.go fixtures).
+# See .lovable/memory/issues/2026-05-02-fixrepo-paired-literal-desync.md.
+$Script:ExitPairedLiteral   = 10
 
 function Test-IsModeFlag { param([string]$A) return $A -in '-2','-3','-5','-all','-All','-ALL' }
 
