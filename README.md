@@ -25,6 +25,14 @@ _Scan, catalog, clone, and manage all your Git repositories from a single CLI._
 
 ---
 
+## Why GitMap?
+
+GitMap is extremely powerful — we built it to solve our own AI-coding workflow problems. Think of it as Git on steroids. It started in 2024 as a quick way to move every repo from my desktop to my laptop, and today our team can't get through a single day without it.
+
+It manages Git repos (public and private), makes releases smooth, and every repo we ship is released through GitMap itself.
+
+---
+
 ## 🚀 Install
 
 GitMap is a **Windows-first** project. The commands below install the latest release with sensible defaults — no prompts, no drive picker. Use the **Quick** block if you want to pick a custom install drive.
