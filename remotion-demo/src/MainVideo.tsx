@@ -20,8 +20,9 @@ const cmdDurations = COMMANDS.map((c) => sceneDurationFor(c.lines));
 const cmdTotal = cmdDurations.reduce((a, b) => a + b, 0);
 const transitionsCount = 1 /*docs→tui*/ + 1 /*tui→cmd0*/ + (COMMANDS.length - 1);
 
-export const TOTAL_FRAMES =
-  INTRO_DOCS_FRAMES + INTRO_TUI_FRAMES + cmdTotal - transitionsCount * TRANSITION_FRAMES;
+export const TOTAL_FRAMES = Math.round(
+  INTRO_DOCS_FRAMES + INTRO_TUI_FRAMES + cmdTotal - transitionsCount * TRANSITION_FRAMES,
+);
 
 export const MainVideo: React.FC = () => {
   return (
