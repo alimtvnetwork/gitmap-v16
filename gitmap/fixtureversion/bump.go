@@ -67,7 +67,7 @@ func BumpStampInBody(body string, req BumpRequest) (string, bool) {
 	head = rewriteGeneration(head, req.NewGeneration)
 	head = rewriteMinCurrent(head, req.NewMinCurrent)
 	head = rewriteCreatedFor(head, req.NewCreatedFor)
-	head = rewriteOrAppendSHA(head, req.NewSHA)
+	head = RewriteOrAppendSHA(head, req.NewSHA)
 
 	return head + tail, true
 }
