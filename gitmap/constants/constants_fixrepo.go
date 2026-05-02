@@ -12,6 +12,15 @@ const (
 	FixRepoExitBadFlag         = 6
 	FixRepoExitWriteFailed     = 7
 	FixRepoExitBadConfig       = 8
+
+	// FixRepoExitTestsFailed is the exit code emitted by --strict when
+	// `go test` on the touched packages reports failure. Distinct from
+	// 7 (write-failed) so CI can branch on "the rewrite produced
+	// semantically broken code" vs "the file system rejected the
+	// write". Picked as 9 (next free code) so the existing 0/2..8
+	// matrix stays stable for downstream parsers; the help block
+	// documents the new value verbatim.
+	FixRepoExitTestsFailed = 9
 )
 
 // Fix-repo flag names. Both GNU long-form (`--dry-run`) and the
@@ -21,6 +30,16 @@ const (
 	FixRepoFlagDryRun     = "dry-run"
 	FixRepoFlagVerbose    = "verbose"
 	FixRepoFlagConfig     = "config"
+
+	// FixRepoFlagStrict gates the post-rewrite `go test` step that
+	// catches semantic desyncs the byte-level rewriter cannot see
+	// (e.g. a v9→v10 bump that desynced a hard-coded sibling literal
+	// from the same file's `-vN` token — exactly the failure mode
+	// closed by v4.12.0). Off by default so `gitmap fix-repo` stays a
+	// pure rewriter for non-Go repos and for users without a Go
+	// toolchain on PATH; opt-in via --strict / -Strict for Go repos
+	// in CI.
+	FixRepoFlagStrict     = "strict"
 	FixRepoModeFlag2      = "-2"
 	FixRepoModeFlag3      = "-3"
 	FixRepoModeFlag5      = "-5"
