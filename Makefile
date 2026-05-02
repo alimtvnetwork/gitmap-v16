@@ -7,6 +7,10 @@ BINARY   := gitmap
 VERSION  ?= dev
 LDFLAGS  := -s -w -X 'github.com/alimtvnetwork/gitmap-v13/gitmap/constants.Version=$(VERSION)'
 
+# Force bash for recipes — fixtures-bump targets rely on $${PIPESTATUS[0]}
+# which is a bash builtin (dash and POSIX sh do not provide it).
+SHELL := /bin/bash
+
 all: lint test build
 
 ## Setup — install tools and git hooks
