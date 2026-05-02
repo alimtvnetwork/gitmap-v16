@@ -26,7 +26,7 @@ func TestScanUnguardedTokenHits(t *testing.T) {
 			wantCount: 1,
 		},
 		{
-			name:      "guarded by trailing digit (-v9 inside -v10)",
+			name:     "guarded by trailing digit (-v9 inside -v10)",
 			body:     "import gitmap-v10 // not v9",
 			token:    "gitmap-v1",
 			wantHits: nil, wantCount: 0,

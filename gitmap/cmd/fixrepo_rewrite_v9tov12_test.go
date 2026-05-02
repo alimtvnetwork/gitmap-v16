@@ -203,7 +203,7 @@ func renderFixRepoFailureDiff(got, oldTok, newTok string, target, current int) s
 	fmt.Fprintf(&b, "     fixture unguarded %s = %d\n",
 		oldTok, countUnguardedHits(fixRepoV9ToV12FixtureBody, oldTok))
 	fmt.Fprintf(&b, "     output unguarded  %s = %d (want 0)\n",
-			oldTok, countUnguardedHits(got, oldTok))
+		oldTok, countUnguardedHits(got, oldTok))
 	fmt.Fprintf(&b, "     output occurrences of %s = %d\n",
 		newTok, strings.Count(got, newTok))
 	b.WriteString(renderUnguardedHitContext(got, oldTok))
