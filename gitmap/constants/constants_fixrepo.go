@@ -26,10 +26,10 @@ const (
 // Fix-repo flag names. Both GNU long-form (`--dry-run`) and the
 // PowerShell single-dash forms (`-DryRun`) are accepted as aliases.
 const (
-	FixRepoFlagAll        = "all"
-	FixRepoFlagDryRun     = "dry-run"
-	FixRepoFlagVerbose    = "verbose"
-	FixRepoFlagConfig     = "config"
+	FixRepoFlagAll     = "all"
+	FixRepoFlagDryRun  = "dry-run"
+	FixRepoFlagVerbose = "verbose"
+	FixRepoFlagConfig  = "config"
 
 	// FixRepoFlagStrict gates the post-rewrite `go test` step that
 	// catches semantic desyncs the byte-level rewriter cannot see
