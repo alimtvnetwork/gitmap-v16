@@ -78,12 +78,18 @@ func TestVerifyCmdFaithful_BranchDrift(t *testing.T) {
 			r.Mismatches)
 	}
 	var buf bytes.Buffer
-	if err := PrintCmdFaithfulReport(&buf, r); err != nil {
+	// Use the test-wrapping printer so the captured output is bounded
+	// by the "--- expected mismatch ---" banner — keeps go test logs
+	// from looking like a real verifier failure.
+	if err := PrintCmdFaithfulReportForTest(&buf, r); err != nil {
 		t.Fatalf("print: %v", err)
 	}
 	out := buf.String()
 	for _, want := range []string{
-		"MISMATCH for repo", "displayed:", "executed:", "--depth=1",
+		"--- expected mismatch", "[FAIL]", "verify-cmd-faithful: repo",
+		"divergence(s)", "displayed:", "executed:", "--depth=1",
+		"--verify-cmd-faithful-exit-on-mismatch",
+		"--- end expected mismatch ---",
 	} {
 		if !strings.Contains(out, want) {
 			t.Fatalf("report missing %q:\n%s", want, out)
