@@ -1,4 +1,5 @@
 import { AbsoluteFill } from "remotion";
+import React from "react";
 import { TransitionSeries, springTiming } from "@remotion/transitions";
 import { fade } from "@remotion/transitions/fade";
 import { slide } from "@remotion/transitions/slide";
@@ -46,34 +47,25 @@ export const MainVideo: React.FC = () => {
           timing={springTiming({ config: { damping: 200 }, durationInFrames: TRANSITION_FRAMES })}
         />
 
-        {COMMANDS.map((c, i) => (
-          <SceneWithMaybeTransition key={i} index={i} duration={cmdDurations[i]} caption={c.caption} cwd={c.cwd} lines={c.lines} />
-        ))}
+        {COMMANDS.flatMap((c, i) => {
+          const nodes: React.ReactNode[] = [];
+          if (i > 0) {
+            nodes.push(
+              <TransitionSeries.Transition
+                key={`tr-${i}`}
+                presentation={fade()}
+                timing={springTiming({ config: { damping: 200 }, durationInFrames: TRANSITION_FRAMES })}
+              />,
+            );
+          }
+          nodes.push(
+            <TransitionSeries.Sequence key={`seq-${i}`} durationInFrames={cmdDurations[i]}>
+              <CommandScene caption={c.caption} cwd={c.cwd} lines={c.lines} />
+            </TransitionSeries.Sequence>,
+          );
+          return nodes;
+        })}
       </TransitionSeries>
     </AbsoluteFill>
-  );
-};
-
-// Helper component to inject a transition between command scenes (not before
-// the first one — that one already has a transition coming from IntroTUI).
-const SceneWithMaybeTransition: React.FC<{
-  index: number;
-  duration: number;
-  caption: string;
-  cwd: string;
-  lines: any;
-}> = ({ index, duration, caption, cwd, lines }) => {
-  return (
-    <>
-      {index > 0 && (
-        <TransitionSeries.Transition
-          presentation={fade()}
-          timing={springTiming({ config: { damping: 200 }, durationInFrames: TRANSITION_FRAMES })}
-        />
-      )}
-      <TransitionSeries.Sequence durationInFrames={duration}>
-        <CommandScene caption={caption} cwd={cwd} lines={lines} />
-      </TransitionSeries.Sequence>
-    </>
   );
 };
