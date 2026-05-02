@@ -182,24 +182,3 @@ func PrintCmdFaithfulReport(w io.Writer, r CmdFaithfulReport) error {
 	return nil
 }
 
-// PrintCmdFaithfulReportForTest wraps PrintCmdFaithfulReport in a
-// "--- expected mismatch ---" banner so test runs that intentionally
-// drive a divergent input don't bury real `[FAIL]` lines in identical-
-// looking simulated ones. Production code MUST NOT call this — only
-// tests that deliberately exercise the mismatch print path. The
-// banner emits even when the report is empty so the section is always
-// paired open/close in captured output, making golden diffs and human
-// scans deterministic.
-func PrintCmdFaithfulReportForTest(w io.Writer, r CmdFaithfulReport) error {
-	if _, err := io.WriteString(w, constants.CmdFaithfulReportTestPrefix); err != nil {
-		return err
-	}
-	if err := PrintCmdFaithfulReport(w, r); err != nil {
-		return err
-	}
-	if _, err := io.WriteString(w, constants.CmdFaithfulReportTestSuffix); err != nil {
-		return err
-	}
-
-	return nil
-}
