@@ -19,7 +19,7 @@ import (
 // width-crossing bump (v9 -> v10/v12) cannot silently desync the
 // fixture from the code under test.
 func TestBuildAuditNeedles(t *testing.T) {
-	targets := []int{4, 9}
+	targets := []int{4, 12}
 	got := buildAuditNeedles("gitmap", targets)
 	want := make([][]byte, 0, len(targets)*2)
 	for _, n := range targets {

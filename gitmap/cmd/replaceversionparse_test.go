@@ -67,7 +67,7 @@ func TestRemoteSlugRegex(t *testing.T) {
 // `gitmap/v9`, a width-crossing desync that drifted whenever the
 // project's own version was bumped.
 func TestPairsForTarget(t *testing.T) {
-	const target, current = 4, 9
+	const target, current = 4, 12
 	got := pairsForTarget("gitmap", target, current)
 	// Diagnostic log: surfaces the actual returned values when CI
 	// reports a failure here. Cheap insurance against truncated
