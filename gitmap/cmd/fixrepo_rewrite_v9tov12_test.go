@@ -90,8 +90,12 @@ func assertDashFormBumped(t *testing.T, got, base string, target, current, count
 	t.Helper()
 	oldTok := fmt.Sprintf("%s-v%d", base, target)
 	newTok := fmt.Sprintf("%s-v%d", base, current)
-	if strings.Contains(got, oldTok) {
-		t.Errorf("found stale %q after bump:\n%s", oldTok, got)
+	// "Stale" means an unguarded occurrence of the old token survived
+	// the rewrite. A digit-adjacent occurrence (e.g. `gitmap-v9` as a
+	// prefix inside `gitmap-v90`) is intentionally preserved by the
+	// negative-lookahead guard and MUST NOT be reported as stale.
+	if countUnguardedHits(got, oldTok) > 0 {
+		t.Errorf("found stale unguarded %q after bump:\n%s", oldTok, got)
 	}
 	if !strings.Contains(got, newTok) {
 		t.Errorf("missing bumped %q after rewrite:\n%s", newTok, got)
