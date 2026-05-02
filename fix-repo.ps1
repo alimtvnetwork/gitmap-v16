@@ -271,5 +271,12 @@ Write-Summary -Scanned $result.Scanned -Changed $result.Changed -Replacements $r
 
 if (-not (Invoke-PostRewriteGofmt -GoFiles $result.GoFiles -DryRun $parsed.DryRun)) { $result.Failed = $true }
 
+# Strict step runs AFTER gofmt so go test sees fully-formatted source.
+# Tests-failed is a distinct exit code (9) so CI can branch on
+# "rewrite produced semantically broken code" vs. write/IO failures.
+if (-not (Invoke-PostRewriteStrict -GoFiles $result.GoFiles -DryRun $parsed.DryRun -Strict $parsed.Strict -RepoRoot $identity.Root)) {
+    exit $Script:ExitTestsFailed
+}
+
 if ($result.Failed) { exit $Script:ExitWriteFailed }
 exit $Script:ExitOk
