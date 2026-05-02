@@ -36,6 +36,14 @@ var minCurrentFieldRe = regexp.MustCompile(`(min-current=)(\d+)`)
 // createdForFieldRe matches `for=<token>` up to the next whitespace.
 var createdForFieldRe = regexp.MustCompile(`(for=)\S+`)
 
+// shaFieldRe matches `sha=<hex>` up to the next whitespace.
+var shaFieldRe = regexp.MustCompile(`(sha=)\S+`)
+
+// markerLineEndRe matches the end of the fixture-stamp line so we
+// can append a new `sha=` field when the marker does not already
+// have one. Captures the trailing newline (if any) for re-insertion.
+var markerLineEndRe = regexp.MustCompile(`(?m)(^// fixture-stamp:[^\n]*?)(\r?\n|$)`)
+
 // BumpRequest describes the in-place rewrite a caller wants. Zero
 // values are no-ops: pass NewMinCurrent=0 / NewCreatedFor="" to
 // leave them unchanged.
@@ -43,6 +51,11 @@ type BumpRequest struct {
 	NewGeneration int
 	NewMinCurrent int
 	NewCreatedFor string
+	// NewSHA, when non-empty, is written to the marker as `sha=<v>`.
+	// If the marker already has a sha= field it is replaced; if not,
+	// the field is appended to the marker line. Pass "" to leave any
+	// existing sha= field untouched.
+	NewSHA string
 }
 
 // BumpStampInBody returns body with the marker line's generation=
@@ -62,6 +75,7 @@ func BumpStampInBody(body string, req BumpRequest) (string, bool) {
 	head = rewriteGeneration(head, req.NewGeneration)
 	head = rewriteMinCurrent(head, req.NewMinCurrent)
 	head = rewriteCreatedFor(head, req.NewCreatedFor)
+	head = rewriteOrAppendSHA(head, req.NewSHA)
 
 	return head + tail, true
 }
@@ -95,6 +109,21 @@ func rewriteCreatedFor(head, newFor string) string {
 	}
 
 	return createdForFieldRe.ReplaceAllString(head, "${1}"+newFor)
+}
+
+// rewriteOrAppendSHA replaces the existing sha= field, or appends
+// `sha=<newSHA>` to the marker line when the field is missing. The
+// append path preserves any trailing newline so the rest of the
+// body remains byte-stable.
+func rewriteOrAppendSHA(head, newSHA string) string {
+	if newSHA == "" {
+		return head
+	}
+	if shaFieldRe.MatchString(head) {
+		return shaFieldRe.ReplaceAllString(head, "${1}"+newSHA)
+	}
+
+	return markerLineEndRe.ReplaceAllString(head, "${1} sha="+newSHA+"${2}")
 }
 
 // NextGeneration returns stamp.Generation+1, clamped to at least
