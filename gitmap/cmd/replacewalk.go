@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/alimtvnetwork/gitmap-v12/gitmap/constants"
+	"github.com/alimtvnetwork/gitmap-v13/gitmap/constants"
 )
 
 // repoRoot returns the absolute path of the current git repo. Exits 1

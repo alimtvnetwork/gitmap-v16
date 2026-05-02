@@ -10,7 +10,7 @@ package cloner
 import (
 	"fmt"
 
-	"github.com/alimtvnetwork/gitmap-v12/gitmap/model"
+	"github.com/alimtvnetwork/gitmap-v13/gitmap/model"
 )
 
 // recordTag returns a short, log-friendly identifier for a record using

@@ -7,9 +7,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/alimtvnetwork/gitmap-v12/scripts/changelog/internal/group"
-	"github.com/alimtvnetwork/gitmap-v12/scripts/changelog/internal/render"
-	"github.com/alimtvnetwork/gitmap-v12/scripts/changelog/internal/writer"
+	"github.com/alimtvnetwork/gitmap-v13/scripts/changelog/internal/group"
+	"github.com/alimtvnetwork/gitmap-v13/scripts/changelog/internal/render"
+	"github.com/alimtvnetwork/gitmap-v13/scripts/changelog/internal/writer"
 )
 
 // TestEndToEndWriteThenCheck simulates the full make-target round trip

@@ -27,7 +27,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/alimtvnetwork/gitmap-v12/gitmap/constants"
+	"github.com/alimtvnetwork/gitmap-v13/gitmap/constants"
 )
 
 // collectManagedPlist is the macOS analog of collectManagedDesktop.

@@ -21,8 +21,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/alimtvnetwork/gitmap-v12/gitmap/gitutil"
-	"github.com/alimtvnetwork/gitmap-v12/gitmap/startup"
+	"github.com/alimtvnetwork/gitmap-v13/gitmap/gitutil"
+	"github.com/alimtvnetwork/gitmap-v13/gitmap/startup"
 )
 
 // TestCSVCRLF_StartupList asserts CRLF + comma for the startup-list

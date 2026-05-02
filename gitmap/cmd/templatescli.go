@@ -7,9 +7,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/alimtvnetwork/gitmap-v12/gitmap/constants"
-	"github.com/alimtvnetwork/gitmap-v12/gitmap/render"
-	"github.com/alimtvnetwork/gitmap-v12/gitmap/templates"
+	"github.com/alimtvnetwork/gitmap-v13/gitmap/constants"
+	"github.com/alimtvnetwork/gitmap-v13/gitmap/render"
+	"github.com/alimtvnetwork/gitmap-v13/gitmap/templates"
 )
 
 const (

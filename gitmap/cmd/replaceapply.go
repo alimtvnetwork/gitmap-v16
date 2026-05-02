@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/alimtvnetwork/gitmap-v12/gitmap/constants"
+	"github.com/alimtvnetwork/gitmap-v13/gitmap/constants"
 )
 
 // replacePair is one literal find/replace combo. Version mode generates

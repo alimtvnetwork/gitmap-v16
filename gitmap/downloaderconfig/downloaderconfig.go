@@ -20,7 +20,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/alimtvnetwork/gitmap-v12/gitmap/constants"
+	"github.com/alimtvnetwork/gitmap-v13/gitmap/constants"
 )
 
 // Document is the top-level Seedable-Config envelope. Field names are

@@ -3,7 +3,7 @@ package tui
 import (
 	"fmt"
 
-	"github.com/alimtvnetwork/gitmap-v12/gitmap/model"
+	"github.com/alimtvnetwork/gitmap-v13/gitmap/model"
 )
 
 // formatLogRow renders a single command history list row.

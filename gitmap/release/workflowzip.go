@@ -5,9 +5,9 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/alimtvnetwork/gitmap-v12/gitmap/constants"
-	"github.com/alimtvnetwork/gitmap-v12/gitmap/store"
-	"github.com/alimtvnetwork/gitmap-v12/gitmap/verbose"
+	"github.com/alimtvnetwork/gitmap-v13/gitmap/constants"
+	"github.com/alimtvnetwork/gitmap-v13/gitmap/store"
+	"github.com/alimtvnetwork/gitmap-v13/gitmap/verbose"
 )
 
 // buildZipGroupAssets creates archives from persistent zip groups.

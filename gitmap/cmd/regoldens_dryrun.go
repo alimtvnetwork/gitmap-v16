@@ -9,8 +9,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/alimtvnetwork/gitmap-v12/gitmap/constants"
-	"github.com/alimtvnetwork/gitmap-v12/gitmap/goldenguard"
+	"github.com/alimtvnetwork/gitmap-v13/gitmap/constants"
+	"github.com/alimtvnetwork/gitmap-v13/gitmap/goldenguard"
 )
 
 // emitRegoldensDryRun prints every invocation that would run, in

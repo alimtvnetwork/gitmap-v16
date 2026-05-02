@@ -5,8 +5,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/alimtvnetwork/gitmap-v12/gitmap/constants"
-	"github.com/alimtvnetwork/gitmap-v12/gitmap/model"
+	"github.com/alimtvnetwork/gitmap-v13/gitmap/constants"
+	"github.com/alimtvnetwork/gitmap-v13/gitmap/model"
 )
 
 // runBookmarkSave saves a new bookmark from name + command + args/flags.

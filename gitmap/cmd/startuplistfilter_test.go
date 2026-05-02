@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/alimtvnetwork/gitmap-v12/gitmap/startup"
+	"github.com/alimtvnetwork/gitmap-v13/gitmap/startup"
 )
 
 // fixtureStartupEntries returns one entry for each shape startup.List can

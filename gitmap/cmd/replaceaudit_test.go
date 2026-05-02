@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/alimtvnetwork/gitmap-v12/gitmap/constants"
+	"github.com/alimtvnetwork/gitmap-v13/gitmap/constants"
 )
 
 // TestBuildAuditNeedles verifies the dual-form contract for the audit
@@ -45,7 +45,7 @@ func TestBuildAuditNeedles(t *testing.T) {
 // TestBuildAuditNeedlesWidthCrossing exercises the v9 -> v10/v12 width
 // boundary directly. Audit needles are OLD tokens, so the boundary
 // affects targets[i] (not current). Regression guard against the
-// historical desync where fixtures hard-coded `gitmap-v12` next to
+// historical desync where fixtures hard-coded `gitmap-v13` next to
 // a single-digit input.
 func TestBuildAuditNeedlesWidthCrossing(t *testing.T) {
 	got := buildAuditNeedles("gitmap", []int{8, 9, 10, 12})
@@ -53,7 +53,7 @@ func TestBuildAuditNeedlesWidthCrossing(t *testing.T) {
 		"gitmap-v8", "gitmap/v8",
 		"gitmap-v9", "gitmap/v9",
 		"gitmap-v10", "gitmap/v10",
-		"gitmap-v12", "gitmap/v12",
+		"gitmap-v13", "gitmap/v12",
 	}
 	if len(got) != len(want) {
 		t.Fatalf("len = %d, want %d", len(got), len(want))

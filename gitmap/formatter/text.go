@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/alimtvnetwork/gitmap-v12/gitmap/model"
+	"github.com/alimtvnetwork/gitmap-v13/gitmap/model"
 )
 
 // WriteText writes one git clone instruction per line to a plain text file.

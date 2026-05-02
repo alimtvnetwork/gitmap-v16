@@ -7,10 +7,10 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/alimtvnetwork/gitmap-v12/gitmap/constants"
-	"github.com/alimtvnetwork/gitmap-v12/gitmap/gitutil"
-	"github.com/alimtvnetwork/gitmap-v12/gitmap/model"
-	"github.com/alimtvnetwork/gitmap-v12/gitmap/scanner"
+	"github.com/alimtvnetwork/gitmap-v13/gitmap/constants"
+	"github.com/alimtvnetwork/gitmap-v13/gitmap/gitutil"
+	"github.com/alimtvnetwork/gitmap-v13/gitmap/model"
+	"github.com/alimtvnetwork/gitmap-v13/gitmap/scanner"
 )
 
 // BuildOptions and resolveDefaultBranch live in mapper_options.go to

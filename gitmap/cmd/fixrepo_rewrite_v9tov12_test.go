@@ -17,7 +17,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/alimtvnetwork/gitmap-v12/gitmap/fixtureversion"
+	"github.com/alimtvnetwork/gitmap-v13/gitmap/fixtureversion"
 )
 
 // fixRepoV9ToV12FixtureBody is the on-disk fixture: every realistic

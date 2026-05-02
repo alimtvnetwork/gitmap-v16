@@ -12,10 +12,10 @@ Test failure in `gitmap/cmd`:
 
 ```
 TestRemoteSlugRegex
-    regex "gitmap-v12" -> base="gitmap" num="12", want base="gitmap" num="9"
+    regex "gitmap-v13" -> base="gitmap" num="12", want base="gitmap" num="9"
 ```
 
-The map key `"gitmap-v12"` was expecting captured num `"9"` — internally
+The map key `"gitmap-v13"` was expecting captured num `"9"` — internally
 inconsistent.
 
 ## Root Cause
@@ -35,10 +35,10 @@ But test fixtures often store the **digit alone**, separated from the
 
 When fix-repo bumped this repo from v9 → v12, it correctly rewrote
 the **map key** (`"gitmap-v9"` matches `{base}-vN` → becomes
-`"gitmap-v12"`) but **did NOT touch the bare `"9"` in the value**,
+`"gitmap-v13"`) but **did NOT touch the bare `"9"` in the value**,
 because `"9"` alone doesn't match the `{base}-vN` token shape. The
 test now asserts that the regex extracting the version number from
-`"gitmap-v12"` returns `"9"`, which is internally contradictory.
+`"gitmap-v13"` returns `"9"`, which is internally contradictory.
 
 The test stayed green for years because v1 → v2, v2 → v3, … v8 → v9
 all had the same digit width as the captured num. The first

@@ -8,8 +8,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/alimtvnetwork/gitmap-v12/gitmap/gitutil"
-	"github.com/alimtvnetwork/gitmap-v12/gitmap/model"
+	"github.com/alimtvnetwork/gitmap-v13/gitmap/gitutil"
+	"github.com/alimtvnetwork/gitmap-v13/gitmap/model"
 )
 
 // TestPlanCloneAudit_ClassifiesEveryRecordType drives the full planner

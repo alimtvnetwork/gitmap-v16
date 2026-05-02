@@ -45,8 +45,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/alimtvnetwork/gitmap-v12/gitmap/clonefrom"
-	"github.com/alimtvnetwork/gitmap-v12/gitmap/goldenguard"
+	"github.com/alimtvnetwork/gitmap-v13/gitmap/clonefrom"
+	"github.com/alimtvnetwork/gitmap-v13/gitmap/goldenguard"
 )
 
 // streamCaptureRows is the fixed 3-row input used by every scenario

@@ -6,8 +6,8 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/alimtvnetwork/gitmap-v12/gitmap/constants"
-	"github.com/alimtvnetwork/gitmap-v12/gitmap/verbose"
+	"github.com/alimtvnetwork/gitmap-v13/gitmap/constants"
+	"github.com/alimtvnetwork/gitmap-v13/gitmap/verbose"
 )
 
 // runUpdateCleanup handles the "update-cleanup" subcommand.

@@ -10,11 +10,11 @@ import (
 // expected result is always the last path segment with `.git` trimmed.
 func TestSlugFromRemote(t *testing.T) {
 	cases := map[string]string{
-		"https://github.com/alimtvnetwork/gitmap-v12.git": "gitmap-v12",
-		"https://github.com/alimtvnetwork/gitmap-v12":     "gitmap-v12",
-		"git@github.com:alimtvnetwork/gitmap-v12.git":     "gitmap-v12",
-		"git@github.com:alimtvnetwork/gitmap-v12":         "gitmap-v12",
-		"ssh://git@host.example/foo/bar/gitmap-v12.git":   "gitmap-v12",
+		"https://github.com/alimtvnetwork/gitmap-v13.git": "gitmap-v13",
+		"https://github.com/alimtvnetwork/gitmap-v13":     "gitmap-v13",
+		"git@github.com:alimtvnetwork/gitmap-v13.git":     "gitmap-v13",
+		"git@github.com:alimtvnetwork/gitmap-v13":         "gitmap-v13",
+		"ssh://git@host.example/foo/bar/gitmap-v13.git":   "gitmap-v13",
 		"gitmap-v3":     "gitmap-v3",
 		"gitmap-v3.git": "gitmap-v3",
 	}
@@ -37,13 +37,13 @@ func TestRemoteSlugRegex(t *testing.T) {
 		num     string
 	}
 	cases := map[string]want{
-		"gitmap-v12":         {true, "gitmap", "12"},
+		"gitmap-v13":         {true, "gitmap", "12"},
 		"my-tool-v123":       {true, "my-tool", "123"},
 		"some-app-prefix-v0": {true, "some-app-prefix", "0"},
 		"gitmap":             {false, "", ""},
 		"gitmap-v":           {false, "", ""},
 		"gitmap-vX":          {false, "", ""},
-		"gitmap-v12-extra":   {false, "", ""},
+		"gitmap-v13-extra":   {false, "", ""},
 	}
 	for in, w := range cases {
 		m := remoteSlugRe.FindStringSubmatch(in)
@@ -63,7 +63,7 @@ func TestRemoteSlugRegex(t *testing.T) {
 // TestPairsForTarget locks the dual-form contract: every target produces
 // both a `-vN` and a `/vN` replacement so Go module import paths and
 // repo URLs are bumped in the same pass. Both pairs MUST use the same
-// `current` value — historically this test pinned `gitmap-v12` next to
+// `current` value — historically this test pinned `gitmap-v13` next to
 // `gitmap/v9`, a width-crossing desync that drifted whenever the
 // project's own version was bumped.
 func TestPairsForTarget(t *testing.T) {
@@ -93,7 +93,7 @@ func TestPairsForTarget(t *testing.T) {
 // TestPairsForTargetWidthCrossing locks the v9 -> v10/v12 boundary
 // where the captured digit goes from 1 char to 2. Regression guard
 // against the historical desync where test fixtures hard-coded
-// `gitmap-v12` next to a `current=9` argument.
+// `gitmap-v13` next to a `current=9` argument.
 func TestPairsForTargetWidthCrossing(t *testing.T) {
 	cases := []struct{ target, current int }{
 		{9, 10}, {9, 12}, {1, 100}, {99, 100},

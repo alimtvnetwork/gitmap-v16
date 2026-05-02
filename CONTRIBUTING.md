@@ -8,7 +8,7 @@ development workflow, coding standards, and pull-request requirements.
 ## Getting Started
 
 ```bash
-git clone https://github.com/alimtvnetwork/gitmap-v12.git gitmap
+git clone https://github.com/alimtvnetwork/gitmap-v13.git gitmap
 ```
 
 ```bash

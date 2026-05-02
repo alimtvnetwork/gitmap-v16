@@ -7,7 +7,7 @@ import (
 	"bufio"
 	"strings"
 
-	"github.com/alimtvnetwork/gitmap-v12/gitmap/constants"
+	"github.com/alimtvnetwork/gitmap-v13/gitmap/constants"
 )
 
 // Token sentinels used by Render() so unit tests can assert on a stable,

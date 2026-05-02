@@ -23,8 +23,8 @@ import (
 	"os/exec"
 	"path/filepath"
 
-	"github.com/alimtvnetwork/gitmap-v12/gitmap/clonenext"
-	"github.com/alimtvnetwork/gitmap-v12/gitmap/constants"
+	"github.com/alimtvnetwork/gitmap-v13/gitmap/clonenext"
+	"github.com/alimtvnetwork/gitmap-v13/gitmap/constants"
 )
 
 // runCloneFixRepo implements `gitmap clone-fix-repo` (alias cfr).

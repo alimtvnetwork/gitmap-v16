@@ -98,9 +98,9 @@ func TestScannerMatchesRewriter(t *testing.T) {
 		t.Errorf("rewriter substituted %d, scanner counted %d (must agree)",
 			count, want)
 	}
-	if strings.Count(out, "gitmap-v12") != want {
-		t.Errorf("output has %d gitmap-v12 tokens, want %d",
-			strings.Count(out, "gitmap-v12"), want)
+	if strings.Count(out, "gitmap-v13") != want {
+		t.Errorf("output has %d gitmap-v13 tokens, want %d",
+			strings.Count(out, "gitmap-v13"), want)
 	}
 	// guarded neighbor must survive
 	if !strings.Contains(out, "gitmap-v10") {
