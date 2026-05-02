@@ -28,12 +28,16 @@ func TestBuildAuditNeedles(t *testing.T) {
 			[]byte(fmt.Sprintf("gitmap/v%d", n)),
 		)
 	}
+	// Diagnostic log: print both slices so any future failure here
+	// surfaces the full got/want context even when CI truncates the
+	// per-assertion error line.
+	t.Logf("buildAuditNeedles(gitmap, %v) -> got=%q want=%q", targets, got, want)
 	if len(got) != len(want) {
-		t.Fatalf("len = %d, want %d", len(got), len(want))
+		t.Fatalf("len = %d, want %d (got=%q want=%q)", len(got), len(want), got, want)
 	}
 	for i := range got {
 		if !bytes.Equal(got[i], want[i]) {
-			t.Errorf("needle[%d] = %q, want %q", i, got[i], want[i])
+			t.Errorf("needle[%d] = %q, want %q (targets=%v)", i, got[i], want[i], targets)
 		}
 	}
 }
