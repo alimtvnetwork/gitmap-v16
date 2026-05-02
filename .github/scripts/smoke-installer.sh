@@ -110,22 +110,50 @@ case "$MODE" in
       --no-discovery
     # Resolve from the deploy manifest so the smoke test tracks the
     # installer's canonical layout instead of stale hardcoded paths.
-    echo "▶ Manifest: APP_SUBDIR=$APP_SUBDIR BINARY_NAME_UNIX=$BINARY_NAME_UNIX LEGACY_APP_SUBDIRS=[${LEGACY_APP_SUBDIRS[*]}]"
+    echo "▶ Manifest resolved values:"
+    echo "    APP_SUBDIR        = '$APP_SUBDIR'"
+    echo "    BINARY_NAME_UNIX  = '$BINARY_NAME_UNIX'"
+    echo "    LEGACY_APP_SUBDIRS = [${LEGACY_APP_SUBDIRS[*]}]"
+
+    # ALWAYS dump the post-install directory listing — invaluable for
+    # diagnosing layout drift between install.sh and this resolver. Printed
+    # before path resolution so the tree is visible even when later steps
+    # short-circuit on success.
+    echo "▶ Post-install tree under $DEST (depth ≤ 4):"
+    if [ -d "$DEST" ]; then
+      find "$DEST" -maxdepth 4 | sed 's/^/    /'
+    else
+      echo "    (DEST does not exist!)"
+    fi
+
+    echo "▶ BIN candidate probe order:"
     BIN=""
-    for candidate in \
-      "$DEST/$APP_SUBDIR/$BINARY_NAME_UNIX" \
-      "$DEST/$BINARY_NAME_UNIX"; do
+    primary_candidates=(
+      "$DEST/$APP_SUBDIR/$BINARY_NAME_UNIX"
+      "$DEST/$BINARY_NAME_UNIX"
+    )
+    for candidate in "${primary_candidates[@]}"; do
       if [ -f "$candidate" ] && [ -x "$candidate" ]; then
+        echo "    [hit ] $candidate"
         BIN="$candidate"
         break
+      else
+        reason="missing"
+        [ -f "$candidate" ] && reason="not executable"
+        echo "    [miss] $candidate ($reason)"
       fi
     done
     if [ -z "$BIN" ]; then
       for legacy in "${LEGACY_APP_SUBDIRS[@]}"; do
         candidate="$DEST/$legacy/$BINARY_NAME_UNIX"
         if [ -f "$candidate" ] && [ -x "$candidate" ]; then
+          echo "    [hit ] $candidate (legacy)"
           BIN="$candidate"
           break
+        else
+          reason="missing"
+          [ -f "$candidate" ] && reason="not executable"
+          echo "    [miss] $candidate (legacy, $reason)"
         fi
       done
     fi
@@ -134,11 +162,14 @@ case "$MODE" in
     if [ -z "$BIN" ]; then
       echo "▶ Direct paths missed; searching for $BINARY_NAME_UNIX under $DEST"
       BIN="$(find "$DEST" -type f -name "$BINARY_NAME_UNIX" -perm -u+x 2>/dev/null | head -n1 || true)"
+      if [ -n "$BIN" ]; then
+        echo "    [hit ] $BIN (find fallback)"
+      else
+        echo "    [miss] no executable named $BINARY_NAME_UNIX found"
+      fi
     fi
     if [ -z "$BIN" ]; then
       echo "::error::Could not locate installed gitmap binary under $DEST" >&2
-      echo "▶ Tree:" >&2
-      find "$DEST" -maxdepth 4 >&2 || true
       exit 3
     fi
     echo "▶ Located binary: $BIN"
