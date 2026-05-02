@@ -149,28 +149,56 @@ func classifyDiff(displayed, executed string) string {
 // report has no mismatches so callers can invoke it unconditionally.
 // Returns the first write error so a closed stderr surfaces (zero-
 // swallow policy).
+//
+// Format (v4.13.0+): every line is prefixed with the severity tag
+// `[FAIL]` so a CI log scraped one line at a time is unambiguous, and
+// the banner ends with a hint about which flag promotes the report
+// into a hard exit. The intent is to stop users asking "is this
+// actually broken?" — the banner answers it inline.
 func PrintCmdFaithfulReport(w io.Writer, r CmdFaithfulReport) error {
 	if !r.HasMismatch() {
 		return nil
 	}
-	header := fmt.Sprintf(
-		"  --verify-cmd-faithful: MISMATCH for %s (%d divergence(s))\n",
-		r.Repo, len(r.Mismatches))
+	tag := constants.CmdFaithfulReportSeverityTag
+	header := fmt.Sprintf(constants.CmdFaithfulReportHeaderFmt,
+		tag, r.Repo, len(r.Mismatches))
 	if _, err := io.WriteString(w, header); err != nil {
 		return err
 	}
-	if _, err := fmt.Fprintf(w, "    displayed: %s\n", r.Displayed); err != nil {
+	if _, err := fmt.Fprintf(w, "  %s   displayed: %s\n", tag, r.Displayed); err != nil {
 		return err
 	}
-	if _, err := fmt.Fprintf(w, "    executed:  %s\n", r.Executed); err != nil {
+	if _, err := fmt.Fprintf(w, "  %s   executed:  %s\n", tag, r.Executed); err != nil {
 		return err
 	}
 	for _, m := range r.Mismatches {
 		if _, err := fmt.Fprintf(w,
-			"    [#%d %s] displayed=%q executed=%q\n",
-			m.Index, m.Reason, m.Displayed, m.Executed); err != nil {
+			"  %s   [#%d %s] displayed=%q executed=%q\n",
+			tag, m.Index, m.Reason, m.Displayed, m.Executed); err != nil {
 			return err
 		}
+	}
+
+	return nil
+}
+
+// PrintCmdFaithfulReportForTest wraps PrintCmdFaithfulReport in a
+// "--- expected mismatch ---" banner so test runs that intentionally
+// drive a divergent input don't bury real `[FAIL]` lines in identical-
+// looking simulated ones. Production code MUST NOT call this — only
+// tests that deliberately exercise the mismatch print path. The
+// banner emits even when the report is empty so the section is always
+// paired open/close in captured output, making golden diffs and human
+// scans deterministic.
+func PrintCmdFaithfulReportForTest(w io.Writer, r CmdFaithfulReport) error {
+	if _, err := io.WriteString(w, constants.CmdFaithfulReportTestPrefix); err != nil {
+		return err
+	}
+	if err := PrintCmdFaithfulReport(w, r); err != nil {
+		return err
+	}
+	if _, err := io.WriteString(w, constants.CmdFaithfulReportTestSuffix); err != nil {
+		return err
 	}
 
 	return nil
