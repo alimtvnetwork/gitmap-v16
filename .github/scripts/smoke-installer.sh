@@ -157,15 +157,31 @@ case "$MODE" in
         fi
       done
     fi
-    # ALWAYS run the find fallback if direct paths missed — guards against
-    # any future layout drift between install.sh and the manifest reader.
+    # ALWAYS run the recursive find fallback if direct paths missed — guards
+    # against any future layout drift between install.sh and the manifest
+    # reader. Tier 1: exact name + executable. Tier 2: exact name, any perms
+    # (chmod +x and warn — surfaces a missing-bit install bug). Tier 3: glob
+    # gitmap* executables (catches renamed/suffixed binaries like gitmap.bin).
     if [ -z "$BIN" ]; then
-      echo "▶ Direct paths missed; searching for $BINARY_NAME_UNIX under $DEST"
+      echo "▶ Direct paths missed; recursive search under $DEST"
+      echo "    tier 1: -name $BINARY_NAME_UNIX -perm -u+x"
       BIN="$(find "$DEST" -type f -name "$BINARY_NAME_UNIX" -perm -u+x 2>/dev/null | head -n1 || true)"
+      if [ -z "$BIN" ]; then
+        echo "    tier 2: -name $BINARY_NAME_UNIX (any perms)"
+        BIN="$(find "$DEST" -type f -name "$BINARY_NAME_UNIX" 2>/dev/null | head -n1 || true)"
+        if [ -n "$BIN" ]; then
+          echo "    ⚠  found $BIN without +x bit; chmod +x and continuing"
+          chmod +x "$BIN" 2>/dev/null || true
+        fi
+      fi
+      if [ -z "$BIN" ]; then
+        echo "    tier 3: -name '${BINARY_NAME_UNIX}*' -perm -u+x"
+        BIN="$(find "$DEST" -type f -name "${BINARY_NAME_UNIX}*" -perm -u+x 2>/dev/null | head -n1 || true)"
+      fi
       if [ -n "$BIN" ]; then
-        echo "    [hit ] $BIN (find fallback)"
+        echo "    [hit ] $BIN (recursive fallback)"
       else
-        echo "    [miss] no executable named $BINARY_NAME_UNIX found"
+        echo "    [miss] no binary matching ${BINARY_NAME_UNIX}* found anywhere under $DEST"
       fi
     fi
     if [ -z "$BIN" ]; then
