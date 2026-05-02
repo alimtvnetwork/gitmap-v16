@@ -1,5 +1,19 @@
 # Changelog
 
+## v4.15.0 — (2026-05-02) — TestScannerMatchesRewriter: derive expected token from `current`, close digit-capture sibling-literal regression
+
+- `gitmap/cmd/fixrepo_rewrite_scan_test.go`: `TestScannerMatchesRewriter` now
+  builds its expected rewritten token via `fmt.Sprintf("%s-v%d", base, current)`
+  instead of hard-coding `"gitmap-v13"` while passing `current = 12` to
+  `applyAllTargets`. The hard-coded literal silently disagreed with the
+  rewriter's actual output (`gitmap-v12`) and failed CI on every run.
+- This is the same bug class as FIX-REPO DIGIT-CAPTURE GAP (closed v4.12.0):
+  any version-bearing expectation in a fix-repo test MUST be derived from the
+  same int the rewriter received — never hard-coded as a sibling literal,
+  which silently desyncs on width-crossing bumps and stale edits alike.
+- Bumps `constants.Version` from the stale `4.4.0` placeholder to `4.15.0`
+  to match the live release line.
+
 ## v4.3.0 — (2026-04-30) — Installer: discard binary stderr on post-install verify, kill cp1252 mojibake
 
 - `gitmap/scripts/install.ps1` and `gitmap/scripts/install.sh` now discard the
