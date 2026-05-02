@@ -2318,6 +2318,66 @@ gitmap dashboard --limit 100 --open
 | `make release BUMP=patch` | Lint, test, then release |
 | `make release-dry` | Preview release without executing |
 | `make clean` | Remove build artifacts |
+| `make fixtures-bump RUN='<test-regex>' PKG='<pkg>'` | Auto-refresh stale `// fixture-stamp:` markers, then re-verify |
+| `make fixtures-bump-verify RUN='<test-regex>' PKG='<pkg>'` | Re-run the same selection without the autobump gate to confirm the rewrite stuck |
+
+### Fixture Stamps & Auto-Bump
+
+Test fixtures across `gitmap/` carry a `// fixture-stamp:` marker that
+pins both a `gen=N` generation counter and a `sha=<hex>` hash of the
+fixture body (excluding the marker line). On every test run,
+`MustValidateBody` (in `gitmap/fixtureversion`) verifies that:
+
+1. The recorded `gen=` matches the current generation.
+2. The recorded `sha=` matches `BodyHashExcludingMarker(body)`.
+
+If either drifts — typically because you intentionally regenerated a
+golden fixture or bumped the generation number — the test fails with
+a clear regenerate recipe instead of producing a confusing diff.
+
+**`fixtures-bump` is the one-shot fix for that failure.** It re-runs
+the selected tests with `GITMAP_FIXTURE_AUTOBUMP=1`, which lets
+`MaybeAutoBumpFile` rewrite the marker in-place (new `gen` + freshly
+computed `sha`), and then re-runs the same selection *without* the
+gate to prove the file is now stable. The two-pass design is
+deliberate: the verify pass is what actually convinces CI that the
+autobump produced deterministic output, not just papered over a real
+regression.
+
+#### When to use it
+
+- You changed a writer (formatter, scanner, render layer) on purpose
+  and the fixture body legitimately needs to update — `sha=` will
+  mismatch on the next run.
+- You bumped the fixture generation counter to invalidate a cached
+  expectation across the whole suite — `gen=` will mismatch.
+- A `MustValidateBody` failure points you at a single test file and
+  the new body is what you want to lock in.
+
+#### When NOT to use it
+
+- The fixture failure is a real regression. If you don't understand
+  *why* the body changed, do not bump — investigate first. Autobump
+  will silently bless a broken writer.
+- The determinism pre-check (`AssertWriterDeterministic`) is failing.
+  That gate runs writers 3× and refuses to rewrite fixtures on any
+  byte divergence — fix the non-determinism first, then bump.
+
+#### Example
+
+```bash
+# Fixture for the v9->v12 fix-repo rewriter test went stale after a
+# legitimate writer change. Bump just that one test, then verify.
+make fixtures-bump \
+  RUN='TestFixRepoRewriteV9ToV12Fixture' \
+  PKG='./gitmap/cmd/...'
+```
+
+The first pass rewrites the `// fixture-stamp:` line in the test
+source (or the embedded fixture file the test points at). The second
+pass runs the same selection with the env gate cleared — if it
+passes, the rewrite is durable; if it fails, the writer is
+non-deterministic and you have a real bug to fix.
 
 ### Build from Source
 
