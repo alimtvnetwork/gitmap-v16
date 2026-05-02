@@ -1,5 +1,7 @@
 package cmd
 
+import "strings"
+
 // Shared guard-aware token scanner used by the rewriter and by tests
 // that need to count or locate stale `{base}-vN` tokens in a body.
 //
@@ -55,16 +57,18 @@ func CountUnguardedTokenHits(body, token string) int {
 // walkTokenHits is the single source-of-truth scanner. onUnguarded is
 // called with the start offset of every unguarded match; onGuarded
 // (may be nil) is called for every digit-adjacent skip. Step
-// semantics deliberately match rewriteToken: advance len(token)
-// bytes after every hit regardless of guard outcome.
+// semantics deliberately match rewriteToken in fixrepo_rewrite.go:
+// advance len(token) bytes after every hit regardless of guard
+// outcome (so a digit-adjacent skip never re-matches the same prefix).
 func walkTokenHits(body, token string, onUnguarded, onGuarded func(int)) {
 	tlen := len(token)
 	pos := 0
 	for pos+tlen <= len(body) {
-		idx := indexFrom(body, token, pos)
-		if idx < 0 {
+		rel := strings.Index(body[pos:], token)
+		if rel < 0 {
 			return
 		}
+		idx := pos + rel
 		end := idx + tlen
 		if end < len(body) && isASCIIDigit(body[end]) {
 			if onGuarded != nil {
@@ -75,29 +79,4 @@ func walkTokenHits(body, token string, onUnguarded, onGuarded func(int)) {
 		}
 		pos = end
 	}
-}
-
-// indexFrom returns the absolute offset of the next token occurrence
-// at or after pos, or -1 if none. Tiny wrapper so walkTokenHits stays
-// readable without inline slice arithmetic.
-func indexFrom(body, token string, pos int) int {
-	rel := indexOfSubstring(body[pos:], token)
-	if rel < 0 {
-		return -1
-	}
-
-	return pos + rel
-}
-
-// indexOfSubstring is `strings.Index` in disguise. Wrapped so the
-// scanner keeps a one-import-free surface for downstream helpers
-// that may want to swap in a different search strategy later.
-func indexOfSubstring(s, sub string) int {
-	for i := 0; i+len(sub) <= len(s); i++ {
-		if s[i:i+len(sub)] == sub {
-			return i
-		}
-	}
-
-	return -1
 }
