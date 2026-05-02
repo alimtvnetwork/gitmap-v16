@@ -16,6 +16,14 @@ package cmd
 // clonetermblock_golden_test.go) but to pin the diff/report
 // behavior so a refactor of diffArgvTokens or the report format
 // fails loudly.
+//
+// Test-output hygiene (v4.13.0+): tests that intentionally drive a
+// divergent input MUST route the printer through
+// PrintCmdFaithfulReportForTest so the emitted "[FAIL]" lines are
+// bracketed by an "--- expected mismatch ---" banner. Without that
+// wrapper, a green `go test ./...` run prints lines that are byte-
+// indistinguishable from a real production verifier failure — which
+// has historically trained engineers to ignore "[FAIL]" in test logs.
 
 import (
 	"bytes"
