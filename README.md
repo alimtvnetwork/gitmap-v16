@@ -1,7 +1,5 @@
 <div align="center">
 
-<img src="gitmap/assets/icon.png" alt="GitMap icon" width="80" height="80">
-
 # GitMap
 
 **Git repository scanner, manager, and navigator CLI**
@@ -18,12 +16,6 @@
 _Scan, catalog, clone, and manage all your Git repositories from a single CLI._
 
 <br>
-
-<img src="docs/assets/gitmap-docs-ui.png" alt="GitMap interactive docs web UI showing the Home page with install / uninstall quick-action terminals and the left-hand command explorer" width="900">
-
-</div>
-
-<div align="center">
 
 <img src="docs/demo.gif" alt="Animated terminal demo of GitMap commands: clone, scan, history, release, ssh, make-public/make-private, merge-left/right/both, and the interactive TUI" width="900">
 
