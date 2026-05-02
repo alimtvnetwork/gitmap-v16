@@ -222,6 +222,7 @@ function Invoke-PostRewriteStrict {
     return $true
 }
 
+function Resolve-Identity {
     $root = Get-RepoRoot
     if (-not $root) { Write-Host "fix-repo: ERROR not a git repository (E_NOT_A_REPO)"; exit $Script:ExitNotARepo }
     $url = Get-RemoteUrl
