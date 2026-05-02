@@ -56,6 +56,7 @@ func printUsageFixRepoFlags() {
 	fmt.Println(constants.HelpFRDryRun)
 	fmt.Println(constants.HelpFRVerbose)
 	fmt.Println(constants.HelpFRConfig)
+	fmt.Println(constants.HelpFRStrict)
 	fmt.Println(constants.HelpFixRepoExitCodes)
 }
 
