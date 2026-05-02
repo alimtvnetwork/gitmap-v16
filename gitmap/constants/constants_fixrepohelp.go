@@ -12,5 +12,6 @@ const (
 	HelpFRDryRun         = "  --dry-run           Preview only; no file is written (PowerShell alias: -DryRun)"
 	HelpFRVerbose        = "  --verbose           Print every modified file with replacement count (alias: -Verbose)"
 	HelpFRConfig         = "  --config <path>     Override fix-repo.config.json location (alias: -Config <path>)"
-	HelpFixRepoExitCodes = "  exit codes:         0 ok | 2 not-a-repo | 3 no-remote | 4 no-vN-suffix | 5 bad-version | 6 bad-flag | 7 write-failed | 8 bad-config"
+	HelpFRStrict         = "  --strict            After rewrite + gofmt, run `go test` on every touched Go package; exit 9 on test failure (alias: -Strict)"
+	HelpFixRepoExitCodes = "  exit codes:         0 ok | 2 not-a-repo | 3 no-remote | 4 no-vN-suffix | 5 bad-version | 6 bad-flag | 7 write-failed | 8 bad-config | 9 tests-failed"
 )

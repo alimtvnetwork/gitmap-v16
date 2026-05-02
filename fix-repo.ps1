@@ -12,6 +12,8 @@
     -All:         replace every prior version (1..Current-1).
     -DryRun:      report changes; do not write.
     -Verbose:     print every modified file path.
+    -Strict:      after rewrite + gofmt, run `go test` on every
+                  touched Go package; exit 9 on test failure.
     -Config <p>:  path to JSON config (default: ./fix-repo.config.json) with
                   ignoreDirs and ignorePatterns arrays.
 
@@ -45,6 +47,11 @@ $Script:ExitBadVersion      = 5
 $Script:ExitBadFlag         = 6
 $Script:ExitWriteFailed     = 7
 $Script:ExitBadConfig       = 8
+# ExitTestsFailed mirrors the Go binary's FixRepoExitTestsFailed (see
+# gitmap/constants/constants_fixrepo.go). Distinct from 7 (write-failed)
+# so CI can tell "rewrite produced semantically broken code" apart from
+# "the file system rejected the write".
+$Script:ExitTestsFailed     = 9
 
 function Test-IsModeFlag { param([string]$A) return $A -in '-2','-3','-5','-all','-All','-ALL' }
 
@@ -53,14 +60,16 @@ function Resolve-Mode {
     $modes      = @()
     $dryRun     = $false
     $verbose    = $false
+    $strict     = $false
     $configPath = $null
     $unknown    = @()
     $i = 0
     while ($i -lt $Args.Count) {
         $a = $Args[$i]
         if (Test-IsModeFlag $a) { $modes += $a; $i++; continue }
-        if ($a -in '-DryRun','-dryrun')   { $dryRun  = $true;  $i++; continue }
-        if ($a -in '-Verbose','-verbose') { $verbose = $true;  $i++; continue }
+        if ($a -in '-DryRun','-dryrun','--dry-run')   { $dryRun  = $true;  $i++; continue }
+        if ($a -in '-Verbose','-verbose','--verbose') { $verbose = $true;  $i++; continue }
+        if ($a -in '-Strict','-strict','--strict')    { $strict  = $true;  $i++; continue }
         if ($a -in '-Config','-config') {
             if ($i + 1 -ge $Args.Count) { return @{ Error = "-Config requires a path" } }
             $configPath = $Args[$i+1]; $i += 2; continue
@@ -73,7 +82,7 @@ function Resolve-Mode {
     if ($modes.Count -gt 1) { return @{ Error = "multiple mode flags: $($modes -join ' ')" } }
     if ($unknown)           { return @{ Error = "unknown flag(s): $($unknown -join ' ')" } }
     $mode = if ($modes.Count -eq 1) { $modes[0].ToLowerInvariant() } else { '-2' }
-    return @{ Mode = $mode; DryRun = $dryRun; Verbose = $verbose; ConfigPath = $configPath }
+    return @{ Mode = $mode; DryRun = $dryRun; Verbose = $verbose; Strict = $strict; ConfigPath = $configPath }
 }
 
 function Get-SpanFromMode {
@@ -168,6 +177,51 @@ function Invoke-PostRewriteGofmt {
     return $true
 }
 
+# Post-rewrite strict step. Mirrors the Go binary's runFixRepoStrict
+# (gitmap/cmd/fixrepo_strict.go): when -Strict is supplied AND the
+# rewrite touched at least one .go file AND `go` is on PATH, run
+# `go test` against the unique set of touched packages. Returns $true
+# on success / safe-skip; $false ONLY when go test itself fails.
+# Caller maps $false to ExitTestsFailed (9). Off by default so non-Go
+# repos and machines without a Go toolchain stay unaffected.
+function Invoke-PostRewriteStrict {
+    param([System.Collections.Generic.List[string]]$GoFiles, [bool]$DryRun, [bool]$Strict, [string]$RepoRoot)
+    if (-not $Strict)         { return $true }
+    if ($DryRun)              { Write-Host 'strict:  skipped (dry-run)';                    return $true }
+    if ($GoFiles.Count -eq 0) { Write-Host 'strict:  no .go files modified; skipping go test'; return $true }
+    if (-not (Get-Command go -ErrorAction SilentlyContinue)) {
+        [Console]::Error.WriteLine('fix-repo: WARN  go not found on PATH; --strict skipped')
+        return $true
+    }
+    # Derive ./<rel-dir> patterns. Forward slashes so the emitted
+    # patterns are identical across Windows + Unix log readers (go
+    # test accepts both, but downstream tooling prefers forward).
+    $packages = New-Object 'System.Collections.Generic.HashSet[string]'
+    foreach ($g in $GoFiles) {
+        $rel = [System.IO.Path]::GetRelativePath($RepoRoot, $g) -replace '\\','/'
+        if ($rel.StartsWith('../')) { continue }
+        $dir = [System.IO.Path]::GetDirectoryName($rel) -replace '\\','/'
+        if ([string]::IsNullOrEmpty($dir) -or $dir -eq '.') { [void]$packages.Add('.') }
+        else                                                { [void]$packages.Add('./' + $dir) }
+    }
+    if ($packages.Count -eq 0) {
+        Write-Host 'strict:  no Go packages derived from modified files; skipping go test'
+        return $true
+    }
+    $sortedPkgs = @($packages) | Sort-Object
+    Write-Host ("strict:  running go test on {0} package(s): {1}" -f $sortedPkgs.Count, ($sortedPkgs -join ' '))
+    Push-Location $RepoRoot
+    try {
+        $out = & go test @($sortedPkgs) 2>&1
+        if ($LASTEXITCODE -ne 0) {
+            [Console]::Error.WriteLine(("fix-repo: ERROR strict mode: go test failed (E_TESTS_FAILED): exit {0}`n{1}" -f $LASTEXITCODE, ($out -join "`n")))
+            return $false
+        }
+    } finally { Pop-Location }
+    Write-Host ("strict:  go test passed ({0} package(s))" -f $sortedPkgs.Count)
+    return $true
+}
+
 function Resolve-Identity {
     $root = Get-RepoRoot
     if (-not $root) { Write-Host "fix-repo: ERROR not a git repository (E_NOT_A_REPO)"; exit $Script:ExitNotARepo }
@@ -216,6 +270,13 @@ $result = Invoke-RewriteSweep -RepoRoot $identity.Root -Base $identity.Base -Cur
 Write-Summary -Scanned $result.Scanned -Changed $result.Changed -Replacements $result.Reps -DryRun $parsed.DryRun
 
 if (-not (Invoke-PostRewriteGofmt -GoFiles $result.GoFiles -DryRun $parsed.DryRun)) { $result.Failed = $true }
+
+# Strict step runs AFTER gofmt so go test sees fully-formatted source.
+# Tests-failed is a distinct exit code (9) so CI can branch on
+# "rewrite produced semantically broken code" vs. write/IO failures.
+if (-not (Invoke-PostRewriteStrict -GoFiles $result.GoFiles -DryRun $parsed.DryRun -Strict $parsed.Strict -RepoRoot $identity.Root)) {
+    exit $Script:ExitTestsFailed
+}
 
 if ($result.Failed) { exit $Script:ExitWriteFailed }
 exit $Script:ExitOk
