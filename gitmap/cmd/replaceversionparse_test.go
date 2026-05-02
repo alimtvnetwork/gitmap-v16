@@ -30,21 +30,19 @@ func TestSlugFromRemote(t *testing.T) {
 // TestRemoteSlugRegex documents what the version-suffix regex accepts
 // and rejects. A failed match must return nil so detectVersion can
 // emit the spec's clear "expected suffix -vN" error.
+//
+// IMPORTANT: every {base}-vN literal here pairs with a SIBLING string
+// representing the same N. Both halves MUST be derived from the same
+// `int` (see fmt.Sprintf below) so a fix-repo bump cannot rewrite one
+// without the other. See .lovable/memory/issues/2026-05-02-fixrepo-
+// paired-literal-desync.md.
 func TestRemoteSlugRegex(t *testing.T) {
 	type want struct {
 		matches bool
 		base    string
 		num     string
 	}
-	cases := map[string]want{
-		"gitmap-v13":         {true, "gitmap", "12"},
-		"my-tool-v123":       {true, "my-tool", "123"},
-		"some-app-prefix-v0": {true, "some-app-prefix", "0"},
-		"gitmap":             {false, "", ""},
-		"gitmap-v":           {false, "", ""},
-		"gitmap-vX":          {false, "", ""},
-		"gitmap-v13-extra":   {false, "", ""},
-	}
+	cases := buildSlugRegexCases()
 	for in, w := range cases {
 		m := remoteSlugRe.FindStringSubmatch(in)
 		if (m != nil) != w.matches {
@@ -58,6 +56,34 @@ func TestRemoteSlugRegex(t *testing.T) {
 				in, m[1], m[2], w.base, w.num)
 		}
 	}
+}
+
+// buildSlugRegexCases derives every paired (slug, expected-num) entry
+// from a single int so fix-repo cannot half-rewrite the test.
+func buildSlugRegexCases() map[string]struct {
+	matches bool
+	base    string
+	num     string
+} {
+	type want = struct {
+		matches bool
+		base    string
+		num     string
+	}
+	out := map[string]want{}
+	add := func(base string, n int) {
+		slug := fmt.Sprintf("%s-v%d", base, n)
+		out[slug] = want{true, base, fmt.Sprintf("%d", n)}
+	}
+	add("gitmap", 12)
+	add("my-tool", 123)
+	add("some-app-prefix", 0)
+	out["gitmap"] = want{false, "", ""}
+	out["gitmap-v"] = want{false, "", ""}
+	out["gitmap-vX"] = want{false, "", ""}
+	out[fmt.Sprintf("gitmap-v%d-extra", 12)] = want{false, "", ""}
+
+	return out
 }
 
 // TestPairsForTarget locks the dual-form contract: every target produces
