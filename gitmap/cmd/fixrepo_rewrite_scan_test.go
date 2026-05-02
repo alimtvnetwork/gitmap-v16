@@ -42,7 +42,7 @@ func TestScanUnguardedTokenHits(t *testing.T) {
 			name:      "mixed guarded + unguarded in one body",
 			body:      "a gitmap-v9 b gitmap-v10 c gitmap-v9\n",
 			token:     "gitmap-v9",
-			wantHits:  []int{2, 28},
+			wantHits:  []int{2, 27},
 			wantCount: 2,
 		},
 		{
