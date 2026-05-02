@@ -61,6 +61,11 @@ func consumeOneFixRepoArg(args []string, i int, out *fixRepoOptions,
 
 		return 1, nil
 	}
+	if isFixRepoStrictArg(a) {
+		out.isStrict = true
+
+		return 1, nil
+	}
 	consumed, ok, err := consumeFixRepoConfigArg(args, i, out)
 	if err != nil {
 		return 0, err
@@ -124,6 +129,14 @@ func isFixRepoVerboseArg(a string) bool {
 	low := strings.ToLower(a)
 
 	return low == "--"+constants.FixRepoFlagVerbose || low == "-"+constants.FixRepoFlagVerbose
+}
+
+// isFixRepoStrictArg matches both --strict and -Strict (any case).
+// The flag has no value — presence flips opts.isStrict.
+func isFixRepoStrictArg(a string) bool {
+	low := strings.ToLower(a)
+
+	return low == "--"+constants.FixRepoFlagStrict || low == "-"+constants.FixRepoFlagStrict
 }
 
 // consumeFixRepoConfigArg handles `--config <p>`, `-Config <p>`,
