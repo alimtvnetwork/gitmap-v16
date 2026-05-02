@@ -17,7 +17,8 @@ set -euo pipefail
 
 MODE="${1:-source}"
 REPO_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
-EXPECTED="${EXPECTED:-$(awk -F'"' '/^const Version/ {print $2}' "$REPO_ROOT/gitmap/constants/constants.go")}"
+EXPECTED="${EXPECTED:-$(awk -F'"' '/^const Version/ {print $2}' "$REPO_ROOT/gitmap/constants/constants.go")}" 
+EXPECTED="${EXPECTED#v}"
 
 load_deploy_manifest() {
   local manifest_path="$REPO_ROOT/gitmap/constants/deploy-manifest.json"
