@@ -12,6 +12,8 @@
     -All:         replace every prior version (1..Current-1).
     -DryRun:      report changes; do not write.
     -Verbose:     print every modified file path.
+    -Strict:      after rewrite + gofmt, run `go test` on every
+                  touched Go package; exit 9 on test failure.
     -Config <p>:  path to JSON config (default: ./fix-repo.config.json) with
                   ignoreDirs and ignorePatterns arrays.
 
@@ -45,6 +47,11 @@ $Script:ExitBadVersion      = 5
 $Script:ExitBadFlag         = 6
 $Script:ExitWriteFailed     = 7
 $Script:ExitBadConfig       = 8
+# ExitTestsFailed mirrors the Go binary's FixRepoExitTestsFailed (see
+# gitmap/constants/constants_fixrepo.go). Distinct from 7 (write-failed)
+# so CI can tell "rewrite produced semantically broken code" apart from
+# "the file system rejected the write".
+$Script:ExitTestsFailed     = 9
 
 function Test-IsModeFlag { param([string]$A) return $A -in '-2','-3','-5','-all','-All','-ALL' }
 
@@ -53,14 +60,16 @@ function Resolve-Mode {
     $modes      = @()
     $dryRun     = $false
     $verbose    = $false
+    $strict     = $false
     $configPath = $null
     $unknown    = @()
     $i = 0
     while ($i -lt $Args.Count) {
         $a = $Args[$i]
         if (Test-IsModeFlag $a) { $modes += $a; $i++; continue }
-        if ($a -in '-DryRun','-dryrun')   { $dryRun  = $true;  $i++; continue }
-        if ($a -in '-Verbose','-verbose') { $verbose = $true;  $i++; continue }
+        if ($a -in '-DryRun','-dryrun','--dry-run')   { $dryRun  = $true;  $i++; continue }
+        if ($a -in '-Verbose','-verbose','--verbose') { $verbose = $true;  $i++; continue }
+        if ($a -in '-Strict','-strict','--strict')    { $strict  = $true;  $i++; continue }
         if ($a -in '-Config','-config') {
             if ($i + 1 -ge $Args.Count) { return @{ Error = "-Config requires a path" } }
             $configPath = $Args[$i+1]; $i += 2; continue
@@ -73,7 +82,7 @@ function Resolve-Mode {
     if ($modes.Count -gt 1) { return @{ Error = "multiple mode flags: $($modes -join ' ')" } }
     if ($unknown)           { return @{ Error = "unknown flag(s): $($unknown -join ' ')" } }
     $mode = if ($modes.Count -eq 1) { $modes[0].ToLowerInvariant() } else { '-2' }
-    return @{ Mode = $mode; DryRun = $dryRun; Verbose = $verbose; ConfigPath = $configPath }
+    return @{ Mode = $mode; DryRun = $dryRun; Verbose = $verbose; Strict = $strict; ConfigPath = $configPath }
 }
 
 function Get-SpanFromMode {
