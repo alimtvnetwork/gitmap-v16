@@ -41,6 +41,11 @@ type Stamp struct {
 	Generation int
 	MinCurrent int
 	CreatedFor string
+	// SHA is the optional short (HashShortLen-char) SHA-256 of the
+	// fixture body with all fixture-stamp lines stripped. Empty
+	// means "do not enforce content drift" so older unstamped-hash
+	// fixtures keep validating. See hash.go.
+	SHA string
 }
 
 // Marker renders s as the one-line comment that should be embedded
@@ -50,10 +55,15 @@ type Stamp struct {
 //
 // Example output:
 //
-//	// fixture-stamp: name=v9-to-v12 generation=2 min-current=12 for=v9->v12 width-cross
+//	// fixture-stamp: name=v9-to-v12 generation=2 min-current=12 for=v9->v12 sha=abc123def456
 func Marker(s Stamp) string {
-	return fmt.Sprintf("%s name=%s generation=%d min-current=%d for=%s",
+	base := fmt.Sprintf("%s name=%s generation=%d min-current=%d for=%s",
 		MarkerPrefix, s.Name, s.Generation, s.MinCurrent, s.CreatedFor)
+	if s.SHA == "" {
+		return base
+	}
+
+	return base + " sha=" + s.SHA
 }
 
 // markerLineRe matches the marker line anywhere in a body. We only
@@ -107,6 +117,8 @@ func parseFields(payload string) (Stamp, bool) {
 			out.MinCurrent = n
 		case "for":
 			out.CreatedFor = val
+		case "sha":
+			out.SHA = val
 		}
 	}
 	if !hasName {
