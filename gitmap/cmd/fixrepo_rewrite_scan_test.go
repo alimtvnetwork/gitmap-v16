@@ -5,6 +5,7 @@ package cmd
 // silently disagree about what counts as a stale `{base}-vN` token.
 
 import (
+	"fmt"
 	"reflect"
 	"strings"
 	"testing"
@@ -98,9 +99,14 @@ func TestScannerMatchesRewriter(t *testing.T) {
 		t.Errorf("rewriter substituted %d, scanner counted %d (must agree)",
 			count, want)
 	}
-	if strings.Count(out, "gitmap-v13") != want {
-		t.Errorf("output has %d gitmap-v13 tokens, want %d",
-			strings.Count(out, "gitmap-v13"), want)
+	// Derive the expected rewritten token from `current` rather than
+	// hard-coding a sibling literal. See mem://FIX-REPO DIGIT-CAPTURE GAP:
+	// any version-bearing expectation must be built from the same int the
+	// rewriter received, otherwise width-crossing bumps silently desync.
+	wantToken := fmt.Sprintf("%s-v%d", base, current)
+	if strings.Count(out, wantToken) != want {
+		t.Errorf("output has %d %s tokens, want %d",
+			strings.Count(out, wantToken), wantToken, want)
 	}
 	// guarded neighbor must survive
 	if !strings.Contains(out, "gitmap-v10") {
