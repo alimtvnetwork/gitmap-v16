@@ -96,10 +96,35 @@ func assertDashFormBumped(t *testing.T, got, base string, target, current, count
 	if !strings.Contains(got, newTok) {
 		t.Errorf("missing bumped %q after rewrite:\n%s", newTok, got)
 	}
-	wantCount := strings.Count(fixRepoV9ToV12FixtureBody, oldTok)
+	// Count dash-form hits MINUS digit-adjacent neighbors that the
+	// negative-lookahead guard intentionally skips (e.g. `-v90` when
+	// target=9). A naive strings.Count(body, "gitmap-v9") counts the
+	// `gitmap-v9` prefix inside `gitmap-v90` and produces an off-by-one
+	// expectation that does not reflect the engine's contract.
+	wantCount := countUnguardedHits(fixRepoV9ToV12FixtureBody, oldTok)
 	if count != wantCount {
 		t.Errorf("replacement count = %d, want %d (dash-form hits in fixture)", count, wantCount)
 	}
+}
+
+// countUnguardedHits mirrors the rewriter's negative-lookahead: a
+// match of token followed by an ASCII digit is a guarded neighbor
+// (e.g. `-v9` inside `-v90`) and is excluded from the count.
+func countUnguardedHits(body, token string) int {
+	hits := 0
+	for i := 0; i+len(token) <= len(body); {
+		idx := strings.Index(body[i:], token)
+		if idx < 0 {
+			break
+		}
+		end := i + idx + len(token)
+		if end >= len(body) || body[end] < '0' || body[end] > '9' {
+			hits++
+		}
+		i = end
+	}
+
+	return hits
 }
 
 // assertGuardedNeighborPreserved locks the negative-lookahead guard:
