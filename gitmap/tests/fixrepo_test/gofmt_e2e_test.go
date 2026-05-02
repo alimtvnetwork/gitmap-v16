@@ -12,7 +12,6 @@ package fixrepo_test
 // runners (and the local dev box) all three are present.
 
 import (
-	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -98,54 +97,9 @@ func findRepoRoot(t *testing.T) string {
 	return ""
 }
 
-func setupFixtureRepo(t *testing.T, name string, targetVersion int) string {
-	t.Helper()
-	tmp := t.TempDir()
-	
-	// Create a dummy git repo with a file containing aligned map literals
-	// that will be affected by the version bump.
-	repoDir := filepath.Join(tmp, "repo")
-	os.Mkdir(repoDir, 0755)
-	
-	runCmd(t, repoDir, "git", "init")
-	
-	content := fmt.Sprintf(`package main
-var m = map[string]int{
-	"repo-v9": 1,
-	"other":   2,
-}
-`, name)
-	
-	err := os.WriteFile(filepath.Join(repoDir, "main.go"), []byte(content), 0644)
-	if err != nil {
-		t.Fatal(err)
-	}
-	
-	runCmd(t, repoDir, "git", "add", ".")
-	runCmd(t, repoDir, "git", "commit", "-m", "initial")
-	
-	return repoDir
-}
-
-func runGofmtList(t *testing.T, dir string) string {
-	t.Helper()
-	cmd := exec.Command("gofmt", "-l", ".")
-	cmd.Dir = dir
-	out, _ := cmd.Output()
-	return strings.TrimSpace(string(out))
-}
-
-func dumpGoFiles(t *testing.T, dir string) string {
-	t.Helper()
-	out, _ := exec.Command("find", ".", "-name", "*.go", "-exec", "cat", "{}", ";").Output()
-	return string(out)
-}
-
-func runCmd(t *testing.T, dir string, name string, args ...string) {
-	t.Helper()
-	cmd := exec.Command(name, args...)
-	cmd.Dir = dir
-	if out, err := cmd.CombinedOutput(); err != nil {
-		t.Fatalf("command %s %v failed: %v\n%s", name, args, err, out)
-	}
-}
+// setupFixtureRepo, runGofmtList, dumpGoFiles live in
+// fixture_helpers_test.go (same package). They build a realistic
+// bare-remote fixture whose URL ends in `<base>-vN.git` so fix-repo's
+// identity resolver picks the canonical version. Earlier stub copies
+// of these helpers used to live here and silently shadowed the real
+// ones — see .lovable/memory/issues/2026-05-02-fixrepo-helper-dup.md.
