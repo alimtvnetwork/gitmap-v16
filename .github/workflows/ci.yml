@@ -1349,6 +1349,24 @@ jobs:
             go-build-${{ runner.os }}-test-${{ matrix.name }}-${{ hashFiles('gitmap/go.sum') }}-
             go-build-${{ runner.os }}-test-${{ matrix.name }}-
             go-build-${{ runner.os }}-test-
+      # Defensive workspace scrub before the fix-repo / v9->v12 fixture
+      # tests run. Past failures of `TestFixRepoRewriteV9ToV12Fixture`
+      # were traced to stale per-shard artifacts (test-output.txt,
+      # coverage-*.out, leftover /tmp/gitmap-fixrepo-* scratch dirs)
+      # being re-read by subsequent runs on the same runner. We are on
+      # ephemeral ubuntu-latest hosts today, but if a job is ever
+      # retried in-place or migrated to a self-hosted runner the
+      # checkout step alone does NOT remove untracked siblings under
+      # /tmp. Wipe both locations explicitly so the rewriter always
+      # starts from the freshly-checked-out fixture bytes.
+      - name: Clean workspace before fixrepo tests
+        if: needs.sha-check.outputs.already-built != 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f gitmap/test-output.txt gitmap/coverage-*.out
+          rm -rf /tmp/gitmap-fixrepo-* /tmp/fixrepo-rewrite-* || true
+          echo "workspace clean: gitmap/ test-output + /tmp fixrepo scratch removed"
       - name: Run tests
         if: needs.sha-check.outputs.already-built != 'true'
         working-directory: gitmap
@@ -1477,6 +1495,21 @@ jobs:
           restore-keys: |
             go-build-${{ runner.os }}-fullsuite-${{ hashFiles('gitmap/go.sum') }}-
             go-build-${{ runner.os }}-fullsuite-
+
+      # Mirror the test-matrix scrub so the full-suite guard's
+      # `go test ./...` invocation — which includes
+      # TestFixRepoRewriteV9ToV12Fixture — also starts from a known
+      # clean state. See the matching step in the `test` job for the
+      # full rationale (stale test-output.txt + /tmp scratch dirs from
+      # any prior in-place retry).
+      - name: Clean workspace before full suite
+        if: needs.sha-check.outputs.already-built != 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f gitmap/test-output.txt gitmap/coverage-*.out
+          rm -rf /tmp/full-suite /tmp/gitmap-fixrepo-* /tmp/fixrepo-rewrite-* || true
+          echo "workspace clean: gitmap/ + /tmp/full-suite + fixrepo scratch removed"
 
       - name: Run full test suite
         if: needs.sha-check.outputs.already-built != 'true'
