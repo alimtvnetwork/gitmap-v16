@@ -94,24 +94,19 @@ func assertDashFormBumped(t *testing.T, got, base string, target, current, count
 	t.Helper()
 	oldTok := fmt.Sprintf("%s-v%d", base, target)
 	newTok := fmt.Sprintf("%s-v%d", base, current)
-	// "Stale" means an unguarded occurrence of the old token survived
-	// the rewrite. A digit-adjacent occurrence (e.g. `gitmap-v9` as a
-	// prefix inside `gitmap-v90`) is intentionally preserved by the
-	// negative-lookahead guard and MUST NOT be reported as stale.
 	if countUnguardedHits(got, oldTok) > 0 {
-		t.Errorf("found stale unguarded %q after bump:\n%s", oldTok, got)
+		t.Errorf("found stale unguarded %q after bump\n%s",
+			oldTok, renderFixRepoFailureDiff(got, oldTok, newTok, target, current))
 	}
 	if !strings.Contains(got, newTok) {
-		t.Errorf("missing bumped %q after rewrite:\n%s", newTok, got)
+		t.Errorf("missing bumped %q after rewrite\n%s",
+			newTok, renderFixRepoFailureDiff(got, oldTok, newTok, target, current))
 	}
-	// Count dash-form hits MINUS digit-adjacent neighbors that the
-	// negative-lookahead guard intentionally skips (e.g. `-v90` when
-	// target=9). A naive strings.Count(body, "gitmap-v9") counts the
-	// `gitmap-v9` prefix inside `gitmap-v90` and produces an off-by-one
-	// expectation that does not reflect the engine's contract.
 	wantCount := countUnguardedHits(fixRepoV9ToV12FixtureBody, oldTok)
 	if count != wantCount {
-		t.Errorf("replacement count = %d, want %d (dash-form hits in fixture)", count, wantCount)
+		t.Errorf("replacement count = %d, want %d (unguarded hits in fixture)\n%s",
+			count, wantCount,
+			renderFixRepoFailureDiff(got, oldTok, newTok, target, current))
 	}
 }
 
@@ -143,7 +138,10 @@ func assertGuardedNeighborPreserved(t *testing.T, got, base string) {
 	t.Helper()
 	guarded := base + "-v10"
 	if !strings.Contains(got, guarded) {
-		t.Errorf("guarded neighbor %q was incorrectly rewritten:\n%s", guarded, got)
+		oldTok := base + "-v9"
+		newTok := base + "-v12"
+		t.Errorf("guarded neighbor %q was incorrectly rewritten\n%s",
+			guarded, renderFixRepoFailureDiff(got, oldTok, newTok, 9, 12))
 	}
 }
 
@@ -158,8 +156,10 @@ func assertPairsForTargetAgrees(t *testing.T, base string, target, current int, 
 		t.Fatalf("pairsForTarget returned %d pairs, want >=1", len(pairs))
 	}
 	if !strings.Contains(got, pairs[0].new) {
-		t.Errorf("rewriter output missing pairsForTarget dash.new=%q\nfile:\n%s",
-			pairs[0].new, got)
+		oldTok := fmt.Sprintf("%s-v%d", base, target)
+		t.Errorf("rewriter output missing pairsForTarget dash.new=%q\n%s",
+			pairs[0].new,
+			renderFixRepoFailureDiff(got, oldTok, pairs[0].new, target, current))
 	}
 }
 
