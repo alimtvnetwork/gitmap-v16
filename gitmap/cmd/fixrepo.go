@@ -18,6 +18,7 @@ type fixRepoOptions struct {
 	span       int
 	isDryRun   bool
 	isVerbose  bool
+	isStrict   bool // --strict / -Strict: post-rewrite `go test` on touched pkgs
 	configPath string
 }
 
@@ -44,6 +45,13 @@ func runFixRepo(args []string) {
 	emitFixRepoSummary(result.scanned, result.changed, result.replacements, opts.isDryRun)
 	if !runFixRepoGofmt(result.goFiles, opts) {
 		result.failed = true
+	}
+	if !runFixRepoStrict(identity.root, result.goFiles, opts) {
+		// Tests-failed is a distinct exit code so CI scripts can
+		// branch on "rewrite produced semantically broken code" vs
+		// other write/IO failures. Reported even if gofmt also failed
+		// — strict failure is the more actionable diagnosis.
+		os.Exit(constants.FixRepoExitTestsFailed)
 	}
 	if result.failed {
 		os.Exit(constants.FixRepoExitWriteFailed)
