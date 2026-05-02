@@ -25,6 +25,8 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 . "$SCRIPT_DIR/scripts/fix-repo/rewrite.sh"
 # shellcheck source=scripts/fix-repo/config.sh
 . "$SCRIPT_DIR/scripts/fix-repo/config.sh"
+# shellcheck source=scripts/fix-repo/paired-literal-audit.sh
+. "$SCRIPT_DIR/scripts/fix-repo/paired-literal-audit.sh"
 
 EXIT_OK=0
 EXIT_NOT_A_REPO=2
@@ -34,6 +36,11 @@ EXIT_BAD_VERSION=5
 EXIT_BAD_FLAG=6
 EXIT_WRITE_FAILED=7
 EXIT_BAD_CONFIG=8
+# E_PAIRED_LITERAL: post-rewrite audit found a {base}-v{Current} token
+# next to a stale sibling literal of the previous version (most often
+# in *_test.go fixtures). See .lovable/memory/issues/2026-05-02-fixrepo-
+# paired-literal-desync.md.
+EXIT_PAIRED_LITERAL=10
 
 MODE="--2"
 DRY_RUN=0
@@ -157,6 +164,7 @@ _process_one_file() {
   [ "$reps" -gt 0 ] || return 0
   SWEEP_CHANGED=$((SWEEP_CHANGED + 1))
   SWEEP_REPS=$((SWEEP_REPS + reps))
+  SWEEP_CHANGED_FILES+=("$full")
   [ "$VERBOSE_FLAG" = "1" ] && echo "modified: $rel ($reps replacements)"
   return 0
 }
@@ -164,6 +172,7 @@ _process_one_file() {
 run_sweep() {
   local current="$1" targets_str="$2" rel n
   SWEEP_SCANNED=0; SWEEP_CHANGED=0; SWEEP_REPS=0; SWEEP_FAILED=0
+  SWEEP_CHANGED_FILES=()
   _TARGET_ARR=()
   for n in $targets_str; do _TARGET_ARR+=("$n"); done
   while IFS= read -r -d '' rel; do
@@ -188,6 +197,9 @@ main() {
   run_sweep "$current" "$targets_str"
   print_summary "$SWEEP_SCANNED" "$SWEEP_CHANGED" "$SWEEP_REPS" "$DRY_RUN"
   if [ "$SWEEP_FAILED" = "1" ]; then exit $EXIT_WRITE_FAILED; fi
+  if ! run_paired_literal_audit "$SPLIT_BASE" "$current" "$DRY_RUN" "${SWEEP_CHANGED_FILES[@]:-}"; then
+    exit $EXIT_PAIRED_LITERAL
+  fi
   exit $EXIT_OK
 }
 
