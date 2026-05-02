@@ -1,5 +1,20 @@
 # Changelog
 
+## v4.15.1 — (2026-05-02) — Installer: stop calling Chocolatey `refreshenv`, kill `'wmic' is not recognized` noise on Windows 11 24H2
+
+- `gitmap/scripts/install.ps1`: removed the opportunistic `refreshenv` call
+  in `Main` after `Add-ToPath`. Older Chocolatey `refreshenv` shells out to
+  `wmic process get parentprocessid ...` to discover the parent shell, but
+  Microsoft removed `wmic.exe` in Windows 11 24H2 / Server 2025. The
+  resulting `'wmic' is not recognized as an internal or external command`
+  was native-stderr from a `cmd.exe` grandchild and could not be
+  suppressed by PowerShell `try/catch` — it leaked straight to the user's
+  console at the tail of an otherwise-successful install.
+- `Rebuild-SessionPath` already reads Machine + User PATH directly from
+  the registry, which is exactly what `refreshenv` was doing, so dropping
+  the call is functionally a no-op on every host and removes the noise on
+  24H2+.
+
 ## v4.15.0 — (2026-05-02) — TestScannerMatchesRewriter: derive expected token from `current`, close digit-capture sibling-literal regression
 
 - `gitmap/cmd/fixrepo_rewrite_scan_test.go`: `TestScannerMatchesRewriter` now
