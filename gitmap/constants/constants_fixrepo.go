@@ -81,4 +81,16 @@ const (
 	FixRepoMsgGofmtNoneFmt = "gofmt:   no .go files modified\n"
 	FixRepoErrGofmtFmt     = "fix-repo: ERROR gofmt failed: %v\n%s"
 	FixRepoErrGofmtMissing = "fix-repo: WARN  gofmt not found on PATH; skipping post-rewrite formatting\n"
+
+	// Strict-mode (post-rewrite `go test`) message family. Phrased to
+	// mirror the gofmt block so a user reading the trailing summary
+	// can tell at a glance which post-step ran, what it did, and
+	// (on failure) which exit code maps to which root cause.
+	FixRepoMsgStrictSkipDryRun = "strict:  skipped (dry-run)\n"
+	FixRepoMsgStrictNoGoFiles  = "strict:  no .go files modified; skipping go test\n"
+	FixRepoMsgStrictNoPackages = "strict:  no Go packages derived from modified files; skipping go test\n"
+	FixRepoMsgStrictRunFmt     = "strict:  running go test on %d package(s): %s\n"
+	FixRepoMsgStrictPassFmt    = "strict:  go test passed (%d package(s))\n"
+	FixRepoErrStrictMissing    = "fix-repo: WARN  go not found on PATH; --strict skipped\n"
+	FixRepoErrStrictFailFmt    = "fix-repo: ERROR strict mode: go test failed (E_TESTS_FAILED): %v\n%s"
 )
