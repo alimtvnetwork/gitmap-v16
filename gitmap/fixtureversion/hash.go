@@ -66,3 +66,29 @@ func HashMatches(body, recordedShortHash string) bool {
 
 	return got == recordedShortHash
 }
+
+// shaFieldRe matches `sha=<hex>` up to the next whitespace. Lives
+// alongside its semantic peers (the other hash helpers) rather than
+// in bump.go so the rewrite logic stays cohesive with the field
+// definition.
+var shaFieldRe = regexp.MustCompile(`(sha=)\S+`)
+
+// markerLineEndRe matches the end of the fixture-stamp line so we
+// can append a new `sha=` field when the marker does not already
+// have one. Captures the trailing newline (if any) for re-insertion.
+var markerLineEndRe = regexp.MustCompile(`(?m)(^// fixture-stamp:[^\n]*?)(\r?\n|$)`)
+
+// RewriteOrAppendSHA replaces the existing sha= field inside head,
+// or appends `sha=<newSHA>` to the marker line when the field is
+// missing. The append path preserves any trailing newline so the
+// rest of the body remains byte-stable. Empty newSHA is a no-op.
+func RewriteOrAppendSHA(head, newSHA string) string {
+	if newSHA == "" {
+		return head
+	}
+	if shaFieldRe.MatchString(head) {
+		return shaFieldRe.ReplaceAllString(head, "${1}"+newSHA)
+	}
+
+	return markerLineEndRe.ReplaceAllString(head, "${1} sha="+newSHA+"${2}")
+}
