@@ -43,6 +43,11 @@ type BumpRequest struct {
 	NewGeneration int
 	NewMinCurrent int
 	NewCreatedFor string
+	// NewSHA, when non-empty, is written to the marker as `sha=<v>`.
+	// If the marker already has a sha= field it is replaced; if not,
+	// the field is appended to the marker line. Pass "" to leave any
+	// existing sha= field untouched.
+	NewSHA string
 }
 
 // BumpStampInBody returns body with the marker line's generation=
@@ -62,6 +67,7 @@ func BumpStampInBody(body string, req BumpRequest) (string, bool) {
 	head = rewriteGeneration(head, req.NewGeneration)
 	head = rewriteMinCurrent(head, req.NewMinCurrent)
 	head = rewriteCreatedFor(head, req.NewCreatedFor)
+	head = RewriteOrAppendSHA(head, req.NewSHA)
 
 	return head + tail, true
 }

@@ -32,7 +32,7 @@ import (
 // whose generation lags the test's MinGeneration) fails with an
 // actionable "regenerate via ..." message instead of a confusing
 // rewrite-count mismatch.
-const fixRepoV9ToV12FixtureBody = `// fixture-stamp: name=fixrepo-v9-to-v12 generation=1 min-current=12 for=v9->v12-width-cross
+const fixRepoV9ToV12FixtureBody = `// fixture-stamp: name=fixrepo-v9-to-v12 generation=1 min-current=12 for=v9->v12-width-cross sha=7e1463d1eae6
 module example.com/consumer
 
 require (

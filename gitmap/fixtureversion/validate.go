@@ -29,6 +29,11 @@ type Expectation struct {
 // error describing exactly what is stale. Returns nil on success.
 // Pure function — no t.* calls — so it can be reused outside
 // *testing.T contexts (e.g. a fixture-audit CLI).
+//
+// Validate does NOT check the body hash — callers that have the
+// body bytes should use ValidateBody instead. Splitting them keeps
+// the pure-stamp-only check usable in contexts (audit CLIs,
+// dashboards) that have the marker but not the full body.
 func Validate(stamp Stamp, want Expectation) error {
 	if stamp.Name == "" {
 		return fmt.Errorf("fixture is unstamped: add %q as the first line",
@@ -50,6 +55,27 @@ func Validate(stamp Stamp, want Expectation) error {
 	return nil
 }
 
+// ValidateBody runs Validate and additionally checks the body's
+// content hash against the stamp's recorded SHA. An empty
+// stamp.SHA opts out (validation passes). Use this in tests so a
+// hand-edit to the fixture body without a corresponding marker
+// refresh fails loudly.
+func ValidateBody(body string, stamp Stamp, want Expectation) error {
+	if err := Validate(stamp, want); err != nil {
+		return err
+	}
+	if HashMatches(body, stamp.SHA) {
+		return nil
+	}
+	got := ShortHash(BodyHashExcludingMarker(body))
+
+	return fmt.Errorf(
+		"fixture %q body hash mismatch: marker records sha=%s but actual body sha=%s\n"+
+			"  the fixture was edited without refreshing its // fixture-stamp: marker.\n"+
+			"  regenerate via: %s",
+		stamp.Name, stamp.SHA, got, want.RegenerateRecipe)
+}
+
 // MustValidateBody is the one-call helper tests use: parses the
 // marker out of body, validates it against want, and t.Fatals with
 // the actionable error on any mismatch. Use this at the top of any
@@ -62,7 +88,7 @@ func MustValidateBody(t *testing.T, body string, want Expectation) Stamp {
 		t.Fatalf("fixture is unstamped or marker malformed: add %q as the first line",
 			Marker(Stamp{Name: "<name>", Generation: 1, MinCurrent: want.CurrentVersion}))
 	}
-	if err := Validate(stamp, want); err != nil {
+	if err := ValidateBody(body, stamp, want); err != nil {
 		t.Fatal(err)
 	}
 
@@ -87,11 +113,12 @@ func MustValidateBodyWithAutobump(t *testing.T, body, sourcePath string, want Ex
 		t.Fatalf("fixture is unstamped or marker malformed: add %q as the first line",
 			Marker(Stamp{Name: "<name>", Generation: 1, MinCurrent: want.CurrentVersion}))
 	}
-	if err := Validate(stamp, want); err == nil {
+	validateErr := ValidateBody(body, stamp, want)
+	if validateErr == nil {
 		return stamp
 	}
-	if !tryAutobumpAndReport(t, stamp, sourcePath, want) {
-		t.Fatal(Validate(stamp, want))
+	if !tryAutobumpAndReport(t, body, stamp, sourcePath, want) {
+		t.Fatal(validateErr)
 	}
 
 	return stamp
@@ -100,10 +127,16 @@ func MustValidateBodyWithAutobump(t *testing.T, body, sourcePath string, want Ex
 // tryAutobumpAndReport runs MaybeAutoBumpFile and logs the outcome.
 // Returns true when an autobump was actually applied (caller should
 // treat the test as passing for this run since the rewrite landed).
-func tryAutobumpAndReport(t *testing.T, stamp Stamp, sourcePath string, want Expectation) bool {
+// Refreshes BOTH the generation and the body-hash so a content-only
+// drift heals in the same pass as a generation drift.
+func tryAutobumpAndReport(t *testing.T, body string, stamp Stamp, sourcePath string, want Expectation) bool {
 	t.Helper()
 	newGen := NextGeneration(stamp, want)
-	bumped, err := MaybeAutoBumpFile(sourcePath, BumpRequest{NewGeneration: newGen})
+	newSHA := ShortHash(BodyHashExcludingMarker(body))
+	bumped, err := MaybeAutoBumpFile(sourcePath, BumpRequest{
+		NewGeneration: newGen,
+		NewSHA:        newSHA,
+	})
 	if err != nil {
 		t.Fatalf("autobump attempt failed: %v", err)
 	}
@@ -111,6 +144,7 @@ func tryAutobumpAndReport(t *testing.T, stamp Stamp, sourcePath string, want Exp
 		return false
 	}
 	t.Log(FormatBumpSummary(sourcePath, stamp.Generation, newGen))
+	t.Logf("autobumped sha %s -> %s", stamp.SHA, newSHA)
 	t.Log("re-run the test without GITMAP_FIXTURE_AUTOBUMP=1 to confirm the bumped fixture passes")
 
 	return true
