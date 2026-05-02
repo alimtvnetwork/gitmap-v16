@@ -47,14 +47,15 @@ func TestBuildAuditNeedles(t *testing.T) {
 // affects targets[i] (not current). Regression guard against the
 // historical desync where fixtures hard-coded `gitmap-v13` next to
 // a single-digit input.
+//
+// IMPORTANT: every needle string is derived from the same `targets`
+// int slice via fmt.Sprintf so fix-repo cannot rewrite one half of
+// the pair without the other. See .lovable/memory/issues/2026-05-02-
+// fixrepo-paired-literal-desync.md.
 func TestBuildAuditNeedlesWidthCrossing(t *testing.T) {
-	got := buildAuditNeedles("gitmap", []int{8, 9, 10, 12})
-	want := []string{
-		"gitmap-v8", "gitmap/v8",
-		"gitmap-v9", "gitmap/v9",
-		"gitmap-v10", "gitmap/v10",
-		"gitmap-v13", "gitmap/v12",
-	}
+	targets := []int{8, 9, 10, 12}
+	got := buildAuditNeedles("gitmap", targets)
+	want := buildExpectedNeedles("gitmap", targets)
 	if len(got) != len(want) {
 		t.Fatalf("len = %d, want %d", len(got), len(want))
 	}
@@ -63,6 +64,20 @@ func TestBuildAuditNeedlesWidthCrossing(t *testing.T) {
 			t.Errorf("needle[%d] = %q, want %q", i, got[i], want[i])
 		}
 	}
+}
+
+// buildExpectedNeedles derives the expected needle slice from the
+// same int slice the production code consumes — the single source of
+// truth that prevents paired-literal desync after a version bump.
+func buildExpectedNeedles(base string, targets []int) []string {
+	out := make([]string, 0, len(targets)*2)
+	for _, n := range targets {
+		out = append(out,
+			fmt.Sprintf("%s-v%d", base, n),
+			fmt.Sprintf("%s/v%d", base, n))
+	}
+
+	return out
 }
 
 // TestLineContainsAny is the primitive the audit scanner uses to decide
