@@ -37,11 +37,6 @@ func TestSlugFromRemote(t *testing.T) {
 // without the other. See .lovable/memory/issues/2026-05-02-fixrepo-
 // paired-literal-desync.md.
 func TestRemoteSlugRegex(t *testing.T) {
-	type want struct {
-		matches bool
-		base    string
-		num     string
-	}
 	cases := buildSlugRegexCases()
 	for in, w := range cases {
 		m := remoteSlugRe.FindStringSubmatch(in)
