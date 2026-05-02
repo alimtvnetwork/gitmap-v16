@@ -33,6 +33,7 @@ treated as an unknown annotation per §6.4 of the 2020-12 spec).
 | Command | Schema | Contract | Notes |
 |---|---|---|---|
 | `gitmap startup-list --json` | [`startup-list.schema.json`](startup-list.schema.json) | **strict** | Backed by `gitmap/stablejson`; key order is contractual |
+| `gitmap scan` (JSON + CSV)   | [`scan-output.schema.json`](scan-output.schema.json) + [`scan-output.README.md`](scan-output.README.md) | **field-name stable** | Field names/keys are permanent; new fields are appended only. Key ordering is NOT byte-contractual (uses `encoding/json`). |
 | _(others)_ | — | — | See [`_TODO.md`](_TODO.md) — currently emit via `json.MarshalIndent` so ordering is NOT contractual until they migrate to `stablejson` |
 
 ## How a downstream consumer uses these

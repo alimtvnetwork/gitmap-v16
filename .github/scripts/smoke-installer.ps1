@@ -61,6 +61,7 @@ if (-not $expected) {
     }
     $expected = ($line.Line -split '"')[1]
 }
+$expected = $expected -replace '^v', ''
 
 $work = New-Item -ItemType Directory -Path (Join-Path $env:TEMP "gitmap-smoke-$(Get-Random)") -Force
 try {

@@ -693,13 +693,9 @@ jobs:
 
       - name: Run installer smoke (release mode)
         env:
-          # Strip leading 'v' — smoke-installer.sh re-adds it
           EXPECTED: ${{ needs.release.outputs.version }}
         shell: bash
-        run: |
-          # EXPECTED comes in as 'v4.1.0'; the script wants '4.1.0'.
-          export EXPECTED="${EXPECTED#v}"
-          bash .github/scripts/smoke-installer.sh release
+        run: bash .github/scripts/smoke-installer.sh release
 
   installer-smoke-windows:
     # Windows post-publish smoke: pulls the freshly-released binary via
@@ -722,10 +718,7 @@ jobs:
         env:
           EXPECTED: ${{ needs.release.outputs.version }}
         shell: pwsh
-        run: |
-          # EXPECTED comes in as 'v4.1.0'; the script wants '4.1.0'.
-          $env:EXPECTED = $env:EXPECTED -replace '^v', ''
-          pwsh -File .github/scripts/smoke-installer.ps1 release
+        run: pwsh -File .github/scripts/smoke-installer.ps1 release
 
   installer-dryrun-windows:
     # Post-publish DRY-RUN check: invokes install.ps1 with -DryRun
