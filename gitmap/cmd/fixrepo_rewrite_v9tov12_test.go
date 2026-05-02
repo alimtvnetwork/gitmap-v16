@@ -16,6 +16,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/alimtvnetwork/gitmap-v12/gitmap/fixtureversion"
 )
 
 // fixRepoV9ToV12FixtureBody is the on-disk fixture: every realistic
@@ -25,7 +27,13 @@ import (
 // We use `-v10` (a real, plausible neighbor version) rather than the
 // nonsensical `-v90` to keep the fixture readable while still locking
 // the negative-lookahead guard against `-v9` matching inside `-v10`.
-const fixRepoV9ToV12FixtureBody = `module example.com/consumer
+//
+// The first line is a fixtureversion stamp so a stale fixture (one
+// whose generation lags the test's MinGeneration) fails with an
+// actionable "regenerate via ..." message instead of a confusing
+// rewrite-count mismatch.
+const fixRepoV9ToV12FixtureBody = `// fixture-stamp: name=fixrepo-v9-to-v12 generation=1 min-current=12 for=v9->v12-width-cross
+module example.com/consumer
 
 require (
 	github.com/alimtvnetwork/gitmap-v9 v0.0.0
@@ -48,6 +56,15 @@ func TestFixRepoRewriteV9ToV12Fixture(t *testing.T) {
 		target  = 9
 		current = 12
 	)
+	// Fail fast if the embedded fixture is stale relative to what
+	// this test expects. Bump generation here AND in the marker
+	// above when intentionally regenerating the fixture.
+	fixtureversion.MustValidateBody(t, fixRepoV9ToV12FixtureBody,
+		fixtureversion.Expectation{
+			MinGeneration:    1,
+			CurrentVersion:   current,
+			RegenerateRecipe: "edit fixRepoV9ToV12FixtureBody and bump generation= in its // fixture-stamp: marker",
+		})
 	path := writeV9Fixture(t)
 
 	count, err := rewriteFixRepoFile(path, base, current, []int{target}, false)
