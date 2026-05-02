@@ -149,6 +149,7 @@ function Invoke-RewriteSweep {
     $files = Get-TrackedFiles -RepoRoot $RepoRoot
     $scanned = 0; $changed = 0; $totalReps = 0; $failed = $false
     $goFiles = New-Object System.Collections.Generic.List[string]
+    $changedFiles = New-Object System.Collections.Generic.List[string]
     foreach ($rel in $files) {
         $r = _Process-OneFile -RepoRoot $RepoRoot -Rel $rel -Base $Base -Current $Current -Targets $Targets -DryRun $DryRun -Verbose $Verbose
         if (-not $r) { continue }
@@ -156,10 +157,11 @@ function Invoke-RewriteSweep {
         if ($r.Failed) { $failed = $true; continue }
         if ($r.Reps -gt 0) {
             $changed++; $totalReps += $r.Reps
+            $changedFiles.Add($r.FullPath) | Out-Null
             if ([System.IO.Path]::GetExtension($rel).ToLowerInvariant() -eq '.go') { $goFiles.Add($r.FullPath) | Out-Null }
         }
     }
-    return [pscustomobject]@{ Scanned=$scanned; Changed=$changed; Reps=$totalReps; Failed=$failed; GoFiles=$goFiles }
+    return [pscustomobject]@{ Scanned=$scanned; Changed=$changed; Reps=$totalReps; Failed=$failed; GoFiles=$goFiles; ChangedFiles=$changedFiles }
 }
 
 # Post-rewrite gofmt step. Mirrors the Go binary's runFixRepoGofmt
@@ -282,6 +284,15 @@ if (-not (Invoke-PostRewriteGofmt -GoFiles $result.GoFiles -DryRun $parsed.DryRu
 # "rewrite produced semantically broken code" vs. write/IO failures.
 if (-not (Invoke-PostRewriteStrict -GoFiles $result.GoFiles -DryRun $parsed.DryRun -Strict $parsed.Strict -RepoRoot $identity.Root)) {
     exit $Script:ExitTestsFailed
+}
+
+# Paired-literal audit runs LAST (after gofmt + strict) so the source
+# being audited is the final, formatted, test-validated state. The
+# audit is cheap (regex over *_test.go only) and gives a precise
+# diagnostic for the desync class strict-mode would otherwise surface
+# as a generic test failure.
+if (-not (Invoke-PairedLiteralAudit -ChangedFiles $result.ChangedFiles -Base $identity.Base -Current $identity.Current -DryRun $parsed.DryRun)) {
+    exit $Script:ExitPairedLiteral
 }
 
 if ($result.Failed) { exit $Script:ExitWriteFailed }
