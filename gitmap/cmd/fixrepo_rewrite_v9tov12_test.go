@@ -21,7 +21,10 @@ import (
 // fixRepoV9ToV12FixtureBody is the on-disk fixture: every realistic
 // shape we have seen in third-party Go repos that depend on a
 // versioned module — bare slug, dash form, slash form, and a digit-
-// adjacent token (`gitmap-v90`) that MUST NOT match `gitmap-v9`.
+// adjacent token (`gitmap-v10`) that MUST NOT match `gitmap-v9`.
+// We use `-v10` (a real, plausible neighbor version) rather than the
+// nonsensical `-v90` to keep the fixture readable while still locking
+// the negative-lookahead guard against `-v9` matching inside `-v10`.
 const fixRepoV9ToV12FixtureBody = `module example.com/consumer
 
 require (
@@ -31,7 +34,8 @@ require (
 import gm "github.com/alimtvnetwork/gitmap-v9/gitmap/cmd"
 
 // repo URL: https://github.com/alimtvnetwork/gitmap-v9.git
-// guarded:  gitmap-v90 should NOT be rewritten by target=9
+// guarded:  gitmap-v10 must NOT be rewritten by target=9 (v9 is a
+//           prefix of v10 — the negative-lookahead guard skips it)
 `
 
 // TestFixRepoRewriteV9ToV12Fixture is the end-to-end regression test.
@@ -132,10 +136,12 @@ func countUnguardedHits(body, token string) int {
 }
 
 // assertGuardedNeighborPreserved locks the negative-lookahead guard:
-// `gitmap-v90` must survive untouched when bumping target=9.
+// `gitmap-v10` must survive untouched when bumping target=9, because
+// `-v9` is a prefix of `-v10` and the rewriter's negative-lookahead
+// must skip digit-adjacent matches.
 func assertGuardedNeighborPreserved(t *testing.T, got, base string) {
 	t.Helper()
-	guarded := base + "-v90"
+	guarded := base + "-v10"
 	if !strings.Contains(got, guarded) {
 		t.Errorf("guarded neighbor %q was incorrectly rewritten:\n%s", guarded, got)
 	}
