@@ -87,6 +87,35 @@ curl -fsSL https://raw.githubusercontent.com/alimtvnetwork/gitmap-v12/main/insta
 
 ## About GitMap
 
+### What is GitMap?
+
+**GitMap** ([this repository](https://github.com/alimtvnetwork/gitmap-v12))
+is an all-in-one **Git workspace CLI**. It scans any folder tree,
+catalogs every Git repository it finds, and lets you clone, mirror,
+navigate, release, and manage all of them as a single map — instead
+of one repo at a time. One binary, one `.gitmap/` directory, every
+repo on your machine in one view.
+
+### Why GitMap?
+
+Because juggling dozens of repos with raw `git` commands does not
+scale. Without GitMap you end up writing one-off shell scripts every
+time you switch machines, audit branches across projects, or try to
+remember which folder maps to which remote. GitMap replaces all of
+that with a single, deterministic, cross-platform workflow:
+
+- **One scan** to discover every repo on disk (however deeply nested).
+- **One manifest** (`.gitmap/output/gitmap.{json,csv,txt}`) that is
+  both a catalog AND a runnable migration script.
+- **One reclone** to reproduce the exact folder layout on any new
+  machine — no IDE junk, no build artifacts, just canonical source.
+- **One CLI** for the everyday Git chores that normally need 5
+  different tools: bulk visibility flips, SSH key sync, multi-repo
+  merges, release packaging, interactive TUI, and shell completion.
+
+If you have ever opened more than ~10 repos on the same machine,
+GitMap pays for itself the first time you switch laptops.
+
 ### Why it exists — the two-hour origin story
 
 GitMap started as a one-evening fix for a very ordinary problem.
