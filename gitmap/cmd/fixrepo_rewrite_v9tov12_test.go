@@ -127,24 +127,13 @@ func assertDashFormBumped(t *testing.T, got, base string, target, current, count
 	}
 }
 
-// countUnguardedHits mirrors the rewriter's negative-lookahead: a
-// match of token followed by an ASCII digit is a guarded neighbor
-// (e.g. `-v9` inside `-v90`) and is excluded from the count.
+// countUnguardedHits is a thin wrapper around the production
+// scanner so the test cannot drift from the rewriter's actual
+// negative-lookahead guard. Any future tweak to the guard
+// predicate (e.g. supporting non-ASCII digits) automatically
+// propagates here. See fixrepo_rewrite_scan.go for the contract.
 func countUnguardedHits(body, token string) int {
-	hits := 0
-	for i := 0; i+len(token) <= len(body); {
-		idx := strings.Index(body[i:], token)
-		if idx < 0 {
-			break
-		}
-		end := i + idx + len(token)
-		if end >= len(body) || body[end] < '0' || body[end] > '9' {
-			hits++
-		}
-		i = end
-	}
-
-	return hits
+	return CountUnguardedTokenHits(body, token)
 }
 
 // assertGuardedNeighborPreserved locks the negative-lookahead guard:
@@ -241,24 +230,12 @@ func renderUnguardedHitContext(body, token string) string {
 }
 
 // unguardedHitOffsets returns every byte offset where token appears
-// in body without a digit immediately after it (mirrors the rewriter
-// guard, same predicate as countUnguardedHits).
+// without a digit immediately after it. Delegates to the production
+// scanner so the test's "where did the rewriter miss" diagnostic and
+// the rewriter's actual substitution decision use byte-identical
+// predicates. See fixrepo_rewrite_scan.go.
 func unguardedHitOffsets(body, token string) []int {
-	var hits []int
-	for i := 0; i+len(token) <= len(body); {
-		idx := strings.Index(body[i:], token)
-		if idx < 0 {
-			break
-		}
-		start := i + idx
-		end := start + len(token)
-		if end >= len(body) || body[end] < '0' || body[end] > '9' {
-			hits = append(hits, start)
-		}
-		i = end
-	}
-
-	return hits
+	return ScanUnguardedTokenHits(body, token)
 }
 
 // lineAtOffset returns the 1-based line number, 1-based column, and
