@@ -1,4 +1,4 @@
-.PHONY: lint vet test build clean setup vulncheck all release release-dry changelog changelog-check goldens-regen goldens-verify
+.PHONY: lint vet test build clean setup vulncheck all release release-dry changelog changelog-check goldens-regen goldens-verify fixtures-bump fixtures-bump-verify
 
 GO       := go
 LINT     := golangci-lint
@@ -95,4 +95,38 @@ goldens-verify:
 	fi
 	@echo "▸ Verifying goldens (no env gates): pattern=$(RUN) pkg=$(PKG)"
 	@cd $(MODULE) && unset GITMAP_UPDATE_GOLDEN GITMAP_ALLOW_GOLDEN_UPDATE && \
+		$(GO) test $(PKG) -run '$(RUN)' -count=1 -v
+
+## Fixtures-bump — re-run a test with GITMAP_FIXTURE_AUTOBUMP=1 so any
+## test using fixtureversion.MustValidateBodyWithAutobump auto-rewrites
+## its stale `// fixture-stamp:` marker in source. Pure no-op for tests
+## that are not stale or do not opt in. Always followed up with a
+## clean re-run via fixtures-bump-verify so a non-deterministic bump
+## cannot land silently.
+## REQUIRES RUN=<pattern>. PKG defaults to ./... — narrow it for speed.
+## Usage:
+##   make fixtures-bump RUN=TestFixRepoRewriteV9ToV12Fixture PKG=./cmd/...
+fixtures-bump:
+	@if [ -z "$(RUN)" ]; then \
+		echo "ERROR: RUN=<test pattern> is required (e.g. make fixtures-bump RUN=TestFooFixture)"; \
+		exit 2; \
+	fi
+	@echo "▸ Auto-bumping fixture stamps: pattern=$(RUN) pkg=$(PKG)"
+	@cd $(MODULE) && GITMAP_FIXTURE_AUTOBUMP=1 \
+		$(GO) test $(PKG) -run '$(RUN)' -count=1 -v || true
+	@$(MAKE) fixtures-bump-verify RUN='$(RUN)' PKG='$(PKG)'
+
+## Fixtures-bump-verify — re-run the same pattern WITHOUT the autobump
+## env gate to confirm the rewritten fixtures pass cleanly. Mandatory
+## second pass (mirrors goldens-verify): if it fails, the rewriter or
+## the test logic still disagrees and a human must intervene.
+## Usage:
+##   make fixtures-bump-verify RUN=TestFooFixture
+fixtures-bump-verify:
+	@if [ -z "$(RUN)" ]; then \
+		echo "ERROR: RUN=<test pattern> is required"; \
+		exit 2; \
+	fi
+	@echo "▸ Verifying bumped fixtures (no autobump gate): pattern=$(RUN) pkg=$(PKG)"
+	@cd $(MODULE) && unset GITMAP_FIXTURE_AUTOBUMP && \
 		$(GO) test $(PKG) -run '$(RUN)' -count=1 -v

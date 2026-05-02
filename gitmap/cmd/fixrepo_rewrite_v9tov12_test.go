@@ -57,13 +57,15 @@ func TestFixRepoRewriteV9ToV12Fixture(t *testing.T) {
 		current = 12
 	)
 	// Fail fast if the embedded fixture is stale relative to what
-	// this test expects. Bump generation here AND in the marker
-	// above when intentionally regenerating the fixture.
-	fixtureversion.MustValidateBody(t, fixRepoV9ToV12FixtureBody,
+	// this test expects. Under `make fixtures-bump` the marker is
+	// rewritten in this very source file automatically; otherwise
+	// this t.Fatals with an actionable regenerate recipe.
+	fixtureversion.MustValidateBodyWithAutobump(t, fixRepoV9ToV12FixtureBody,
+		"fixrepo_rewrite_v9tov12_test.go",
 		fixtureversion.Expectation{
 			MinGeneration:    1,
 			CurrentVersion:   current,
-			RegenerateRecipe: "edit fixRepoV9ToV12FixtureBody and bump generation= in its // fixture-stamp: marker",
+			RegenerateRecipe: "run `make fixtures-bump RUN=TestFixRepoRewriteV9ToV12Fixture` (or hand-edit the // fixture-stamp: marker)",
 		})
 	path := writeV9Fixture(t)
 

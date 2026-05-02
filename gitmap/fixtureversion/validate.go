@@ -68,3 +68,50 @@ func MustValidateBody(t *testing.T, body string, want Expectation) Stamp {
 
 	return stamp
 }
+
+// MustValidateBodyWithAutobump is a drop-in upgrade of
+// MustValidateBody that, when the FixtureAutoBumpEnv gate is set,
+// rewrites sourcePath in place to satisfy want.MinGeneration before
+// failing. Use it from tests whose fixture body lives as a string
+// literal in a Go source file (the common case): pass the path of
+// that .go file as sourcePath and a stale fixture becomes a
+// self-healing condition under `make fixtures-bump`.
+//
+// Without the env gate this behaves identically to MustValidateBody
+// — there is zero risk of accidental source mutation in CI / local
+// `go test` runs.
+func MustValidateBodyWithAutobump(t *testing.T, body, sourcePath string, want Expectation) Stamp {
+	t.Helper()
+	stamp, ok := ParseMarker(body)
+	if !ok {
+		t.Fatalf("fixture is unstamped or marker malformed: add %q as the first line",
+			Marker(Stamp{Name: "<name>", Generation: 1, MinCurrent: want.CurrentVersion}))
+	}
+	if err := Validate(stamp, want); err == nil {
+		return stamp
+	}
+	if !tryAutobumpAndReport(t, stamp, sourcePath, want) {
+		t.Fatal(Validate(stamp, want))
+	}
+
+	return stamp
+}
+
+// tryAutobumpAndReport runs MaybeAutoBumpFile and logs the outcome.
+// Returns true when an autobump was actually applied (caller should
+// treat the test as passing for this run since the rewrite landed).
+func tryAutobumpAndReport(t *testing.T, stamp Stamp, sourcePath string, want Expectation) bool {
+	t.Helper()
+	newGen := NextGeneration(stamp, want)
+	bumped, err := MaybeAutoBumpFile(sourcePath, BumpRequest{NewGeneration: newGen})
+	if err != nil {
+		t.Fatalf("autobump attempt failed: %v", err)
+	}
+	if !bumped {
+		return false
+	}
+	t.Log(FormatBumpSummary(sourcePath, stamp.Generation, newGen))
+	t.Log("re-run the test without GITMAP_FIXTURE_AUTOBUMP=1 to confirm the bumped fixture passes")
+
+	return true
+}
