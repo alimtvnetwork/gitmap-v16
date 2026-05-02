@@ -295,6 +295,20 @@ const (
 	FlagScanWorkers     = "workers"
 	FlagDescScanWorkers = "Worker pool size for scan (0 = auto, capped at 16)"
 	DefaultScanWorkers  = 0
+	// FlagScanWorkersConcurrencyAlias is the deprecated long-form
+	// spelling kept for muscle-memory compatibility. Mirrors the
+	// --probe-workers / --probe-concurrency precedent in
+	// constants_probe.go: --workers stays canonical; --concurrency
+	// is honored but emits a one-line stderr deprecation notice.
+	// When BOTH are passed, --workers wins (explicit canonical
+	// flag overrides the deprecated alias) without a warning.
+	FlagScanWorkersConcurrencyAlias     = "concurrency"
+	FlagDescScanWorkersConcurrencyAlias = "(deprecated, use --workers) Worker pool size for scan (0 = auto, capped at 16)"
+	// MsgScanWorkersConcurrencyAlias is printed to os.Stderr when
+	// the deprecated --concurrency flag is used. Single-line,
+	// prefixed with two-space + middle-dot to match the rest of
+	// gitmap's stderr advisory format (see MsgScanProbeConcurrencyAlias).
+	MsgScanWorkersConcurrencyAlias = "  · --concurrency is deprecated; use --workers instead\n"
 	// FlagScanRelativeRoot lets the user pin the base path used to compute
 	// each repo's RelativePath in the output (CSV/JSON/text/structure/
 	// clone scripts). Without it, RelativePath is derived from the scan

@@ -60,6 +60,8 @@ func parseScanFlags(args []string) (dir, configPath, mode, output, outFile, outp
 	noVSCodeSyncFlag := fs.Bool(constants.FlagNoVSCodeSync, false, constants.FlagDescNoVSCodeSync)
 	noAutoTagsFlag := fs.Bool(constants.FlagNoAutoTags, false, constants.FlagDescNoAutoTags)
 	workersFlag := fs.Int(constants.FlagScanWorkers, constants.DefaultScanWorkers, constants.FlagDescScanWorkers)
+	concurrencyFlag := fs.Int(constants.FlagScanWorkersConcurrencyAlias,
+		constants.DefaultScanWorkers, constants.FlagDescScanWorkersConcurrencyAlias)
 	maxDepthFlag := fs.Int(constants.FlagScanMaxDepth, constants.DefaultScanMaxDepth, constants.FlagDescScanMaxDepth)
 	reportErrFlag := fs.Bool(constants.FlagScanReportErrors, false, constants.FlagDescScanReportErrors)
 	noProbeFlag := fs.Bool(constants.ScanProbeFlagDisable, false, constants.FlagDescScanProbeDisable)
@@ -75,12 +77,30 @@ func parseScanFlags(args []string) (dir, configPath, mode, output, outFile, outp
 	dir = resolveScanDir(fs)
 	probeOpts = resolveScanProbeOptions(fs, noProbeFlag, noProbeWaitFlag,
 		probeConcFlag, probeWorkersFlag, probeDepthFlag)
+	resolvedWorkers := resolveScanWorkers(fs, workersFlag, concurrencyFlag)
 	resolvedOutputPath := *outputPathFlag
 	if resolvedOutputPath == "" && *manifestFlag != "" {
 		resolvedOutputPath = *manifestFlag
 	}
 
-	return dir, *cfgFlag, *modeFlag, *outputFlag, *outFileFlag, resolvedOutputPath, *relRootFlag, *defaultBranchFlag, *ghDesktopFlag, *openFlag, *quietFlag, *noVSCodeSyncFlag, *noAutoTagsFlag, *reportErrFlag, *workersFlag, *maxDepthFlag, probeOpts
+	return dir, *cfgFlag, *modeFlag, *outputFlag, *outFileFlag, resolvedOutputPath, *relRootFlag, *defaultBranchFlag, *ghDesktopFlag, *openFlag, *quietFlag, *noVSCodeSyncFlag, *noAutoTagsFlag, *reportErrFlag, resolvedWorkers, *maxDepthFlag, probeOpts
+}
+
+// resolveScanWorkers reconciles --workers (canonical) against the
+// deprecated --concurrency alias. Canonical wins when both are set;
+// when only --concurrency is set we honor it and emit a one-line
+// stderr deprecation notice. Mirrors resolveScanProbeOptions for
+// the --probe-workers / --probe-concurrency pair.
+func resolveScanWorkers(fs *flag.FlagSet, workers, concurrency *int) int {
+	workersSet := wasFlagPassed(fs, constants.FlagScanWorkers)
+	concSet := wasFlagPassed(fs, constants.FlagScanWorkersConcurrencyAlias)
+	if !workersSet && concSet {
+		fmt.Fprint(os.Stderr, constants.MsgScanWorkersConcurrencyAlias)
+
+		return *concurrency
+	}
+
+	return *workers
 }
 
 // resolveScanProbeOptions reconciles the deprecated --probe-concurrency

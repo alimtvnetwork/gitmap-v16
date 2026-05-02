@@ -25,6 +25,7 @@ s
 | --no-vscode-sync | false | Skip syncing into VS Code Project Manager projects.json |
 | --no-auto-tags | false | Skip auto-derived tags (git/node/go/...) when syncing |
 | --workers \<n\> | 0 (auto) | Worker-pool size for the parallel directory walker. `0` picks `min(NumCPU, 16)`; explicit values are clamped into `[1, 16]` to stay under the per-process file-descriptor budget |
+| --concurrency \<n\> | — | Deprecated alias for `--workers`; emits a one-line stderr notice. When both are passed, `--workers` wins |
 | --relative-root \<dir\> | (scan dir) | Pin the base directory used to compute every output `RelativePath`. Makes CSV/JSON/text/structure/clone-script artifacts byte-stable across cwds. Repos outside the root keep the scanner-computed path and emit a stderr warning |
 | --max-depth \<n\> | 4 | Hard cap on directory levels descended below the scan root. Scan root = depth 0, its children = depth 1, etc. Default 4 keeps walks bounded on huge trees; pass `-1` for unlimited (legacy behavior). Repos found earlier still stop their own subtree |
 | --default-branch \<name\> | main | Fallback branch name when HEAD/remote-tracking detection finds nothing. Written into `ScanRecord.Branch` for repos where every live detection step (HEAD, remote-tracking, configured default) returned an empty value. The same flag is also accepted by `gitmap clone` to rebuild clone instructions for rows whose recorded Branch is empty / detached / unknown |
