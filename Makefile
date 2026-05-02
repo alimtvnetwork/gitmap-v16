@@ -104,6 +104,8 @@ goldens-verify:
 ## clean re-run via fixtures-bump-verify so a non-deterministic bump
 ## cannot land silently.
 ## REQUIRES RUN=<pattern>. PKG defaults to ./... — narrow it for speed.
+## Fails with exit code 3 if RUN matched zero tests — a typo in the
+## pattern would otherwise look like a successful no-op bump.
 ## Usage:
 ##   make fixtures-bump RUN=TestFixRepoRewriteV9ToV12Fixture PKG=./cmd/...
 fixtures-bump:
@@ -112,14 +114,24 @@ fixtures-bump:
 		exit 2; \
 	fi
 	@echo "▸ Auto-bumping fixture stamps: pattern=$(RUN) pkg=$(PKG)"
-	@cd $(MODULE) && GITMAP_FIXTURE_AUTOBUMP=1 \
-		$(GO) test $(PKG) -run '$(RUN)' -count=1 -v || true
+	@LOG=$$(mktemp); \
+		cd $(MODULE) && GITMAP_FIXTURE_AUTOBUMP=1 \
+		$(GO) test $(PKG) -run '$(RUN)' -count=1 -v 2>&1 | tee $$LOG; \
+		ran=$$(grep -c '^=== RUN  ' $$LOG || true); \
+		rm -f $$LOG; \
+		if [ "$$ran" -eq 0 ]; then \
+			echo "ERROR: RUN='$(RUN)' matched 0 tests in PKG='$(PKG)' — check the pattern (regex) and package path."; \
+			exit 3; \
+		fi; \
+		echo "▸ Autobump pass executed $$ran test(s)"
 	@$(MAKE) fixtures-bump-verify RUN='$(RUN)' PKG='$(PKG)'
 
 ## Fixtures-bump-verify — re-run the same pattern WITHOUT the autobump
 ## env gate to confirm the rewritten fixtures pass cleanly. Mandatory
 ## second pass (mirrors goldens-verify): if it fails, the rewriter or
 ## the test logic still disagrees and a human must intervene.
+## Also fails with exit code 3 if RUN matched zero tests, so a
+## stale or mistyped pattern cannot masquerade as a clean verify.
 ## Usage:
 ##   make fixtures-bump-verify RUN=TestFooFixture
 fixtures-bump-verify:
@@ -128,5 +140,15 @@ fixtures-bump-verify:
 		exit 2; \
 	fi
 	@echo "▸ Verifying bumped fixtures (no autobump gate): pattern=$(RUN) pkg=$(PKG)"
-	@cd $(MODULE) && unset GITMAP_FIXTURE_AUTOBUMP && \
-		$(GO) test $(PKG) -run '$(RUN)' -count=1 -v
+	@LOG=$$(mktemp); \
+		cd $(MODULE) && unset GITMAP_FIXTURE_AUTOBUMP && \
+		$(GO) test $(PKG) -run '$(RUN)' -count=1 -v 2>&1 | tee $$LOG; \
+		status=$${PIPESTATUS[0]}; \
+		ran=$$(grep -c '^=== RUN  ' $$LOG || true); \
+		rm -f $$LOG; \
+		if [ "$$status" -ne 0 ]; then exit $$status; fi; \
+		if [ "$$ran" -eq 0 ]; then \
+			echo "ERROR: RUN='$(RUN)' matched 0 tests in PKG='$(PKG)' during verify pass."; \
+			exit 3; \
+		fi; \
+		echo "▸ Verify pass executed $$ran test(s)"
