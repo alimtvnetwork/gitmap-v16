@@ -29,6 +29,17 @@ func setupFixtureRepo(t *testing.T, base string, current int) string {
 	mustGit(t, root, "clone", bare, work)
 	mustGit(t, work, "config", "user.email", "fix@repo.test")
 	mustGit(t, work, "config", "user.name", "FixRepo Test")
+	// fix-repo's identity resolver only accepts HTTPS / SSH remote
+	// URL shapes (see parseRemoteURL in cmd/fixrepo_identity.go) — a
+	// raw local-filesystem path triggers E_NO_REMOTE. Override the
+	// origin URL with a fake HTTPS one whose final path segment is
+	// `<base>-v<current>.git` so the resolver picks <current> as the
+	// canonical version, while git itself still pushes/fetches from
+	// the local bare repo we cloned from (we never actually run a
+	// network op — fix-repo only reads the URL string).
+	fakeURL := fmt.Sprintf("https://example.com/fixture/%s-v%d.git",
+		baseName(base), current)
+	mustGit(t, work, "remote", "set-url", "origin", fakeURL)
 	writeFixtureFiles(t, work, baseName(base))
 	mustGit(t, work, "add", "-A")
 	mustGit(t, work, "commit", "-m", "fixture")
