@@ -69,20 +69,24 @@ func TestRemoteSlugRegex(t *testing.T) {
 func TestPairsForTarget(t *testing.T) {
 	const target, current = 4, 9
 	got := pairsForTarget("gitmap", target, current)
+	// Diagnostic log: surfaces the actual returned values when CI
+	// reports a failure here. Cheap insurance against truncated
+	// failure logs that hide the assertion detail.
+	t.Logf("pairsForTarget(gitmap, %d, %d) = %+v", target, current, got)
 	if len(got) != 2 {
 		t.Fatalf("expected 2 pairs, got %d", len(got))
 	}
 	wantDashOld := fmt.Sprintf("gitmap-v%d", target)
 	wantDashNew := fmt.Sprintf("gitmap-v%d", current)
 	if got[0].old != wantDashOld || got[0].new != wantDashNew {
-		t.Errorf("dash form: got %+v, want {old:%q new:%q}",
-			got[0], wantDashOld, wantDashNew)
+		t.Errorf("dash form: got %+v, want {old:%q new:%q} (target=%d current=%d)",
+			got[0], wantDashOld, wantDashNew, target, current)
 	}
 	wantSlashOld := fmt.Sprintf("gitmap/v%d", target)
 	wantSlashNew := fmt.Sprintf("gitmap/v%d", current)
 	if got[1].old != wantSlashOld || got[1].new != wantSlashNew {
-		t.Errorf("slash form: got %+v, want {old:%q new:%q}",
-			got[1], wantSlashOld, wantSlashNew)
+		t.Errorf("slash form: got %+v, want {old:%q new:%q} (target=%d current=%d)",
+			got[1], wantSlashOld, wantSlashNew, target, current)
 	}
 }
 
