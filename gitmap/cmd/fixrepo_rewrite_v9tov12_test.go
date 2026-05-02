@@ -179,3 +179,99 @@ func assertRemoteSlugRegexAgrees(t *testing.T, base string, current int) {
 			bumpedSlug, m[1], m[2], base, wantNum)
 	}
 }
+
+// renderFixRepoFailureDiff produces a single multi-section diagnostic
+// block for any fix-repo rewrite assertion failure. CI logs only show
+// what is in the t.Errorf payload, so we pre-bake the most useful
+// signals: target/current versions, hit counts on both the fixture
+// and the rewritten output, every unguarded `-vN` match with a line
+// number + surrounding context, and the full rewritten file.
+func renderFixRepoFailureDiff(got, oldTok, newTok string, target, current int) string {
+	var b strings.Builder
+	fmt.Fprintf(&b, "  -- fix-repo rewrite diff (target=v%d -> current=v%d)\n",
+		target, current)
+	fmt.Fprintf(&b, "     old token        = %q\n", oldTok)
+	fmt.Fprintf(&b, "     new token        = %q\n", newTok)
+	fmt.Fprintf(&b, "     fixture unguarded %s = %d\n",
+		oldTok, countUnguardedHits(fixRepoV9ToV12FixtureBody, oldTok))
+	fmt.Fprintf(&b, "     output unguarded  %s = %d (want 0)\n",
+			oldTok, countUnguardedHits(got, oldTok))
+	fmt.Fprintf(&b, "     output occurrences of %s = %d\n",
+		newTok, strings.Count(got, newTok))
+	b.WriteString(renderUnguardedHitContext(got, oldTok))
+	b.WriteString("  -- rewritten file --\n")
+	b.WriteString(indentLines(got, "    "))
+
+	return b.String()
+}
+
+// renderUnguardedHitContext walks every unguarded occurrence of token
+// in body and emits a `line N: <line>` block per hit so the CI log
+// pinpoints exactly where the rewriter missed.
+func renderUnguardedHitContext(body, token string) string {
+	var b strings.Builder
+	hits := unguardedHitOffsets(body, token)
+	if len(hits) == 0 {
+		return ""
+	}
+	b.WriteString("  -- unguarded stale matches --\n")
+	for _, off := range hits {
+		line, col, text := lineAtOffset(body, off)
+		fmt.Fprintf(&b, "    line %d col %d: %s\n", line, col, text)
+	}
+
+	return b.String()
+}
+
+// unguardedHitOffsets returns every byte offset where token appears
+// in body without a digit immediately after it (mirrors the rewriter
+// guard, same predicate as countUnguardedHits).
+func unguardedHitOffsets(body, token string) []int {
+	var hits []int
+	for i := 0; i+len(token) <= len(body); {
+		idx := strings.Index(body[i:], token)
+		if idx < 0 {
+			break
+		}
+		start := i + idx
+		end := start + len(token)
+		if end >= len(body) || body[end] < '0' || body[end] > '9' {
+			hits = append(hits, start)
+		}
+		i = end
+	}
+
+	return hits
+}
+
+// lineAtOffset returns the 1-based line number, 1-based column, and
+// the line text containing byte offset off in body. Used to label
+// each stale-match site in the failure diff.
+func lineAtOffset(body string, off int) (int, int, string) {
+	if off < 0 || off > len(body) {
+		return 0, 0, ""
+	}
+	line := 1 + strings.Count(body[:off], "\n")
+	lineStart := strings.LastIndexByte(body[:off], '\n') + 1
+	lineEnd := lineStart + strings.IndexByte(body[lineStart:], '\n')
+	if lineEnd < lineStart {
+		lineEnd = len(body)
+	}
+
+	return line, off - lineStart + 1, body[lineStart:lineEnd]
+}
+
+// indentLines prefixes every line in s with prefix. Keeps the
+// rewritten-file dump visually distinct from the surrounding test
+// log so CI scrollback stays scannable.
+func indentLines(s, prefix string) string {
+	if s == "" {
+		return ""
+	}
+	lines := strings.Split(s, "\n")
+	for i, line := range lines {
+		lines[i] = prefix + line
+	}
+
+	return strings.Join(lines, "\n")
+}
