@@ -16,6 +16,14 @@ package cmd
 // clonetermblock_golden_test.go) but to pin the diff/report
 // behavior so a refactor of diffArgvTokens or the report format
 // fails loudly.
+//
+// Test-output hygiene (v4.13.0+): tests that intentionally drive a
+// divergent input MUST route the printer through
+// PrintCmdFaithfulReportForTest so the emitted "[FAIL]" lines are
+// bracketed by an "--- expected mismatch ---" banner. Without that
+// wrapper, a green `go test ./...` run prints lines that are byte-
+// indistinguishable from a real production verifier failure — which
+// has historically trained engineers to ignore "[FAIL]" in test logs.
 
 import (
 	"bytes"
@@ -78,12 +86,18 @@ func TestVerifyCmdFaithful_BranchDrift(t *testing.T) {
 			r.Mismatches)
 	}
 	var buf bytes.Buffer
-	if err := PrintCmdFaithfulReport(&buf, r); err != nil {
+	// Use the test-wrapping printer so the captured output is bounded
+	// by the "--- expected mismatch ---" banner — keeps go test logs
+	// from looking like a real verifier failure.
+	if err := PrintCmdFaithfulReportForTest(&buf, r); err != nil {
 		t.Fatalf("print: %v", err)
 	}
 	out := buf.String()
 	for _, want := range []string{
-		"MISMATCH for repo", "displayed:", "executed:", "--depth=1",
+		"--- expected mismatch", "[FAIL]", "verify-cmd-faithful: repo",
+		"divergence(s)", "displayed:", "executed:", "--depth=1",
+		"--verify-cmd-faithful-exit-on-mismatch",
+		"--- end expected mismatch ---",
 	} {
 		if !strings.Contains(out, want) {
 			t.Fatalf("report missing %q:\n%s", want, out)

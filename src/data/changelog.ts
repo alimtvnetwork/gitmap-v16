@@ -8,6 +8,21 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = [
   {
+    version: "v4.13.0",
+    date: "2026-05-02",
+    subtitle: "verify-cmd-faithful: clearer report banner + test-only `--- expected mismatch ---` wrapper so go-test logs no longer look like real failures",
+    items: [
+      "Refreshed the `--verify-cmd-faithful` mismatch report banner (in `gitmap/cmd/clonetermverify.go::PrintCmdFaithfulReport`). The previous one-line header `--verify-cmd-faithful: MISMATCH for <repo> (N divergence(s))` and 4-space-indented detail lines were grep-friendly but ambiguous — readers (and CI single-line scrapers) routinely asked \"is this actually a build failure or just a warning?\" because the banner answered neither severity nor exit-code policy inline.",
+      "New format prefixes EVERY emitted line with the severity tag `[FAIL]` and ends the header with the exit-code hint: `[FAIL] verify-cmd-faithful: <repo> — N divergence(s); displayed cmd: did not match executor argv (non-fatal unless --verify-cmd-faithful-exit-on-mismatch is set)`. Detail lines (`displayed:`, `executed:`, per-position `[#i reason]` rows) carry the same `[FAIL]` prefix, so a log scraped one line at a time still reads as a failure AND tells the reader which CLI flag would convert it into a non-zero exit. Stream choice is unchanged (stderr).",
+      "Added a test-only sibling printer `PrintCmdFaithfulReportForTest` (in new file `gitmap/cmd/clonetermverifytestbanner.go`) that brackets the report with two sentinel lines: `--- expected mismatch (test fixture; not a real failure) ---` and `--- end expected mismatch ---`. Tests that intentionally drive a divergent input (e.g. `TestVerifyCmdFaithful_BranchDrift`) MUST route through this wrapper. Without it, every successful `go test ./...` run printed `[FAIL]` lines that were byte-indistinguishable from a real production verifier failure, which historically trained engineers to skim past `[FAIL]` in test logs.",
+      "Updated `gitmap/cmd/clonetermverify_test.go::TestVerifyCmdFaithful_BranchDrift` to print via the wrapper and assert on the new banner words (`[FAIL]`, `verify-cmd-faithful: repo`, `divergence(s)`, the exit-flag hint, and both `--- expected mismatch ---` sentinels). The match-path test (`TestVerifyCmdFaithful_Match`) still uses the raw printer because its contract is \"silent on match\" (zero bytes) — wrapping that case would defeat the assertion.",
+      "Centralized the new strings in `gitmap/constants/constants_clone_term.go` per the no-magic-strings rule: `CmdFaithfulReportSeverityTag = \"[FAIL]\"`, `CmdFaithfulReportHeaderFmt`, `CmdFaithfulReportTestPrefix`, `CmdFaithfulReportTestSuffix`. Production `MsgCloneVerifyCmdFaithfulExit` (the run-tail one-liner used by `--verify-cmd-faithful-exit-on-mismatch`) is unchanged — its wording was already explicit about the FAIL state.",
+      "File-size discipline: split the test wrapper into its own file (`clonetermverifytestbanner.go`) so `clonetermverify.go` stays under the 200-line ceiling. Both files build off the shared `CmdFaithfulReport` type — no API surface change beyond the new exported `PrintCmdFaithfulReportForTest`.",
+      "Backwards-compat note: any external tool that grepped for the literal `MISMATCH for ` substring in stderr will need to switch to `verify-cmd-faithful:` or the `[FAIL]` tag. The integration goldens in `gitmap/cmd/testdata/clonestream_diag_*.stderr.golden` are unaffected because they exercise the silent-on-match path; no fixture regeneration was required.",
+      "Files: `gitmap/cmd/clonetermverify.go` (banner format rewrite + `[FAIL]` prefixing), `gitmap/cmd/clonetermverifytestbanner.go` (new — `PrintCmdFaithfulReportForTest`), `gitmap/cmd/clonetermverify_test.go` (updated assertions + file-header convention note), `gitmap/constants/constants_clone_term.go` (4 new constants), `src/constants/index.ts` (VERSION → v4.13.0), `src/data/changelog.ts` (this entry).",
+    ],
+  },
+  {
     version: "v4.12.0",
     date: "2026-05-01",
     subtitle: "Fix-repo tests: kill the v9→v10/v12 width-crossing digit-capture desync; assertions now derive expected tokens from inputs",
