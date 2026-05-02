@@ -3,7 +3,7 @@ package cmd
 // fixrepo_strict_packages_test.go — unit tests for the pure helper
 // that maps modified .go files to `go test` package patterns. Pure
 // (no I/O, no exec) so the table-driven cases are deterministic on
-// every OS. Production behaviour assertions:
+// every OS. Production behavior assertions:
 //
 //   1. Files at the repo root produce the literal "." pattern (NOT
 //      "./") because `go test .` is the canonical form for the root
