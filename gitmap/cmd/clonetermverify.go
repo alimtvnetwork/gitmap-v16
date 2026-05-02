@@ -181,4 +181,3 @@ func PrintCmdFaithfulReport(w io.Writer, r CmdFaithfulReport) error {
 
 	return nil
 }
-
