@@ -116,7 +116,7 @@ const (
 	// context is missing (e.g. log truncation, single-line scrapers).
 	// Paired with CmdFaithfulReportTestPrefix so test-emitted reports
 	// can be visually separated from production-emitted ones.
-	CmdFaithfulReportSeverityTag = "[FAIL]"
+	CmdFaithfulReportSeverityTag = "[FAIL]" // gitmap:cmd skip
 
 	// CmdFaithfulReportHeaderFmt is the multi-arg format string for
 	// the report banner. Order: severity tag, repo name, divergence
@@ -144,5 +144,5 @@ const (
 	// CmdFaithfulReportTestSuffix closes the test-fixture banner. Kept
 	// as a separate constant (vs. embedding both in one block) so
 	// callers can wrap multi-line content without string surgery.
-	CmdFaithfulReportTestSuffix = "--- end expected mismatch ---\n"
+	CmdFaithfulReportTestSuffix = "--- end expected mismatch ---\n" // gitmap:cmd skip
 )
