@@ -58,4 +58,4 @@ export const CommandScene: React.FC<Props> = ({ caption, cwd, lines }) => {
 
 // Per-scene duration including zoom-out tail
 export const sceneDurationFor = (lines: TerminalLine[]) =>
-  computeTerminalDuration(lines, 1.4, 6) + 60; // tail for read + zoom-out
+  Math.round(computeTerminalDuration(lines, 1.4, 6)) + 60; // tail for read + zoom-out
