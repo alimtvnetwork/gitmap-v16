@@ -1095,11 +1095,16 @@ function Main {
         if (-not $NoPath) {
             $pathResult = Add-ToPath $resolvedDir
 
-            # Also try Chocolatey refreshenv if available
-            $refreshCmd = Get-Command refreshenv -ErrorAction SilentlyContinue
-            if ($refreshCmd) {
-                try { refreshenv | Out-Null } catch {}
-            }
+            # NOTE: We intentionally do NOT call Chocolatey's `refreshenv` here.
+            # On Windows 11 24H2 / Server 2025 `wmic.exe` was removed from the
+            # OS, and older `refreshenv` implementations shell out to
+            # `wmic process get parentprocessid ...` which prints
+            #   'wmic' is not recognized as an internal or external command
+            # to the user's console. PowerShell `try/catch` cannot suppress
+            # native-stderr from a `cmd.exe` child, so the noise leaks
+            # through. `Rebuild-SessionPath` below already reads the
+            # Machine + User PATH from the registry, which is exactly what
+            # `refreshenv` would have done -- so the call is redundant.
 
             # Force-rebuild $env:PATH in this scope so gitmap is usable immediately
             $script:NewPath = Rebuild-SessionPath $resolvedDir
