@@ -13,6 +13,7 @@ import (
 	"github.com/alimtvnetwork/gitmap-v13/gitmap/desktop"
 	"github.com/alimtvnetwork/gitmap-v13/gitmap/model"
 	"github.com/alimtvnetwork/gitmap-v13/gitmap/verbose"
+	"github.com/alimtvnetwork/gitmap-v13/gitmap/vscodepm"
 )
 
 // applySSHKey sets GIT_SSH_COMMAND if an SSH key name is provided.
@@ -77,14 +78,14 @@ func runClone(args []string) {
 	}
 
 	if isDirectURL(cf.Source) {
-		executeDirectClone(cf.Source, cf.FolderName, cf.GHDesktop, cf.NoReplace, cf.Output)
+		executeDirectClone(cf.Source, cf.FolderName, cf.GHDesktop, cf.NoReplace, cf.Output, cf.NoVSCodeSync)
 		maybeExitOnCmdFaithfulMismatch()
 
 		return
 	}
 
 	source := resolveCloneShorthand(cf.Source)
-	executeClone(source, cf.TargetDir, cf.SafePull, cf.GHDesktop, cf.MaxConcurrency, cf.DefaultBranch)
+	executeClone(source, cf.TargetDir, cf.SafePull, cf.GHDesktop, cf.MaxConcurrency, cf.DefaultBranch, cf.NoVSCodeSync)
 	maybeExitOnCmdFaithfulMismatch()
 }
 
@@ -143,6 +144,7 @@ func runCloneMulti(cf CloneFlags) {
 
 	succeeded := 0
 	failed := 0
+	pmPairs := make([]vscodepm.Pair, 0, len(urls))
 
 	for idx, url := range urls {
 		fmt.Printf(constants.MsgCloneMultiItem, idx+1, len(urls), url)
@@ -161,11 +163,25 @@ func runCloneMulti(cf CloneFlags) {
 			continue
 		}
 		succeeded++
+		// Build a PM pair for the URL we just cloned. Mirrors the
+		// folder resolution executeDirectCloneOne uses internally so
+		// the absPath we hand to projects.json matches what landed
+		// on disk.
+		repoName := repoNameFromURL(url)
+		folder := resolveCloneFolder(repoName, "")
+		if abs, absErr := filepath.Abs(folder); absErr == nil {
+			pmPairs = append(pmPairs, buildClonePMPair(abs, repoName))
+		}
 	}
 
 	failed += len(invalid)
 
 	fmt.Printf(constants.MsgCloneSummaryMultiFmt, succeeded, failed, len(urls)+len(invalid))
+
+	// Single projects.json transaction for the whole batch. Soft-
+	// fails when VS Code or the extension is missing. Skipped when
+	// every per-URL clone failed (pmPairs is empty).
+	syncClonedReposToVSCodePM(pmPairs, cf.NoVSCodeSync)
 
 	if failed > 0 {
 		os.Exit(constants.ExitCloneMultiPartialFail)
@@ -213,7 +229,11 @@ func repoNameFromURL(url string) string {
 // By default, an existing target folder is replaced via the two-strategy
 // flow in spec/01-app/96-clone-replace-existing-folder.md. Pass noReplace=true
 // to restore the strict abort-on-exists behavior.
-func executeDirectClone(url, folderName string, ghDesktopFlag, noReplace bool, output string) {
+//
+// noVSCodeSync, when true, skips the post-clone update of the
+// alefragnani.project-manager projects.json file. See
+// spec/01-vscode-project-manager-sync/02-clone-sync.md.
+func executeDirectClone(url, folderName string, ghDesktopFlag, noReplace bool, output string, noVSCodeSync bool) {
 	repoName := repoNameFromURL(url)
 	if len(folderName) == 0 {
 		parsed := clonenext.ParseRepoName(repoName)
@@ -295,6 +315,11 @@ func executeDirectClone(url, folderName string, ghDesktopFlag, noReplace bool, o
 
 	// Open in VS Code if available.
 	openInVSCode(absPath)
+
+	// VS Code Project Manager: register the freshly-cloned repo so
+	// it appears in the sidebar without a separate `gitmap code`
+	// step. Soft-fails when VS Code or the extension is missing.
+	syncSingleClonedRepoToVSCodePM(absPath, repoName, noVSCodeSync)
 
 	completePendingTask(taskDB, taskID)
 }
@@ -391,7 +416,7 @@ func validateShorthandPath(resolved string) string {
 // untrustworthy Branch / BranchSource. Non-empty rewrites those rows
 // in cloner.applyDefaultBranchFallback so they go through the
 // trusted `git clone -b <fallback>` path.
-func executeClone(source, targetDir string, safePull, ghDesktop bool, maxConcurrency int, defaultBranch string) {
+func executeClone(source, targetDir string, safePull, ghDesktop bool, maxConcurrency int, defaultBranch string, noVSCodeSync bool) {
 	workers, ok := cloneconcurrency.Resolve(maxConcurrency)
 	if !ok {
 		fmt.Fprintf(os.Stderr, constants.ErrCloneMaxConcurrencyInvalid, maxConcurrency)
@@ -430,8 +455,37 @@ func executeClone(source, targetDir string, safePull, ghDesktop bool, maxConcurr
 	printCloneFailures(summary)
 	registerCloned(summary, targetDir, ghDesktop)
 
+	// VS Code Project Manager: build one pair per successfully
+	// cloned repo and run a single Sync. Mirrors registerCloned's
+	// abs-path resolution so projects.json points at the same path
+	// the GitHub Desktop registration uses.
+	syncManifestClonedReposToVSCodePM(summary, targetDir, noVSCodeSync)
+
 	// Mark clone task as completed after all steps succeed.
 	completePendingTask(taskDB, taskID)
+}
+
+// syncManifestClonedReposToVSCodePM converts a manifest-style
+// CloneSummary into VS Code Project Manager pairs and syncs them in
+// one shot. Skipped when summary has zero successes (avoids a noisy
+// "0 added, 0 updated" line).
+func syncManifestClonedReposToVSCodePM(summary model.CloneSummary, targetDir string, skip bool) {
+	if summary.Succeeded == 0 {
+		return
+	}
+
+	absTarget, err := filepath.Abs(targetDir)
+	if err != nil {
+		absTarget = targetDir
+	}
+
+	pairs := make([]vscodepm.Pair, 0, summary.Succeeded)
+	for _, r := range summary.Cloned {
+		abs := filepath.Join(absTarget, r.Record.RelativePath)
+		pairs = append(pairs, buildClonePMPair(abs, r.Record.RepoName))
+	}
+
+	syncClonedReposToVSCodePM(pairs, skip)
 }
 
 // printCloneFailures lists any repos that failed to clone.
