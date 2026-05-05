@@ -12,6 +12,7 @@ package cmd
 
 import (
 	"bytes"
+	"encoding/json"
 	"testing"
 
 	"github.com/alimtvnetwork/gitmap-v13/gitmap/model"
@@ -202,10 +203,12 @@ func TestListReleasesAllReposJSON_ByteCompatWithLegacyMarshalIndent(t *testing.T
 	}
 }
 
-// jsonMarshalIndentForTest is a thin wrapper kept local so the
-// contract file's import set is contained — the byte-compat tests
-// are the only place we still need encoding/json in this package
-// after migration.
+// jsonMarshalIndentForTest reproduces the EXACT call the legacy
+// printReleasesJSON used (`json.MarshalIndent(v, "", "  ")`) so the
+// byte-compat tests above pin the new encoder against that surface.
+// Kept inside the contract test file so the encoding/json import
+// only lives in test code — production listreleases.go is fully on
+// stablejson.
 func jsonMarshalIndentForTest(v any) ([]byte, error) {
-	return jsonMarshalIndent(v)
+	return json.MarshalIndent(v, "", "  ")
 }
