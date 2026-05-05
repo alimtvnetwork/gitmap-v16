@@ -1338,6 +1338,35 @@ extension (`.json` / `.csv` / `.txt`) or the shorthand keywords `json` /
 `csv` / `text`, so the `--output` format you chose at scan time is the
 format `clone` will read on the other side.
 
+#### `--no-vscode-sync` — opt out of VS Code Project Manager sync
+
+By default, every `gitmap` clone variant upserts each successfully-cloned
+repo into the alefragnani.project-manager `projects.json` so the new
+folder appears in VS Code's Project Manager sidebar immediately. Pass
+`--no-vscode-sync` on any clone command to skip that step (useful in CI,
+headless servers, or environments without VS Code installed):
+
+| Command | Sync target when default |
+|---------|--------------------------|
+| `gitmap clone <url>` | the single resolved folder |
+| `gitmap clone <json\|csv\|text>` | every repo that landed on disk (one batched pass) |
+| `gitmap clone-next` (`cn`) | the freshly-flattened folder; batch mode covers every repo in the batch |
+| `gitmap clone-fix-repo` (`cfr`) / `clone-fix-repo-pub` (`cfrp`) | forwarded to the underlying clone step |
+| `gitmap clone-from` (`cf`) | every successfully-cloned row (no-op during dry-run) |
+| `gitmap clone-pick` (`cpk`) | the sparse-checkout destination |
+| `gitmap reclone` / `clone-now` (`cnow`) | every successfully re-cloned repo (no-op without `--execute`) |
+
+```bash
+gitmap clone https://github.com/acme/widget.git --no-vscode-sync
+gitmap cn v++ --no-vscode-sync
+gitmap clone-from repos.csv --execute --no-vscode-sync
+```
+
+When sync is skipped gitmap prints
+`• VS Code Project Manager sync skipped (--no-vscode-sync)`. When the
+VS Code extension directory is missing the sync is also a soft no-op (a
+warning is logged; exit code is unchanged).
+
 ---
 
 <div align="center">
