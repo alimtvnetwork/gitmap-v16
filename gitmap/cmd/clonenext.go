@@ -238,6 +238,12 @@ func runCloneNext(args []string) {
 	// Open in VS Code if available.
 	openInVSCode(targetPath)
 
+	// VS Code Project Manager: register the freshly-cloned (and
+	// flattened) repo so it appears in the sidebar without a
+	// separate `gitmap code` step. Soft-fails when VS Code or the
+	// extension is missing.
+	syncSingleClonedRepoToVSCodePM(targetPath, flattenedFolder, cnFlags.NoVSCodeSync)
+
 	if cnFlags.Force {
 		fmt.Printf(constants.MsgCNDone, flattenedFolder)
 	}
