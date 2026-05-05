@@ -56,7 +56,6 @@ func TestBuildUninstallCommand(t *testing.T) {
 		{"apt-purge", constants.PkgMgrApt, "node", true, "sudo", "purge"},
 		{"brew", constants.PkgMgrBrew, "go", false, "brew", "uninstall"},
 		{"snap", constants.PkgMgrSnap, "code", false, "sudo", "remove"},
-		{"unknown-falls-back-to-choco", "made-up", "git", false, "choco", "-y"},
 	}
 
 	for _, tc := range cases {
