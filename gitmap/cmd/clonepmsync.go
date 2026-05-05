@@ -77,6 +77,23 @@ func emitDebugPathsTrace(rawIn, cleaned, resolved string) {
 		rawIn, cleaned, resolved)
 }
 
+// applyDebugPathsEnv flips GITMAP_DEBUG_PATHS=1 for the current
+// process when the user passed --debug-paths to `gitmap clone`.
+// Setting an env var (instead of plumbing a bool through every
+// CloneFlags / ClonenextFlags / ClonefromFlags / ClonenowFlags /
+// ClonepickFlags struct + executor signature) means the seven
+// clone variants — and any future projects.json caller — inherit
+// the trace by virtue of routing through canonicalizePMPath. When
+// the flag is omitted we deliberately do NOT clear the env var so
+// CI runs that pre-set GITMAP_DEBUG_PATHS=1 keep their tracing.
+func applyDebugPathsEnv(isOn bool) {
+	if !isOn {
+		return
+	}
+
+	os.Setenv(constants.EnvDebugPaths, constants.EnvDebugPathsOn)
+}
+
 // buildClonePMPair wraps a single (absPath, repoName) into a
 // vscodepm.Pair with auto-detected tags. Auto-tags mirror what
 // `gitmap code` does so a cloned-then-scanned repo gets identical
