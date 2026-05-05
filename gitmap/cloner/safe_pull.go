@@ -20,7 +20,7 @@ var (
 )
 
 func cloneOrPullOne(rec model.ScanRecord, targetDir string, safePull bool) model.CloneResult {
-	dest := filepath.Join(targetDir, rec.RelativePath)
+	dest := filepath.Join(targetDir, model.CleanRelativePath(rec.RelativePath))
 	if safePull && isGitRepo(dest) {
 		return safePullRepo(rec, dest)
 	}

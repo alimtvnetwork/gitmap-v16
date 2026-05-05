@@ -72,8 +72,9 @@ func collectExistingDests(plan clonenow.Plan, cwd string) []string {
 
 			continue
 		}
-		if destPathExists(filepath.Join(base, r.RelativePath)) {
-			out = append(out, r.RelativePath)
+		cleaned := model.CleanRelativePath(r.RelativePath)
+		if destPathExists(filepath.Join(base, cleaned)) {
+			out = append(out, cleaned)
 		}
 	}
 

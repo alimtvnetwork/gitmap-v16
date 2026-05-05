@@ -481,7 +481,7 @@ func syncManifestClonedReposToVSCodePM(summary model.CloneSummary, targetDir str
 
 	pairs := make([]vscodepm.Pair, 0, summary.Succeeded)
 	for _, r := range summary.Cloned {
-		abs := filepath.Join(absTarget, r.Record.RelativePath)
+		abs := filepath.Join(absTarget, model.CleanRelativePath(r.Record.RelativePath))
 		pairs = append(pairs, buildClonePMPair(abs, r.Record.RepoName))
 	}
 
@@ -511,7 +511,7 @@ func registerCloned(s model.CloneSummary, targetDir string, enabled bool) {
 		}
 		records := make([]model.ScanRecord, 0, s.Succeeded)
 		for _, r := range s.Cloned {
-			r.Record.AbsolutePath = filepath.Join(absTarget, r.Record.RelativePath)
+			r.Record.AbsolutePath = filepath.Join(absTarget, model.CleanRelativePath(r.Record.RelativePath))
 			records = append(records, r.Record)
 		}
 		result := desktop.AddRepos(records)
