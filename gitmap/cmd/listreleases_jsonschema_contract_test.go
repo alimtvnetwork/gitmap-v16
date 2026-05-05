@@ -149,3 +149,63 @@ func TestListReleasesAllReposSchema_EmptyEncodesAsArray(t *testing.T) {
 		t.Fatalf("empty encoded as %q, want []", buf.Bytes())
 	}
 }
+
+// TestListReleasesJSON_ByteCompatWithLegacyMarshalIndent guards the
+// migration's headline promise: the new stablejson encoder produces
+// bytes IDENTICAL to the legacy json.MarshalIndent output the
+// command emitted before this PR. Any drift here means a downstream
+// consumer doing byte-level diffs (CI golden files, content-hash
+// caches) would see a spurious change. The legacy `\n` suffix
+// matches the old `fmt.Println(string(data))` framing.
+func TestListReleasesJSON_ByteCompatWithLegacyMarshalIndent(t *testing.T) {
+	rec := []model.ReleaseRecord{{
+		ID: 7, RepoID: 3, Version: "1.0.0", Tag: "v1.0.0",
+		Branch: "release-v1.0.0", SourceBranch: "main", CommitSha: "abc",
+		Changelog: "first", Notes: "n", IsLatest: true, Source: "repo",
+		CreatedAt: "2026-05-05T00:00:00Z",
+	}}
+	legacy, err := jsonMarshalIndentForTest(rec)
+	if err != nil {
+		t.Fatalf("legacy marshal: %v", err)
+	}
+	var got bytes.Buffer
+	if err := encodeListReleasesJSON(&got, rec); err != nil {
+		t.Fatalf("encode: %v", err)
+	}
+	if !bytes.Equal(append(legacy, '\n'), got.Bytes()) {
+		t.Fatalf("byte drift from legacy MarshalIndent:\n--- legacy ---\n%s\n--- new ---\n%s",
+			legacy, got.Bytes())
+	}
+}
+
+// TestListReleasesAllReposJSON_ByteCompatWithLegacyMarshalIndent
+// pins the same byte-equality guarantee for the joined --all-repos
+// view. PascalCase keys are part of the contract here.
+func TestListReleasesAllReposJSON_ByteCompatWithLegacyMarshalIndent(t *testing.T) {
+	rec := []store.ReleaseAcrossRepos{{
+		ReleaseID: 1, RepoID: 2, RepoSlug: "a/b", RepoPath: "/x",
+		Version: "1.0.0", Tag: "v1.0.0", Branch: "release-v1.0.0",
+		CommitSha: "abc", Source: "repo", IsLatest: true,
+		CreatedAt: "2026-05-05",
+	}}
+	legacy, err := jsonMarshalIndentForTest(rec)
+	if err != nil {
+		t.Fatalf("legacy marshal: %v", err)
+	}
+	var got bytes.Buffer
+	if err := encodeListReleasesAllReposJSON(&got, rec); err != nil {
+		t.Fatalf("encode: %v", err)
+	}
+	if !bytes.Equal(append(legacy, '\n'), got.Bytes()) {
+		t.Fatalf("byte drift from legacy MarshalIndent:\n--- legacy ---\n%s\n--- new ---\n%s",
+			legacy, got.Bytes())
+	}
+}
+
+// jsonMarshalIndentForTest is a thin wrapper kept local so the
+// contract file's import set is contained — the byte-compat tests
+// are the only place we still need encoding/json in this package
+// after migration.
+func jsonMarshalIndentForTest(v any) ([]byte, error) {
+	return jsonMarshalIndent(v)
+}
