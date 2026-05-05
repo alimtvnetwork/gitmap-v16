@@ -51,4 +51,4 @@
 - 🔲 Add `gitmap uninstall <tool>` command
 - 🔲 Enhanced `install --list` grouped by category with installed status
 - 🔲 Unit tests for task, env, and install commands
-- 🔲 Update `helptext/env.md` with `--shell` flag usage examples
+- ✅ Update `helptext/env.md` with `--shell` flag usage examples (added dedicated section + 4 examples + Unix-only note)
