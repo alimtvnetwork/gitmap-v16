@@ -54,6 +54,7 @@ const navItems = [
   { title: "Home", url: "/", icon: Home },
   { title: "Commands", url: "/commands", icon: BookOpen },
   { title: "scan (cmd)", url: "/scan-command", icon: Search },
+  { title: "Clone Overview", url: "/clone", icon: GitBranch },
   { title: "clone (cmd)", url: "/clone-command", icon: GitBranch },
   { title: "clone-next (cmd)", url: "/clone-next-command", icon: GitBranch },
   { title: "scan/clone flags", url: "/scan-clone-flags", icon: Flag },
