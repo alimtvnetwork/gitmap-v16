@@ -1,39 +1,13 @@
 package cmd
 
 import (
-	"bytes"
 	"flag"
 	"io"
-	"os"
 	"strings"
 	"testing"
 
 	"github.com/alimtvnetwork/gitmap-v13/gitmap/constants"
 )
-
-// captureStderr swaps os.Stderr for a pipe, runs fn, and returns
-// whatever fn wrote to the real stderr. Used to assert deprecation
-// notices land on stderr (not stdout) without polluting test output.
-func captureStderr(t *testing.T, fn func()) string {
-	t.Helper()
-	orig := os.Stderr
-	r, w, err := os.Pipe()
-	if err != nil {
-		t.Fatalf("pipe: %v", err)
-	}
-	os.Stderr = w
-	done := make(chan string, 1)
-	go func() {
-		var buf bytes.Buffer
-		_, _ = io.Copy(&buf, r)
-		done <- buf.String()
-	}()
-	fn()
-	_ = w.Close()
-	os.Stderr = orig
-
-	return <-done
-}
 
 // newScanWorkersFS builds a throwaway flag set wired to the same
 // names parseScanFlags uses, parses argv, and returns the pointers
