@@ -1671,6 +1671,27 @@ export const commands: CommandDef[] = [
   },
   {
     category: "tools",
+    name: "uninstall", alias: "un", description: "Remove a developer tool installed via `gitmap install`. Without a tool name, delegates to `gitmap self-uninstall` for removing the gitmap binary itself.",
+    usage: "gitmap uninstall <tool> [--dry-run] [--force] [--purge]",
+    flags: [
+      { flag: "--dry-run", description: "Print the package-manager uninstall command without running it" },
+      { flag: "--force", description: "Skip the y/N confirmation prompt and the 'not in DB' guard" },
+      { flag: "--purge", description: "Remove user/config data too (apt purge, choco -x); ignored on managers without a purge mode" },
+    ],
+    examples: [
+      { command: "gitmap uninstall vscode", description: "Prompt, then uninstall using the manager that originally installed it" },
+      { command: "gitmap un node --dry-run", description: "Preview the uninstall command (manager auto-detected)" },
+      { command: "gitmap uninstall python --force --purge", description: "No prompt, also remove user config (apt purge / choco -x)" },
+      { command: "gitmap uninstall --confirm --keep-data", description: "No tool name → shortcut for `gitmap self-uninstall`; flags pass through verbatim" },
+    ],
+    seeAlso: [
+      { name: "install", description: "Install a developer tool" },
+      { name: "self-uninstall", description: "Remove the gitmap binary itself" },
+      { name: "doctor", description: "Verify a tool was actually removed from PATH" },
+    ],
+  },
+  {
+    category: "tools",
     name: "pending", description: "List all pending tasks that have not yet completed successfully",
     usage: "gitmap pending",
     examples: [
