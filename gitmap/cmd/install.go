@@ -30,7 +30,7 @@ func runInstall(args []string) {
 	fs.Parse(reordered)
 
 	if list {
-		printInstallList()
+		printInstallListGrouped()
 
 		return
 	}
@@ -65,15 +65,6 @@ type installOptions struct {
 	DryRun  bool
 	Check   bool
 	Yes     bool
-}
-
-// printInstallList prints all supported tools.
-func printInstallList() {
-	fmt.Print(constants.MsgInstallListHeader)
-
-	for tool, desc := range constants.InstallToolDescriptions {
-		fmt.Printf(constants.MsgInstallListRow, tool, desc)
-	}
 }
 
 // validateToolName checks if the tool is supported.
