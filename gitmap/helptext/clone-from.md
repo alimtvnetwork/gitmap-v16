@@ -27,6 +27,7 @@ gitmap cf <file> --execute            # short alias
 | `--output <mode>` | `default` | Per-row format. `default` = legacy 4-line block. `terminal` = standardized branch/from/to/command block on **stdout**, streamed immediately before each row's `git clone`. Git's clone progress and the human summary stay on **stderr**. |
 | `--checkout <mode>` | `auto` | Default post-clone checkout behaviour. `auto` = legacy (git checks out the cloned branch / remote HEAD). `skip` = pass `--no-checkout` to `git clone` so no working tree is materialized. `force` = explicitly run `git checkout <branch>` after clone and **fail the row** if the branch is missing on the remote. Per-row `checkout` field in the input file overrides this global default. |
 | `--max-concurrency <N>` | 0 (auto = NumCPU) | Run up to N clones in parallel. `1` = sequential (monotonic `[i/N]` progress). `0` = auto. The on-disk dest layout is preserved at any N because every worker still uses each row's `dest` (or `DeriveDest(url)`) verbatim. |
+| `--no-vscode-sync` | off | Skip syncing every successfully-cloned row into VS Code Project Manager `projects.json`. Default is to sync once per batch (one entry per resolved `dest`). Has no effect during `--dry-run` (no clones happen). |
 | `--help` | off | Print this help and exit. |
 
 ## Output streams (`--output terminal`)
