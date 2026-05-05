@@ -63,6 +63,11 @@ type CloneNextFlags struct {
 	VerifyCmdFaithfulExitOnMismatch bool
 	// PrintCloneArgv dumps the executor argv to stderr.
 	PrintCloneArgv bool
+	// NoVSCodeSync suppresses the post-clone update of the
+	// alefragnani.project-manager projects.json file. Mirrors
+	// `gitmap scan --no-vscode-sync`. Default false. See
+	// spec/01-vscode-project-manager-sync/02-clone-sync.md.
+	NoVSCodeSync bool
 }
 
 // parseCloneNextFlags parses flags for the clone-next command.
@@ -98,6 +103,8 @@ func parseCloneNextFlags(args []string) CloneNextFlags {
 		false, constants.FlagDescCloneVerifyCmdFaithfulExitOnMismatch)
 	printArgvFlag := fs.Bool(constants.FlagClonePrintArgv, false,
 		constants.FlagDescClonePrintArgv)
+	noVSCodeSyncFlag := fs.Bool(constants.FlagNoVSCodeSync, false,
+		constants.FlagDescNoVSCodeSync)
 	// Reorder so flags placed AFTER the positional version (e.g.
 	// `gitmap cn v+1 -f`) are still recognized. Go's stdlib flag
 	// parser stops at the first non-flag arg, so without this the
@@ -128,6 +135,7 @@ func parseCloneNextFlags(args []string) CloneNextFlags {
 		VerifyCmdFaithful:               *verifyFlag,
 		VerifyCmdFaithfulExitOnMismatch: *verifyExitFlag,
 		PrintCloneArgv:                  *printArgvFlag,
+		NoVSCodeSync:                    *noVSCodeSyncFlag,
 	}
 	if fs.NArg() > 0 {
 		out.VersionArg = fs.Arg(0)

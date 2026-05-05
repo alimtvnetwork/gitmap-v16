@@ -20,11 +20,13 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 
 	"github.com/alimtvnetwork/gitmap-v13/gitmap/cliexit"
 	"github.com/alimtvnetwork/gitmap-v13/gitmap/cloneconcurrency"
 	"github.com/alimtvnetwork/gitmap-v13/gitmap/clonenow"
 	"github.com/alimtvnetwork/gitmap-v13/gitmap/constants"
+	"github.com/alimtvnetwork/gitmap-v13/gitmap/vscodepm"
 )
 
 // cloneNowFlags holds parsed CLI inputs. Grouped in a struct so
@@ -63,6 +65,11 @@ type cloneNowFlags struct {
 	verifyCmdFaithful               bool
 	verifyCmdFaithfulExitOnMismatch bool
 	printCloneArgv                  bool
+	// noVSCodeSync suppresses the post-clone update of the
+	// alefragnani.project-manager projects.json file. Mirrors
+	// `gitmap scan --no-vscode-sync`. Default false. See
+	// spec/01-vscode-project-manager-sync/02-clone-sync.md.
+	noVSCodeSync                    bool
 	maxConcurrency                  int
 }
 
@@ -131,6 +138,8 @@ func parseCloneNowFlags(args []string) cloneNowFlags {
 		constants.FlagDescCloneNowYes)
 	fs.BoolVar(&cfg.noSummary, constants.FlagCloneNowNoSummary, false,
 		constants.FlagDescCloneNowNoSummary)
+	fs.BoolVar(&cfg.noVSCodeSync, constants.FlagNoVSCodeSync, false,
+		constants.FlagDescNoVSCodeSync)
 	maxConcFlag := fs.Int(constants.CloneFlagMaxConcurrency,
 		constants.CloneDefaultMaxConcurrency, constants.FlagDescCloneMaxConcurrency)
 	reordered := reorderFlagsBeforeArgs(args)
@@ -220,6 +229,7 @@ func runCloneNowExecute(plan clonenow.Plan, cfg cloneNowFlags) {
 	if err := clonenow.RenderSummary(os.Stdout, results); err != nil {
 		cliexit.Reportf(constants.CmdCloneReclone, "render-summary", cfg.file, err)
 	}
+	syncCloneNowResultsToVSCodePM(results, cfg.noVSCodeSync)
 	os.Exit(cloneNowExitCode(results))
 }
 
@@ -235,4 +245,25 @@ func cloneNowExitCode(results []clonenow.Result) int {
 	}
 
 	return 0
+}
+
+// syncCloneNowResultsToVSCodePM filters status=ok rows and pushes
+// them into projects.json in one batched Sync.
+func syncCloneNowResultsToVSCodePM(results []clonenow.Result, skip bool) {
+	pairs := make([]vscodepm.Pair, 0, len(results))
+	for _, r := range results {
+		if r.Status != constants.CloneNowStatusOK {
+			continue
+		}
+		abs, err := filepath.Abs(r.Dest)
+		if err != nil {
+			abs = r.Dest
+		}
+		name := r.Row.RepoName
+		if name == "" {
+			name = filepath.Base(abs)
+		}
+		pairs = append(pairs, buildClonePMPair(abs, name))
+	}
+	syncClonedReposToVSCodePM(pairs, skip)
 }

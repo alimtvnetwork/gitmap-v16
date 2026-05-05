@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 
 	"github.com/alimtvnetwork/gitmap-v13/gitmap/cliexit"
 	"github.com/alimtvnetwork/gitmap-v13/gitmap/clonepick"
@@ -61,7 +62,7 @@ func runClonePick(args []string) {
 	if parsed.Output == constants.OutputTerminal {
 		printClonePickTermBlock(plan)
 	}
-	runClonePickExecute(plan)
+	runClonePickExecute(plan, parsed.NoVSCodeSync)
 }
 
 // clonePickParsed bundles every output of parseClonePickFlags so a
@@ -76,6 +77,11 @@ type clonePickParsed struct {
 	VerifyCmdFaithful               bool
 	VerifyCmdFaithfulExitOnMismatch bool
 	PrintCloneArgv                  bool
+	// NoVSCodeSync suppresses the post-clone update of the
+	// alefragnani.project-manager projects.json file. Mirrors
+	// `gitmap scan --no-vscode-sync`. Default false. See
+	// spec/01-vscode-project-manager-sync/02-clone-sync.md.
+	NoVSCodeSync bool
 }
 
 // parseClonePickFlags binds every clone-pick flag and extracts the
@@ -116,6 +122,8 @@ func parseClonePickFlags(args []string) clonePickParsed {
 		false, constants.FlagDescCloneVerifyCmdFaithfulExitOnMismatch)
 	printArgv := fs.Bool(constants.FlagClonePrintArgv, false,
 		constants.FlagDescClonePrintArgv)
+	noVSCodeSync := fs.Bool(constants.FlagNoVSCodeSync, false,
+		constants.FlagDescNoVSCodeSync)
 
 	reordered := reorderFlagsBeforeArgs(args)
 	fs.Parse(reordered)
@@ -137,12 +145,13 @@ func parseClonePickFlags(args []string) clonePickParsed {
 		VerifyCmdFaithful:               *verify,
 		VerifyCmdFaithfulExitOnMismatch: *verifyExit,
 		PrintCloneArgv:                  *printArgv,
+		NoVSCodeSync:                    *noVSCodeSync,
 	}
 }
 
 // runClonePickExecute opens the DB (best-effort), runs the
 // sparse-checkout, and translates the Result to an exit code.
-func runClonePickExecute(plan clonepick.Plan) {
+func runClonePickExecute(plan clonepick.Plan, noVSCodeSync bool) {
 	progress := io.Writer(os.Stderr)
 	if plan.Quiet {
 		progress = io.Discard
@@ -171,8 +180,32 @@ func runClonePickExecute(plan clonepick.Plan) {
 		os.Exit(1)
 	}
 
+	// VS Code Project Manager sync. Result.Detail carries the
+	// resolved destination path on success; fall back to the plan's
+	// DestDir when empty.
+	syncClonePickResultToVSCodePM(plan, result, noVSCodeSync)
+
 	if plan.DestDir != "." && plan.DestDir != "" {
 		WriteShellHandoff(result.Detail)
 	}
 	maybeExitOnCmdFaithfulMismatch()
+}
+
+// syncClonePickResultToVSCodePM registers a successful sparse-checkout
+// dest in projects.json. The pick name (when set) wins over the folder
+// basename so users see their alias in the Project Manager sidebar.
+func syncClonePickResultToVSCodePM(plan clonepick.Plan, result clonepick.Result, skip bool) {
+	dest := result.Detail
+	if dest == "" {
+		dest = plan.DestDir
+	}
+	abs, err := filepath.Abs(dest)
+	if err != nil {
+		abs = dest
+	}
+	name := plan.Name
+	if name == "" {
+		name = filepath.Base(abs)
+	}
+	syncSingleClonedRepoToVSCodePM(abs, name, skip)
 }

@@ -20,10 +20,12 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 
 	"github.com/alimtvnetwork/gitmap-v13/gitmap/cliexit"
 	"github.com/alimtvnetwork/gitmap-v13/gitmap/clonefrom"
 	"github.com/alimtvnetwork/gitmap-v13/gitmap/constants"
+	"github.com/alimtvnetwork/gitmap-v13/gitmap/vscodepm"
 )
 
 // cloneFromFlags holds parsed CLI inputs. Grouped in a struct
@@ -50,6 +52,11 @@ type cloneFromFlags struct {
 	verifyCmdFaithfulExitOnMismatch bool
 	// printCloneArgv dumps the executor argv to stderr.
 	printCloneArgv bool
+	// noVSCodeSync suppresses the post-clone update of the
+	// alefragnani.project-manager projects.json file. Mirrors
+	// `gitmap scan --no-vscode-sync`. Default false. See
+	// spec/01-vscode-project-manager-sync/02-clone-sync.md.
+	noVSCodeSync bool
 	// maxConcurrency is the resolved worker-pool size. The parser
 	// runs cloneconcurrency.Resolve so the value seen here is
 	// always >=1 (0=auto becomes NumCPU at parse time). Increasing
@@ -154,6 +161,7 @@ func runCloneFromExecute(plan clonefrom.Plan, cfg cloneFromFlags) {
 		results = clonefrom.ExecuteWithHooks(plan, "", progress, hook)
 	}
 	csvPath, jsonPath := writeCloneFromReports(results, cfg)
+	syncCloneFromResultsToVSCodePM(results, cfg.noVSCodeSync)
 	if cfg.output == constants.OutputTerminal {
 		if err := clonefrom.RenderSummaryTerminal(os.Stdout, results, csvPath, jsonPath); err != nil {
 			cliexit.Reportf(constants.CmdCloneFrom, "render-summary", csvPath, err)
@@ -180,4 +188,23 @@ func cloneFromExitCode(results []clonefrom.Result) int {
 	}
 
 	return 0
+}
+
+// syncCloneFromResultsToVSCodePM filters status=ok rows and pushes
+// them into projects.json in a single batched Sync. Mirrors the
+// pattern used by executeClone for manifest-style inputs.
+func syncCloneFromResultsToVSCodePM(results []clonefrom.Result, skip bool) {
+	pairs := make([]vscodepm.Pair, 0, len(results))
+	for _, r := range results {
+		if r.Status != constants.CloneFromStatusOK {
+			continue
+		}
+		abs, err := filepath.Abs(r.Dest)
+		if err != nil {
+			abs = r.Dest
+		}
+		name := filepath.Base(abs)
+		pairs = append(pairs, buildClonePMPair(abs, name))
+	}
+	syncClonedReposToVSCodePM(pairs, skip)
 }
