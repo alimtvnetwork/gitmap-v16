@@ -17,6 +17,7 @@ package cmd
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 
 	"github.com/alimtvnetwork/gitmap-v13/gitmap/constants"
@@ -52,10 +53,45 @@ func canonicalizePMPath(absPath string) string {
 
 	resolved, err := filepath.EvalSymlinks(cleaned)
 	if err != nil {
+		emitDebugPathsTrace(absPath, cleaned, cleaned)
+
 		return cleaned
 	}
 
+	emitDebugPathsTrace(absPath, cleaned, resolved)
+
 	return resolved
+}
+
+// emitDebugPathsTrace writes one stderr line per canonicalize call
+// when GITMAP_DEBUG_PATHS=1 is set in the process environment. The
+// CLI flag --debug-paths on `gitmap clone` flips the env var; CI
+// users can also set it directly. Soft no-op when the var is unset
+// so production runs pay zero cost beyond a single env lookup.
+func emitDebugPathsTrace(rawIn, cleaned, resolved string) {
+	if os.Getenv(constants.EnvDebugPaths) != constants.EnvDebugPathsOn {
+		return
+	}
+
+	fmt.Fprintf(os.Stderr, constants.MsgDebugPathsTrace,
+		rawIn, cleaned, resolved)
+}
+
+// applyDebugPathsEnv flips GITMAP_DEBUG_PATHS=1 for the current
+// process when the user passed --debug-paths to `gitmap clone`.
+// Setting an env var (instead of plumbing a bool through every
+// CloneFlags / ClonenextFlags / ClonefromFlags / ClonenowFlags /
+// ClonepickFlags struct + executor signature) means the seven
+// clone variants — and any future projects.json caller — inherit
+// the trace by virtue of routing through canonicalizePMPath. When
+// the flag is omitted we deliberately do NOT clear the env var so
+// CI runs that pre-set GITMAP_DEBUG_PATHS=1 keep their tracing.
+func applyDebugPathsEnv(isOn bool) {
+	if !isOn {
+		return
+	}
+
+	os.Setenv(constants.EnvDebugPaths, constants.EnvDebugPathsOn)
 }
 
 // buildClonePMPair wraps a single (absPath, repoName) into a

@@ -389,3 +389,15 @@ const (
 	FlagDescConfirm       = "Confirm destructive operation"
 	FlagDescSource        = "Filter by source: release or import"
 )
+
+// FlagDebugPaths exposes the canonicalize-path tracer used by the
+// VS Code Project Manager sync helper. When set on `gitmap clone`,
+// the flag exports GITMAP_DEBUG_PATHS=1 for the current process so
+// every clone variant that routes through canonicalizePMPath emits
+// a one-line stderr trace of (raw → cleaned → resolved) rootPaths.
+// Diagnostic-only — Windows 8.3 short-name and symlink resolution is
+// the primary debugging target. Off by default.
+const (
+	FlagDebugPaths     = "debug-paths"
+	FlagDescDebugPaths = "trace VS Code Project Manager sync rootPath canonicalization (raw → cleaned → resolved) to stderr; useful for diagnosing Windows 8.3 short-name and symlink dedup"
+)
