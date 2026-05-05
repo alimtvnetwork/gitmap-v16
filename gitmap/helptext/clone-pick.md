@@ -41,6 +41,14 @@ cpk
 | `--output <mode>` | (off) | `terminal` prints the standardized branch/from/to/command block on **stdout** before the clone runs. Git progress + the saved-selection line stay on **stderr**. Empty keeps legacy output. |
 | `--no-vscode-sync` | false | Skip syncing the sparse-checkout destination into VS Code Project Manager `projects.json`. Default is to sync after a successful checkout. The DB-side selection record is written either way. |
 
+The sparse-checkout destination written to `projects.json` is
+canonicalized via `filepath.Clean` + `filepath.EvalSymlinks` (Windows
+8.3 short names + symlinks → canonical long form). On
+`EvalSymlinks` failure the cleaned absolute path is used — the
+sparse checkout never fails over a path-resolution issue. See
+`gitmap clone --help` "Windows path canonicalization &
+EvalSymlinks soft-fail" for the full rule set.
+
 ## Examples
 
 ### Example 1: pick a single folder

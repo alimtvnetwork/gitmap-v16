@@ -124,6 +124,15 @@ populated tree is impossible without explicit confirmation.
 | `--max-concurrency` | auto | Worker count for parallel re-clones. `0` = `runtime.NumCPU()`, `1` = sequential. |
 | `--no-vscode-sync` | off | Skip syncing every successfully re-cloned repo into VS Code Project Manager `projects.json`. Default is to sync once per batch (one entry per resolved destination). Has no effect during dry-run (no `--execute`). Honored identically by the `clone-now` / `cnow` aliases. |
 
+Per-row destinations are canonicalized via `filepath.Clean` +
+`filepath.EvalSymlinks` (Windows 8.3 short names + symlinks → long
+form). Manifest `RelativePath` joins go through
+`model.CleanRelativePath` so a row authored on POSIX produces an
+identical `AbsolutePath` on Windows. `EvalSymlinks` failures soft-
+fail to the cleaned absolute path; the re-clone never errors over a
+resolution issue. Full rules: `gitmap clone --help` "Windows path
+canonicalization & EvalSymlinks soft-fail".
+
 ## Aliases
 
 `reclone` is the canonical name. The following spellings dispatch to
