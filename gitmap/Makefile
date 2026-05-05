@@ -1,4 +1,4 @@
-.PHONY: build run test update no-pull no-deploy clean help generate
+.PHONY: build run test update no-pull no-deploy clean help generate cross cross-startup
 
 SHELL := /bin/bash
 
@@ -40,3 +40,54 @@ no-deploy: generate ## Build without deploying
 clean: ## Remove build artifacts
 	@rm -rf bin/
 	@echo "Build artifacts removed."
+
+# Cross-platform compilation matrix. Mirrors the targets in
+# .github/workflows/cross-platform.yml + startup-build-tags.yml so a
+# single local command catches build-tag leaks (e.g. the historic
+# startup/win*.go regression where an untagged dispatcher referenced
+# a Windows-only symbol with no `_other.go` stub).
+#
+# Uses `go build` (not `go vet`) so every referenced symbol must
+# resolve on the target OS — vet skips files excluded by build tags
+# and would silently miss the leak class. CGO_ENABLED=0 matches the
+# release pipeline's static-link contract.
+#
+# Matrix: 6 targets (windows/linux/darwin × amd64/arm64), same as
+# spec/01-app/42-cross-platform.md. Compile-only test pass
+# (`go test -count=0`) catches symbol leaks in *_test.go files too.
+#
+# Runs sequentially (not parallel) so failures attribute cleanly to
+# the offending GOOS/GOARCH pair without interleaved output.
+CROSS_TARGETS := \
+	windows/amd64 windows/arm64 \
+	linux/amd64   linux/arm64 \
+	darwin/amd64  darwin/arm64
+
+cross: generate ## Cross-compile all 6 GOOS/GOARCH targets (build + test-compile)
+	@set -e; \
+	failed=""; \
+	for target in $(CROSS_TARGETS); do \
+		os=$${target%/*}; arch=$${target#*/}; \
+		printf "\033[36m==> %s/%s\033[0m\n" "$$os" "$$arch"; \
+		if ! CGO_ENABLED=0 GOOS=$$os GOARCH=$$arch go build ./...; then \
+			failed="$$failed $$os/$$arch(build)"; continue; \
+		fi; \
+		if ! CGO_ENABLED=0 GOOS=$$os GOARCH=$$arch go test -count=0 ./...; then \
+			failed="$$failed $$os/$$arch(test-compile)"; continue; \
+		fi; \
+		printf "    \033[32mok\033[0m\n"; \
+	done; \
+	if [ -n "$$failed" ]; then \
+		printf "\n\033[31m✗ cross-compile failed:\033[0m%s\n" "$$failed" >&2; \
+		exit 1; \
+	fi; \
+	printf "\n\033[32m✓ all 6 GOOS/GOARCH targets compiled cleanly\033[0m\n"
+
+cross-startup: ## Cross-compile only the startup package (fast build-tag guard)
+	@set -e; \
+	for os in linux darwin windows; do \
+		printf "\033[36m==> startup / GOOS=%s\033[0m\n" "$$os"; \
+		CGO_ENABLED=0 GOOS=$$os GOARCH=amd64 go build ./startup/...; \
+		CGO_ENABLED=0 GOOS=$$os GOARCH=amd64 go test -count=0 ./startup/...; \
+	done; \
+	printf "\n\033[32m✓ startup package builds cleanly on all 3 OSes\033[0m\n"
