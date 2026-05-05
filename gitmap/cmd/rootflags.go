@@ -233,7 +233,11 @@ func parseCloneFlags(args []string) CloneFlags {
 		constants.FlagDescClonePrintArgv)
 	noVSCodeSyncFlag := fs.Bool(constants.FlagNoVSCodeSync, false,
 		constants.FlagDescNoVSCodeSync)
+	debugPathsFlag := fs.Bool(constants.FlagDebugPaths, false,
+		constants.FlagDescDebugPaths)
 	fs.Parse(args)
+
+	applyDebugPathsEnv(*debugPathsFlag)
 
 	return CloneFlags{
 		Source:                          resolveCloneSource(fs),

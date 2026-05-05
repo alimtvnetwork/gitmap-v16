@@ -17,6 +17,7 @@ package cmd
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 
 	"github.com/alimtvnetwork/gitmap-v13/gitmap/constants"
@@ -52,10 +53,28 @@ func canonicalizePMPath(absPath string) string {
 
 	resolved, err := filepath.EvalSymlinks(cleaned)
 	if err != nil {
+		emitDebugPathsTrace(absPath, cleaned, cleaned)
+
 		return cleaned
 	}
 
+	emitDebugPathsTrace(absPath, cleaned, resolved)
+
 	return resolved
+}
+
+// emitDebugPathsTrace writes one stderr line per canonicalize call
+// when GITMAP_DEBUG_PATHS=1 is set in the process environment. The
+// CLI flag --debug-paths on `gitmap clone` flips the env var; CI
+// users can also set it directly. Soft no-op when the var is unset
+// so production runs pay zero cost beyond a single env lookup.
+func emitDebugPathsTrace(rawIn, cleaned, resolved string) {
+	if os.Getenv(constants.EnvDebugPaths) != constants.EnvDebugPathsOn {
+		return
+	}
+
+	fmt.Fprintf(os.Stderr, constants.MsgDebugPathsTrace,
+		rawIn, cleaned, resolved)
 }
 
 // buildClonePMPair wraps a single (absPath, repoName) into a
