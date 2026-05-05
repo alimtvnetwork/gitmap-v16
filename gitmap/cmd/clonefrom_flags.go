@@ -78,6 +78,8 @@ func bindCloneFromFlags(fs *flag.FlagSet, cfg *cloneFromFlags) *int {
 		constants.FlagDescCloneFromCheckout)
 	fs.StringVar(&cfg.emitSchema, constants.FlagCloneFromEmitSchema, "",
 		constants.FlagDescCloneFromEmitSchema)
+	fs.BoolVar(&cfg.noVSCodeSync, constants.FlagNoVSCodeSync, false,
+		constants.FlagDescNoVSCodeSync)
 
 	return fs.Int(constants.CloneFlagMaxConcurrency,
 		constants.CloneDefaultMaxConcurrency, constants.FlagDescCloneMaxConcurrency)

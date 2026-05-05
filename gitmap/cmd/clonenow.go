@@ -63,6 +63,11 @@ type cloneNowFlags struct {
 	verifyCmdFaithful               bool
 	verifyCmdFaithfulExitOnMismatch bool
 	printCloneArgv                  bool
+	// noVSCodeSync suppresses the post-clone update of the
+	// alefragnani.project-manager projects.json file. Mirrors
+	// `gitmap scan --no-vscode-sync`. Default false. See
+	// spec/01-vscode-project-manager-sync/02-clone-sync.md.
+	noVSCodeSync                    bool
 	maxConcurrency                  int
 }
 
@@ -131,6 +136,8 @@ func parseCloneNowFlags(args []string) cloneNowFlags {
 		constants.FlagDescCloneNowYes)
 	fs.BoolVar(&cfg.noSummary, constants.FlagCloneNowNoSummary, false,
 		constants.FlagDescCloneNowNoSummary)
+	fs.BoolVar(&cfg.noVSCodeSync, constants.FlagNoVSCodeSync, false,
+		constants.FlagDescNoVSCodeSync)
 	maxConcFlag := fs.Int(constants.CloneFlagMaxConcurrency,
 		constants.CloneDefaultMaxConcurrency, constants.FlagDescCloneMaxConcurrency)
 	reordered := reorderFlagsBeforeArgs(args)

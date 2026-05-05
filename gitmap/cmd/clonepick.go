@@ -76,6 +76,11 @@ type clonePickParsed struct {
 	VerifyCmdFaithful               bool
 	VerifyCmdFaithfulExitOnMismatch bool
 	PrintCloneArgv                  bool
+	// NoVSCodeSync suppresses the post-clone update of the
+	// alefragnani.project-manager projects.json file. Mirrors
+	// `gitmap scan --no-vscode-sync`. Default false. See
+	// spec/01-vscode-project-manager-sync/02-clone-sync.md.
+	NoVSCodeSync bool
 }
 
 // parseClonePickFlags binds every clone-pick flag and extracts the
@@ -116,6 +121,8 @@ func parseClonePickFlags(args []string) clonePickParsed {
 		false, constants.FlagDescCloneVerifyCmdFaithfulExitOnMismatch)
 	printArgv := fs.Bool(constants.FlagClonePrintArgv, false,
 		constants.FlagDescClonePrintArgv)
+	noVSCodeSync := fs.Bool(constants.FlagNoVSCodeSync, false,
+		constants.FlagDescNoVSCodeSync)
 
 	reordered := reorderFlagsBeforeArgs(args)
 	fs.Parse(reordered)
@@ -137,6 +144,7 @@ func parseClonePickFlags(args []string) clonePickParsed {
 		VerifyCmdFaithful:               *verify,
 		VerifyCmdFaithfulExitOnMismatch: *verifyExit,
 		PrintCloneArgv:                  *printArgv,
+		NoVSCodeSync:                    *noVSCodeSync,
 	}
 }
 

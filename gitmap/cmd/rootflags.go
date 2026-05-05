@@ -197,6 +197,13 @@ type CloneFlags struct {
 	// PrintCloneArgv dumps the executor's literal argv tokens to
 	// stderr. See cloneprintargv.go for behavior.
 	PrintCloneArgv bool
+	// NoVSCodeSync suppresses the post-clone update of the
+	// alefragnani.project-manager projects.json file. Mirrors the
+	// flag of the same name on `gitmap scan`. Default false →
+	// every successful clone is reflected in the VS Code Project
+	// Manager sidebar without an extra command. See
+	// spec/01-vscode-project-manager-sync/02-clone-sync.md.
+	NoVSCodeSync bool
 }
 
 // parseCloneFlags parses flags for the clone command.
@@ -224,6 +231,8 @@ func parseCloneFlags(args []string) CloneFlags {
 		false, constants.FlagDescCloneVerifyCmdFaithfulExitOnMismatch)
 	printArgvFlag := fs.Bool(constants.FlagClonePrintArgv, false,
 		constants.FlagDescClonePrintArgv)
+	noVSCodeSyncFlag := fs.Bool(constants.FlagNoVSCodeSync, false,
+		constants.FlagDescNoVSCodeSync)
 	fs.Parse(args)
 
 	return CloneFlags{
@@ -243,6 +252,7 @@ func parseCloneFlags(args []string) CloneFlags {
 		VerifyCmdFaithful:               *verifyFlag,
 		VerifyCmdFaithfulExitOnMismatch: *verifyExitFlag,
 		PrintCloneArgv:                  *printArgvFlag,
+		NoVSCodeSync:                    *noVSCodeSyncFlag,
 	}
 }
 
