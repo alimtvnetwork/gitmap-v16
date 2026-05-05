@@ -23,6 +23,20 @@ c
 | --default-branch \<name\> | (none) | Fallback branch name when HEAD/remote-tracking detection finds nothing. Rewrites `branchSource=detached \| unknown \| empty` rows so they go through the trusted `git clone -b <name>` path instead of relying on the remote's default HEAD. Empty preserves legacy behavior. |
 | --verbose | false | Write detailed debug log |
 | --output \<mode\> | (off) | `terminal` streams a standardized branch/from/to/command block to **stdout** immediately before each URL's `git clone`. Git progress and the per-repo summary stay on **stderr**. Pipe stdout to capture just the previews. |
+| --no-vscode-sync | false | Skip writing every successfully-cloned repo into the VS Code Project Manager `projects.json`. Default is to sync (one entry per cloned repo, additive — never clobbers existing entries). Use this in CI / headless environments or when VS Code is not installed. |
+
+## VS Code Project Manager sync
+
+After every successful clone, gitmap upserts an entry into the
+alefragnani.project-manager `projects.json` so the new folder appears
+in VS Code's Project Manager sidebar immediately. URL-mode clones sync
+the single resulting folder; manifest-mode clones (`json` / `csv` /
+`text`) sync every repo that landed on disk in one batched pass. Pass
+`--no-vscode-sync` to opt out — gitmap then prints
+`• VS Code Project Manager sync skipped (--no-vscode-sync)` and exits
+with the same code as a normal run. The flag is a no-op when the VS
+Code extension directory is absent (a warning is logged, exit code is
+unchanged).
 
 ## Hierarchy preservation
 
