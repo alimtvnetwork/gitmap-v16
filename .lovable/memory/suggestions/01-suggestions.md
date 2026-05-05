@@ -44,9 +44,9 @@
 
 ## Pending Suggestions
 
-- 🔲 Add `version-history` to docs site sidebar/commands navigation
+- ✅ Add `version-history` to docs site sidebar/commands navigation (added to DocsSidebar.tsx + commands.ts under `history` category)
 - 🔲 Add `clone` page to docs site (file-based + URL clone documentation)
-- 🔲 Add `--dry-run` flag to `clone-next` for previewing actions without executing
+- ✅ Add `--dry-run` flag to `clone-next` for previewing actions without executing (already implemented v3.132.0+ — see gitmap/cmd/clonenextdryrun.go)
 - 🔲 Expand `install` command with database tools (MySQL, PostgreSQL, Redis, etc.)
 - 🔲 Add `gitmap uninstall <tool>` command
 - 🔲 Enhanced `install --list` grouped by category with installed status
