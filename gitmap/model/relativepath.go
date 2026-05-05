@@ -1,5 +1,7 @@
 package model
 
+import "path/filepath"
+
 // CleanRelativePath returns the OS-native, defensively-normalized form
 // of a manifest-supplied RelativePath. Used at every call site that
 // joins a parsed JSON/CSV manifest row's RelativePath onto a target
@@ -54,12 +56,5 @@ func CleanRelativePath(rel string) string {
 		return ""
 	}
 
-	return filepathCleanFromSlash(rel)
-}
-
-// filepathCleanFromSlash is split out so CleanRelativePath stays
-// trivially auditable and the import surface (path/filepath) lives
-// in one place inside the model package.
-func filepathCleanFromSlash(rel string) string {
-	return filepathClean(filepathFromSlash(rel))
+	return filepath.Clean(filepath.FromSlash(rel))
 }
