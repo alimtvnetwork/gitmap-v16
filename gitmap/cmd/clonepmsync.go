@@ -17,20 +17,63 @@ package cmd
 
 import (
 	"fmt"
+	"path/filepath"
 
 	"github.com/alimtvnetwork/gitmap-v13/gitmap/constants"
 	"github.com/alimtvnetwork/gitmap-v13/gitmap/vscodepm"
 )
 
+// canonicalizePMPath returns the canonical Windows-friendly form of an
+// absolute clone destination so projects.json never gains duplicate
+// entries for the same physical folder.
+//
+// Steps (in order):
+//
+//  1. filepath.Clean — collapses mixed `/` and `\` separators (a clone
+//     target built by string-joining a Windows abs path with a
+//     forward-slash RelativePath from a JSON manifest is the common
+//     offender).
+//  2. filepath.EvalSymlinks — resolves symlinks AND Windows 8.3 short
+//     names (`C:\PROGRA~1\...`) to the canonical long form. Without
+//     this, `gitmap clone` invoked from a `cmd.exe` that resolved a
+//     `Program Files` ancestor to its short name would produce a
+//     second projects.json row distinct from the long-form row a
+//     PowerShell-launched run would produce.
+//
+// Soft-fail: if EvalSymlinks errors (path not yet on disk, permission
+// denied, broken symlink) the cleaned absolute path is returned. A
+// projects.json entry is always preferable to a swallowed clone.
+//
+// The same canonicalization rule lives in mem://tech/database-location
+// for the SQLite anchor, so both surfaces agree on "what counts as the
+// same folder".
+func canonicalizePMPath(absPath string) string {
+	cleaned := filepath.Clean(absPath)
+
+	resolved, err := filepath.EvalSymlinks(cleaned)
+	if err != nil {
+		return cleaned
+	}
+
+	return resolved
+}
+
 // buildClonePMPair wraps a single (absPath, repoName) into a
 // vscodepm.Pair with auto-detected tags. Auto-tags mirror what
 // `gitmap code` does so a cloned-then-scanned repo gets identical
 // projects.json shape regardless of which command first landed it.
+//
+// absPath is run through canonicalizePMPath so the rootPath written
+// to projects.json is always the canonical long-form path with OS-
+// native separators — eliminating duplicate sidebar entries when the
+// same repo is cloned via two shells with different ancestor spellings.
 func buildClonePMPair(absPath, repoName string) vscodepm.Pair {
+	canonical := canonicalizePMPath(absPath)
+
 	return vscodepm.Pair{
-		RootPath: absPath,
+		RootPath: canonical,
 		Name:     repoName,
-		Tags:     vscodepm.DetectTags(absPath),
+		Tags:     vscodepm.DetectTags(canonical),
 	}
 }
 
