@@ -25,6 +25,7 @@ cn
 | --all | false | Batch mode: cn every git repo one level under cwd |
 | --max-concurrency N | 0 (auto = NumCPU) | Batch mode: run up to N repos in parallel. `1` = sequential, `0` = auto. |
 | --output \<mode\> | (off) | `terminal` prints the standardized branch/from/to/command block on **stdout** before the clone runs (one block per repo in batch mode). Git progress and version-transition lines stay on **stderr**. |
+| --no-vscode-sync | false | Skip syncing the freshly-cloned (flattened) folder into VS Code Project Manager `projects.json`. Default is to sync after every successful `cn`. In batch mode (`--csv` / `--all`), the flag suppresses sync for every repo in the batch. |
 
 ## Prerequisites
 
