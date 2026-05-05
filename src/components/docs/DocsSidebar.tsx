@@ -97,6 +97,7 @@ const navItems = [
   { title: "Dashboard", url: "/dashboard", icon: BarChart3 },
   { title: "Setup", url: "/setup", icon: Settings },
   { title: "Install", url: "/install", icon: Hammer },
+  { title: "Uninstall", url: "/commands#uninstall", icon: Hammer },
   { title: "Help Dashboard", url: "/help-dashboard", icon: MonitorPlay },
   { title: "Help Index", url: "/help-index", icon: BookOpen },
   { title: "Diff", url: "/diff", icon: GitCompare },
