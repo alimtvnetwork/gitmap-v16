@@ -30,6 +30,16 @@ gitmap cf <file> --execute            # short alias
 | `--no-vscode-sync` | off | Skip syncing every successfully-cloned row into VS Code Project Manager `projects.json`. Default is to sync once per batch (one entry per resolved `dest`). Has no effect during `--dry-run` (no clones happen). |
 | `--help` | off | Print this help and exit. |
 
+`projects.json` `rootPath` values go through `filepath.Clean` +
+`filepath.EvalSymlinks` (Windows 8.3 short names + symlinks resolve to
+the canonical long form). Manifest-mode `RelativePath` joins are
+normalized via `model.CleanRelativePath` so a row authored as
+`"acme/widget"` produces identical `AbsolutePath` strings on Windows
+and POSIX. `EvalSymlinks` failures (missing path / broken link) soft-
+fail to the cleaned absolute path — the clone never errors over a
+resolution issue. Full rules: `gitmap clone --help` "Windows path
+canonicalization & EvalSymlinks soft-fail".
+
 ## Output streams (`--output terminal`)
 
 The streams are split so machine consumers can grep just the previews:

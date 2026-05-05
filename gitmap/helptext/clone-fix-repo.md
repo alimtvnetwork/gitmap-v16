@@ -32,6 +32,12 @@ gitmap cfr <url> [folder]                # short alias
 |------|---------|-------------|
 | `--no-vscode-sync` | false | Forwarded to the underlying `clone` step — skips writing the resolved folder into VS Code Project Manager `projects.json`. The `fix-repo --all` step is unaffected. |
 
+Path canonicalization (Clean + EvalSymlinks for Windows 8.3 short
+names and symlinks, with soft-fail to the cleaned absolute path on
+resolver error) is inherited from the forwarded `clone` step. See
+`gitmap clone --help` "Windows path canonicalization & EvalSymlinks
+soft-fail" for the full rule set.
+
 ## Examples
 
 ```
