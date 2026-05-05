@@ -169,24 +169,24 @@ func TestResolvePackageManagerOverride(t *testing.T) {
 }
 
 func TestResolvePackageManagerEmptyDelegates(t *testing.T) {
-	// Empty override delegates to detectPackageManager. Result is
+	// Empty override delegates to detectPackageManager — result is
 	// platform-dependent but must be a non-empty known manager.
 	got := resolvePackageManager("")
 	if got == "" {
 		t.Fatal("empty override must still return a default manager")
 	}
 
-	known := map[string]bool{
-		constants.PkgMgrChocolatey: true,
-		constants.PkgMgrWinget:     true,
-		constants.PkgMgrBrew:       true,
-		constants.PkgMgrApt:        true,
-		constants.PkgMgrDnf:        true,
-		constants.PkgMgrPacman:     true,
+	known := []string{
+		constants.PkgMgrChocolatey, constants.PkgMgrWinget, constants.PkgMgrBrew,
+		constants.PkgMgrApt, constants.PkgMgrDnf, constants.PkgMgrPacman,
 	}
-	if !known[got] {
-		t.Fatalf("detected manager %q is not in the known set", got)
+	for _, k := range known {
+		if got == k {
+			return
+		}
 	}
+
+	t.Fatalf("detected manager %q is not in the known set %v", got, known)
 }
 
 // containsToken reports whether any element of args contains substr.
