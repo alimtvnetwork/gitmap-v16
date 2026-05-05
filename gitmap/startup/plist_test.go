@@ -16,24 +16,6 @@ import (
 	"github.com/alimtvnetwork/gitmap-v13/gitmap/constants"
 )
 
-// withFakeLaunchAgentsDir points $HOME at a temp dir so AutostartDir
-// resolves to <temp>/Library/LaunchAgents under our control. Skipped
-// on non-darwin so the suite is a no-op on Linux/Windows CI.
-func withFakeLaunchAgentsDir(t *testing.T) string {
-	t.Helper()
-	if runtime.GOOS != "darwin" {
-		t.Skip("plist tests are macOS-only")
-	}
-	root := t.TempDir()
-	t.Setenv("HOME", root)
-	dir := filepath.Join(root, "Library", "LaunchAgents")
-	if err := os.MkdirAll(dir, 0o755); err != nil {
-		t.Fatalf("mkdir: %v", err)
-	}
-
-	return dir
-}
-
 // writePlist drops a LaunchAgent fixture into the dir. `managed`
 // controls whether the XGitmapManaged marker is emitted; `argv`
 // becomes the ProgramArguments array (empty argv → no Program /

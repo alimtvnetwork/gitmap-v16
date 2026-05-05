@@ -18,24 +18,6 @@ import (
 	"github.com/alimtvnetwork/gitmap-v13/gitmap/constants"
 )
 
-// withFakeLaunchAgentsDir is the darwin analog of
-// withFakeAutostartDir. Sets $HOME so darwinLaunchAgentsDir resolves
-// inside t.TempDir() and pre-creates the LaunchAgents folder.
-func withFakeLaunchAgentsDir(t *testing.T) string {
-	t.Helper()
-	if runtime.GOOS != "darwin" {
-		t.Skip("plist tests are macOS-only; add_test.go covers Linux")
-	}
-	root := t.TempDir()
-	t.Setenv("HOME", root)
-	dir := filepath.Join(root, "Library", "LaunchAgents")
-	if err := os.MkdirAll(dir, 0o755); err != nil {
-		t.Fatalf("mkdir: %v", err)
-	}
-
-	return dir
-}
-
 // writeRawPlist drops a third-party (un-marked) plist in place so
 // the refusal test has something to NOT overwrite. The body is the
 // minimum launchd accepts; absence of the XGitmapManaged key is what
