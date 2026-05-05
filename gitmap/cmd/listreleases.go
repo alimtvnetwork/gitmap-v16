@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 	"strconv"
@@ -145,13 +144,14 @@ func printReleaseRow(r model.ReleaseRecord) {
 	fmt.Printf(constants.MsgListReleasesRowFmt, r.Version, r.Tag, r.Branch, draft, latest, r.Source, r.CreatedAt)
 }
 
-// printReleasesJSON renders releases as JSON to stdout.
+// printReleasesJSON renders releases as JSON to stdout via the
+// stablejson encoder so key order is contractual (pinned by
+// spec/08-json-schemas/list-releases.schema.json + the matching
+// jsonschema_contract test). Keeps the legacy `_ = constants.JSONIndent`
+// 2-space layout byte-for-byte compatible with the prior MarshalIndent
+// output, so existing consumers see no diff.
 func printReleasesJSON(releases []model.ReleaseRecord) {
-	data, err := json.MarshalIndent(releases, "", constants.JSONIndent)
-	if err != nil {
+	if err := encodeListReleasesJSON(os.Stdout, releases); err != nil {
 		fmt.Fprintf(os.Stderr, "  ✗ Failed to marshal releases to JSON: %v\n", err)
-
-		return
 	}
-	fmt.Println(string(data))
 }

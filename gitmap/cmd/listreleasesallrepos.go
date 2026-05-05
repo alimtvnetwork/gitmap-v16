@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 
@@ -78,15 +77,15 @@ func printAllReposRow(r store.ReleaseAcrossRepos) {
 		r.RepoSlug, r.Version, r.Tag, r.Branch, latest, r.Source, r.CreatedAt)
 }
 
-// printAllReposJSON marshals records as indented JSON.
+// printAllReposJSON renders the joined --all-repos view via the
+// stablejson encoder. PascalCase wire keys preserve the legacy
+// MarshalIndent surface (store.ReleaseAcrossRepos has no `json:`
+// tags). Schema:
+// spec/08-json-schemas/list-releases-all-repos.schema.json.
 func printAllReposJSON(records []store.ReleaseAcrossRepos) {
-	data, err := json.MarshalIndent(records, "", constants.JSONIndent)
-	if err != nil {
+	if err := encodeListReleasesAllReposJSON(os.Stdout, records); err != nil {
 		fmt.Fprintf(os.Stderr, "  ✗ Failed to marshal releases to JSON: %v\n", err)
-
-		return
 	}
-	fmt.Println(string(data))
 }
 
 // hasAllReposFlag reports whether --all-repos appears in args.

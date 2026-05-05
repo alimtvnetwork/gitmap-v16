@@ -33,6 +33,8 @@ treated as an unknown annotation per §6.4 of the 2020-12 spec).
 | Command | Schema | Contract | Notes |
 |---|---|---|---|
 | `gitmap startup-list --json` | [`startup-list.schema.json`](startup-list.schema.json) | **strict** | Backed by `gitmap/stablejson`; key order is contractual |
+| `gitmap list-releases --json` | [`list-releases.schema.json`](list-releases.schema.json) | **strict** | Per-repo view; lowerCamel keys mirror `model.ReleaseRecord` `json:` tags; pinned by `gitmap/cmd/listreleases_jsonschema_contract_test.go` |
+| `gitmap list-releases --all-repos --json` | [`list-releases-all-repos.schema.json`](list-releases-all-repos.schema.json) | **strict** | Joined Release+Repo view; PascalCase keys preserve the legacy `json.MarshalIndent` surface (`store.ReleaseAcrossRepos` has no `json:` tags) |
 | `gitmap scan` (JSON + CSV)   | [`scan-output.schema.json`](scan-output.schema.json) + [`scan-output.README.md`](scan-output.README.md) | **field-name stable** | Field names/keys are permanent; new fields are appended only. Key ordering is NOT byte-contractual (uses `encoding/json`). |
 | _(others)_ | — | — | See [`_TODO.md`](_TODO.md) — currently emit via `json.MarshalIndent` so ordering is NOT contractual until they migrate to `stablejson` |
 
