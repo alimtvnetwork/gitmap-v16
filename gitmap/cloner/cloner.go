@@ -138,7 +138,7 @@ func parseCloneLine(line string) model.ScanRecord {
 // hasExistingRepos checks if any target repo directories already exist.
 func hasExistingRepos(records []model.ScanRecord, targetDir string) bool {
 	for _, rec := range records {
-		dest := filepath.Join(targetDir, rec.RelativePath)
+		dest := filepath.Join(targetDir, model.CleanRelativePath(rec.RelativePath))
 		if isGitRepo(dest) {
 			return true
 		}
@@ -151,7 +151,7 @@ func hasExistingRepos(records []model.ScanRecord, targetDir string) bool {
 // path and the record's RelativePath/RepoName so failures point straight
 // at the offending row in the source manifest.
 func cloneOne(rec model.ScanRecord, targetDir string) model.CloneResult {
-	dest := filepath.Join(targetDir, rec.RelativePath)
+	dest := filepath.Join(targetDir, model.CleanRelativePath(rec.RelativePath))
 	err := os.MkdirAll(filepath.Dir(dest), constants.DirPermission)
 	if err != nil {
 		msg := fmt.Sprintf("mkdir %q for %s: %v", filepath.Dir(dest), recordTag(rec), err)

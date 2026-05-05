@@ -80,7 +80,7 @@ func enqueueJobs(records []model.ScanRecord, targetDir string, cache *CloneCache
 	progress *Progress, jobs chan<- cloneJob, out chan<- cloneOutcome) {
 	for _, rec := range records {
 		progress.Begin(repoDisplayName(rec))
-		dest := filepath.Join(targetDir, rec.RelativePath)
+		dest := filepath.Join(targetDir, model.CleanRelativePath(rec.RelativePath))
 		if cache.IsUpToDate(rec, dest) {
 			out <- cloneOutcome{
 				rec:    rec,

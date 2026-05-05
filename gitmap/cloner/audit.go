@@ -83,7 +83,7 @@ func PlanCloneAudit(sourcePath, targetDir string) (*CloneAuditReport, error) {
 // planOne computes the audit action for a single record. Pure function:
 // no git invocations, no writes, no network.
 func planOne(rec model.ScanRecord, targetDir string, cache *CloneCache) AuditEntry {
-	dest := filepath.Join(targetDir, rec.RelativePath)
+	dest := filepath.Join(targetDir, model.CleanRelativePath(rec.RelativePath))
 	url := pickURL(rec)
 
 	if len(url) == 0 {
