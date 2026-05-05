@@ -33,6 +33,12 @@ gitmap cfrp <url> [folder]                # short alias
 Each step's exit code is propagated as-is; the pipeline halts on
 the first non-zero exit.
 
+## Flags
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--no-vscode-sync` | false | Forwarded to the underlying `clone` step — skips writing the resolved folder into VS Code Project Manager `projects.json`. The `fix-repo` and `make-public` steps are unaffected. |
+
 ## Examples
 
 ```

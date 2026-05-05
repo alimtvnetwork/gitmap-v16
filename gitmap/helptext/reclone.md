@@ -122,6 +122,7 @@ populated tree is impossible without explicit confirmation.
 | `--cwd` | current dir | Working directory `git clone` runs in. Use to re-create the tree under a fresh root. |
 | `--on-exists` | `skip` | Behavior when target already exists: `skip` (no-op when repo+branch match), `update` (fetch + checkout to align), `force` (remove target and re-clone — destructive). |
 | `--max-concurrency` | auto | Worker count for parallel re-clones. `0` = `runtime.NumCPU()`, `1` = sequential. |
+| `--no-vscode-sync` | off | Skip syncing every successfully re-cloned repo into VS Code Project Manager `projects.json`. Default is to sync once per batch (one entry per resolved destination). Has no effect during dry-run (no `--execute`). Honored identically by the `clone-now` / `cnow` aliases. |
 
 ## Aliases
 
