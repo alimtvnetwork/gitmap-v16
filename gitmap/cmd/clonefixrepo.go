@@ -42,7 +42,7 @@ func runCloneFixRepoPub(args []string) {
 // runCloneFixRepoPipeline is the shared core. `makePublic` controls
 // whether the optional 3rd step (visibility flip) runs.
 func runCloneFixRepoPipeline(args []string, makePublic bool) {
-	url, folderName := parseCloneFixRepoArgs(args)
+	url, folderName, noVSCodeSync := parseCloneFixRepoArgs(args)
 	if len(url) == 0 {
 		fmt.Fprint(os.Stderr, constants.ErrCloneFixRepoUsage)
 		os.Exit(constants.ExitCloneFixRepoBadFlag)
@@ -50,7 +50,7 @@ func runCloneFixRepoPipeline(args []string, makePublic bool) {
 
 	absPath := resolveCloneTargetFolder(url, folderName)
 	requireOnline()
-	executeDirectClone(url, folderName, true, false, "")
+	executeDirectClone(url, folderName, true, false, "", noVSCodeSync)
 
 	if err := os.Chdir(absPath); err != nil {
 		fmt.Fprintf(os.Stderr, constants.ErrCloneFixRepoChdirFmt, absPath, err)
@@ -68,9 +68,20 @@ func runCloneFixRepoPipeline(args []string, makePublic bool) {
 // non-flag arg is the URL; an optional second non-flag arg is the
 // destination folder. Unknown flags are ignored at this layer
 // because clone itself accepts a wide flag surface.
-func parseCloneFixRepoArgs(args []string) (string, string) {
+//
+// The cfr/cfrp pipelines also recognize `--no-vscode-sync` so the
+// projects.json update at the end of the inner clone step can be
+// suppressed in CI / headless runs without VS Code installed.
+func parseCloneFixRepoArgs(args []string) (string, string, bool) {
 	positional := make([]string, 0, len(args))
+	noVSCodeSync := false
+	syncFlag := "--" + constants.FlagNoVSCodeSync
 	for _, a := range args {
+		if a == syncFlag {
+			noVSCodeSync = true
+
+			continue
+		}
 		if len(a) > 0 && a[0] != '-' {
 			positional = append(positional, a)
 		}
@@ -84,7 +95,7 @@ func parseCloneFixRepoArgs(args []string) (string, string) {
 		folder = positional[1]
 	}
 
-	return url, folder
+	return url, folder, noVSCodeSync
 }
 
 // resolveCloneTargetFolder mirrors the folder-naming logic in
