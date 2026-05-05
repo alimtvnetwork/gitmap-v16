@@ -1089,6 +1089,25 @@ export const commands: CommandDef[] = [
       { name: "history", description: "View command history", url: "/history" },
     ],
   },
+  {
+    category: "history",
+    name: "version-history", alias: "vh", description: "Show version transitions for the current repo (e.g. v11 → v12 → v13) recorded by clone-next flatten",
+    usage: "gitmap version-history [--limit N] [--json]",
+    flags: [
+      { flag: "--limit <n>", description: "Show only the most recent N transitions" },
+      { flag: "--json", description: "Emit machine-readable JSON instead of the human table" },
+    ],
+    examples: [
+      { command: "gitmap version-history", description: "Print every recorded version transition for this repo" },
+      { command: "gitmap vh --limit 5", description: "Last 5 transitions only" },
+      { command: "gitmap vh --json", description: "JSON output for scripts and dashboards" },
+    ],
+    seeAlso: [
+      { name: "clone-next", description: "Source of new version transitions (flatten-by-default since v2.75.0)" },
+      { name: "Spec: version-history", description: "Full version-history docs page", url: "/version-history" },
+      { name: "history", description: "Generic command-execution history", url: "/history" },
+    ],
+  },
 
   // ═══════════════════════════════════════════
   // Project Detection
