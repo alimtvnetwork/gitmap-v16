@@ -14,35 +14,12 @@ package cmd
 // don't depend on log redirection. t.Setenv handles teardown.
 
 import (
-	"io"
 	"os"
 	"strings"
 	"testing"
 
 	"github.com/alimtvnetwork/gitmap-v13/gitmap/constants"
 )
-
-func captureStderr(t *testing.T, fn func()) string {
-	t.Helper()
-
-	originalStderr := os.Stderr
-	r, w, err := os.Pipe()
-	if err != nil {
-		t.Fatalf("pipe: %v", err)
-	}
-
-	os.Stderr = w
-	fn()
-	w.Close()
-	os.Stderr = originalStderr
-
-	out, err := io.ReadAll(r)
-	if err != nil {
-		t.Fatalf("read pipe: %v", err)
-	}
-
-	return string(out)
-}
 
 func TestCanonicalizePMPathSilentWhenDebugPathsOff(t *testing.T) {
 	t.Setenv(constants.EnvDebugPaths, "")
