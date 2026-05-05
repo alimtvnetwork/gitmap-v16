@@ -47,8 +47,8 @@
 - ✅ Add `version-history` to docs site sidebar/commands navigation (added to DocsSidebar.tsx + commands.ts under `history` category)
 - ✅ Add `clone` page to docs site (file-based + URL clone documentation) — `/clone` overview page covering both workflows + Windows path canonicalization
 - ✅ Add `--dry-run` flag to `clone-next` for previewing actions without executing (already implemented v3.132.0+ — see gitmap/cmd/clonenextdryrun.go)
-- 🔲 Expand `install` command with database tools (MySQL, PostgreSQL, Redis, etc.)
+- ✅ Expand `install` command with database tools (MySQL, PostgreSQL, Redis, etc.) — already shipped (see ToolCategoryDatabase in constants_install.go: MySQL/MariaDB/PostgreSQL/SQLite/MongoDB/CouchDB/Redis/Cassandra/Neo4j/Elasticsearch/DuckDB/LiteDB)
 - 🔲 Add `gitmap uninstall <tool>` command
-- 🔲 Enhanced `install --list` grouped by category with installed status
+- ✅ Enhanced `install --list` grouped by category with installed status (gitmap/cmd/installlist.go: groups by ToolCategoryCore/Database, status from InstalledTool DB + PATH probe fallback, ●/○ glyphs + legend)
 - 🔲 Unit tests for task, env, and install commands
 - ✅ Update `helptext/env.md` with `--shell` flag usage examples (added dedicated section + 4 examples + Unix-only note)

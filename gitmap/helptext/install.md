@@ -19,7 +19,7 @@ in
 | --verbose | false   | Show full installer output                         |
 | --dry-run | false   | Show install command without executing             |
 | --check   | false   | Only check if tool is installed                    |
-| --list    | false   | List all supported tools                           |
+| --list    | false   | List all supported tools, grouped by category, with installed status (● = installed, ○ = not installed) |
 
 ## Supported Tools
 
