@@ -67,6 +67,7 @@ const navItems = [
   { title: "Projects", url: "/projects", icon: FolderGit2 },
   { title: "Makefile", url: "/makefile", icon: Hammer },
   { title: "History", url: "/history", icon: Clock },
+  { title: "Version History", url: "/version-history", icon: Clock },
   { title: "Stats", url: "/stats", icon: BarChart3 },
   { title: "Detection", url: "/project-detection", icon: Search },
   { title: "Generic CLI", url: "/generic-cli", icon: Terminal },
