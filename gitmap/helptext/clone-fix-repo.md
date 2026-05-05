@@ -26,6 +26,12 @@ gitmap cfr <url> [folder]                # short alias
    prior `{base}-vN` token in tracked text files is rewritten to
    the current version.
 
+## Flags
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--no-vscode-sync` | false | Forwarded to the underlying `clone` step — skips writing the resolved folder into VS Code Project Manager `projects.json`. The `fix-repo --all` step is unaffected. |
+
 ## Examples
 
 ```
