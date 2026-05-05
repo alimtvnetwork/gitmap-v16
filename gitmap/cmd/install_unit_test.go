@@ -190,15 +190,10 @@ func TestResolvePackageManagerEmptyDelegates(t *testing.T) {
 }
 
 // containsToken reports whether any element of args contains substr.
-// Empty substr trivially matches (used by tests that only assert head).
 func containsToken(args []string, substr string) bool {
-	if substr == "" {
-		return true
-	}
+	if substr == "" { return true }
 	for _, a := range args {
-		if strings.Contains(a, substr) {
-			return true
-		}
+		if strings.Contains(a, substr) { return true }
 	}
 	return false
 }
