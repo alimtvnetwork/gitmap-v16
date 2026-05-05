@@ -48,6 +48,19 @@ const (
 	FlagDescNoVSCodeSync = "skip syncing scanned repos into VS Code Project Manager projects.json"
 )
 
+// Debug-paths process-wide switch. The CLI flag (FlagDebugPaths in
+// constants_cli.go) sets this env var to "1" for the current process
+// so every code path that calls canonicalizePMPath — across every
+// clone variant — emits the same trace line without N flag-plumbing
+// edits. Reading from an env var (instead of a struct field) keeps
+// the helper signature stable and lets future callers opt in by
+// setting the env var directly in CI.
+const (
+	EnvDebugPaths      = "GITMAP_DEBUG_PATHS"
+	EnvDebugPathsOn    = "1"
+	MsgDebugPathsTrace = "[debug-paths] in=%q clean=%q resolved=%q\n"
+)
+
 // Error messages (Code Red zero-swallow policy).
 const (
 	ErrVSCodePMUserDataNotFound = "vscode: user data directory not found at %q (is VS Code installed?)\n"
