@@ -1367,6 +1367,54 @@ When sync is skipped gitmap prints
 VS Code extension directory is missing the sync is also a soft no-op (a
 warning is logged; exit code is unchanged).
 
+##### Windows path canonicalization & EvalSymlinks soft-fail
+
+Every `rootPath` written to `projects.json` is run through a single
+canonicalization helper (`canonicalizePMPath` in `gitmap/cmd/clonepmsync.go`)
+before it reaches disk. This is what stops the same physical clone target
+from producing two distinct VS Code sidebar entries when reached through
+different shells, drive mappings, or path spellings on Windows.
+
+**Canonicalization steps** (in order):
+
+1. **`filepath.Clean`** — collapses mixed `/` and `\` separators,
+   removes redundant `.` segments and trailing separators. Without
+   this, a manifest authored on Linux with `RelativePath: "acme/widget"`
+   joined onto a Windows abs path leaks the forward-slash form into
+   `projects.json`.
+2. **`filepath.EvalSymlinks`** — resolves symlinks AND Windows 8.3
+   short names (`C:\PROGRA~1\…`) to their canonical long form.
+   Without this, a `gitmap clone` invoked from a `cmd.exe` that
+   resolved a `Program Files` ancestor to its short name produces a
+   second `projects.json` row distinct from the long-form row a
+   PowerShell-launched run would produce.
+3. **Case-insensitive dedup on Windows** (handled inside
+   `vscodepm.normalizePath`) — `C:\Foo\Repo` and `c:\foo\repo`
+   resolve to a single entry. POSIX systems remain case-sensitive.
+
+**Soft-fail policy** for `EvalSymlinks`: when the resolver errors
+(path not yet on disk, permission denied, broken symlink), the
+helper falls back to the **cleaned absolute path** rather than
+failing the clone. The reasoning: a `projects.json` entry with the
+pre-symlink path is always preferable to a swallowed clone — VS
+Code will simply open the path verbatim, and the next `gitmap scan`
+pass will re-canonicalize once the symlink is resolvable.
+
+**Manifest-mode `RelativePath` joins** apply the same defensive
+normalization at the source: every join site routes through
+`model.CleanRelativePath` (`gitmap/model/relativepath.go`), which
+runs `filepath.Clean(filepath.FromSlash(rel))` so cross-platform
+manifests produce identical `AbsolutePath` strings on Windows and
+POSIX.
+
+**Tracing**: pass `--debug-paths` to `gitmap clone` to emit one
+`[debug-paths] in=… clean=… resolved=…` line on **stderr** for every
+canonicalize call (works on both the resolved-OK and soft-fail
+branches). Equivalent to setting `GITMAP_DEBUG_PATHS=1` directly,
+which CI environments can use without a CLI flag. The trace surfaces
+the exact rewrite at the boundary, making 8.3 short-name and
+symlink-ancestor dedup issues self-diagnosing.
+
 ---
 
 <div align="center">

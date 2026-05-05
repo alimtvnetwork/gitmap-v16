@@ -38,6 +38,27 @@ with the same code as a normal run. The flag is a no-op when the VS
 Code extension directory is absent (a warning is logged, exit code is
 unchanged).
 
+### Windows path canonicalization & EvalSymlinks soft-fail
+
+Every `rootPath` written to `projects.json` is normalized via
+`filepath.Clean` (collapses mixed `/` `\` separators, redundant `.`,
+and trailing separators) and then `filepath.EvalSymlinks` (resolves
+symlinks AND Windows 8.3 short names like `C:\PROGRA~1\…` to the
+canonical long form). On Windows, the dedup key is also
+case-insensitive — `C:\Foo` and `c:\foo` collapse to one entry.
+
+**Soft-fail rule**: when `EvalSymlinks` errors (path not yet on
+disk, permission denied, broken symlink), gitmap falls back to the
+**cleaned absolute path** and still writes the `projects.json`
+entry — never failing the clone over a symlink-resolution issue. The
+next `gitmap scan` re-canonicalizes once the path is resolvable.
+
+Pass `--debug-paths` to emit one `[debug-paths] in=… clean=…
+resolved=…` line per canonicalize call on **stderr** (or set
+`GITMAP_DEBUG_PATHS=1` directly in CI). See the README "Windows path
+canonicalization & EvalSymlinks soft-fail" subsection for the full
+failure-mode catalogue.
+
 ## Hierarchy preservation
 
 Every record is cloned into `<target-dir>/<RelativePath>` exactly as
