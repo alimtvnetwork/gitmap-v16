@@ -3,7 +3,6 @@ package cmd
 import (
 	"flag"
 	"io"
-	"os"
 	"strings"
 	"testing"
 
