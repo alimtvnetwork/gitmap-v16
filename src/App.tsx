@@ -62,6 +62,7 @@ import ScanGdSpecPage from "./pages/ScanGdSpec";
 import CloneMultiSpecPage from "./pages/CloneMultiSpec";
 import ScanCommandPage from "./pages/ScanCommand";
 import CloneCommandPage from "./pages/CloneCommand";
+import CloneOverviewPage from "./pages/CloneOverview";
 import CloneNextCommandPage from "./pages/CloneNextCommand";
 import ScanCloneFlagsPage from "./pages/ScanCloneFlags";
 import TroubleshootingPage from "./pages/Troubleshooting";
@@ -140,6 +141,7 @@ const App = () => (
           <Route path="/clone-multi" element={<CloneMultiSpecPage />} />
           <Route path="/scan-command" element={<ScanCommandPage />} />
           <Route path="/clone-command" element={<CloneCommandPage />} />
+          <Route path="/clone" element={<CloneOverviewPage />} />
           <Route path="/clone-next-command" element={<CloneNextCommandPage />} />
           <Route path="/scan-clone-flags" element={<ScanCloneFlagsPage />} />
           <Route path="/troubleshooting" element={<TroubleshootingPage />} />
