@@ -67,6 +67,30 @@ ev
     $ gitmap env path add /opt/tools/bin --dry-run
       [dry-run] Would add to PATH: /opt/tools/bin
 
+### Target a specific shell profile with --shell
+
+On Unix, `--shell` selects which profile file to write to. Without it,
+gitmap auto-detects from `$SHELL`. Use it when you need to target a
+profile other than your current login shell (e.g. seeding a CI image
+or scripting from one shell while configuring another).
+
+    $ gitmap env set EDITOR "nvim" --shell zsh
+      Set EDITOR=nvim in ~/.zshrc
+
+    $ gitmap env set EDITOR "nvim" --shell bash
+      Set EDITOR=nvim in ~/.bashrc
+
+    $ gitmap env path add /opt/go/bin --shell zsh
+      Added to PATH (~/.zshrc): /opt/go/bin
+
+    $ gitmap env delete EDITOR --shell bash --dry-run
+      [dry-run] Would remove EDITOR from ~/.bashrc
+
+Notes:
+- `--shell` is Unix-only; on Windows it is silently ignored (Windows uses `setx`).
+- Accepted values: `bash`, `zsh`. Other shells fall back to auto-detect.
+- Combine with `--dry-run` to preview which profile file would change.
+
 ## See Also
 
 - [install](install.md) — Install developer tools
