@@ -20,7 +20,7 @@ roughly by perceived consumer impact — high-traffic / scripting-friendly first
 
 | Priority | Command (file) | Notes |
 |---|---|---|
-| high | `gitmap list-releases --json` (`listreleases.go`, `listreleasesallrepos.go`) | Likely most-scripted output |
+| ✅ done | ~~`gitmap list-releases --json` (`listreleases.go`, `listreleasesallrepos.go`)~~ | Migrated to `gitmap/stablejson` via `listreleasesrender.go`. Schemas: [`list-releases.schema.json`](list-releases.schema.json) (per-repo, lowerCamel) + [`list-releases-all-repos.schema.json`](list-releases-all-repos.schema.json) (joined --all-repos, PascalCase preserved from legacy `MarshalIndent`). Pinned by `gitmap/cmd/listreleases_jsonschema_contract_test.go` (9 tests incl. byte-compat with legacy output). |
 | high | `gitmap history --json` (`history.go`) | Activity timeline; downstream dashboards |
 | high | `gitmap watch --json` (`watch.go`) | Long-running; format stability matters |
 | high | `gitmap probe-report` (`probereport.go`) | Health-check consumers |
