@@ -313,13 +313,19 @@ path → `mkdir -p && git init`. No prompt, no flag.
 
 ### Phased implementation (gated — execute one phase per `next`)
 
-- ⏳ **Phase 1 — Constants & enums.** Add `CmdCommitIn` /
-  `CmdCommitInAlias` to `constants_cli.go`. Add every enum
-  (`CommitInAlias`, `InputKeyword`, `InputKind`, `RunStatus`,
-  `CommitOutcome`, `SkipReason`, `ConflictMode`, `ExclusionKind`,
-  `MessageRuleKind`, `FunctionIntelLanguage`, `CommitInStage`,
-  `CommitInExit`, `ProfileSource`) under
-  `gitmap/cmd/commitin/<enum>.go`, one per file. No behavior yet.
+- ✅ **Phase 1 — Constants & enums (2026-05-06).** Added `CmdCommitIn`
+  / `CmdCommitInAlias` to `constants_cli.go` and registered both in
+  `cmd_constants_test.go` registry. New `gitmap/constants/constants_commitin.go`
+  owns all flag names, descriptions, exit codes, enum tokens, defaults,
+  filesystem paths, URL prefixes, phase banners, and error formats.
+  New `gitmap/cmd/commitin/enums.go` provides typed `uint8` enums
+  (`ConflictMode`, `InputKind`, `RunStatus`, `CommitOutcome`,
+  `SkipReason`, `ExclusionKind`, `MessageRuleKind`, `FunctionIntelLanguage`)
+  with `String()` returning the constants tokens and an `AllX()` slice
+  per enum. `enums_test.go` locks every enum's spec ↔ constants ↔ Go
+  member list, asserts PascalCase shape, exit-code uniqueness, and
+  flag-name kebab-case uniqueness. `go build ./...` and
+  `go test ./cmd/commitin/... ./constants/...` both pass.
 - ⏳ **Phase 2 — DB migrations.** Create idempotent migration files
   per §4.5; seed every enum-mirror table with `INSERT OR IGNORE`.
   Wire into the existing migrator. Cover with table-presence tests.
