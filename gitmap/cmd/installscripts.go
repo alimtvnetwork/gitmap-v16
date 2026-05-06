@@ -43,8 +43,9 @@ func runInstallScripts() {
 	cloneCmd.Stderr = os.Stderr
 
 	if err := cloneCmd.Run(); err != nil {
+		_ = os.RemoveAll(tmpDir)
 		fmt.Fprintf(os.Stderr, constants.ErrScriptsClone, err)
-		os.Exit(1)
+		exitWith(1)
 	}
 
 	// Copy scripts from gitmap/scripts/ and root scripts.
