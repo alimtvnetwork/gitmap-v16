@@ -34,6 +34,7 @@ func executeAliasSet(alias, slug string) {
 	repos, err := db.FindBySlug(slug)
 	if err != nil || len(repos) == 0 {
 		fmt.Fprintf(os.Stderr, constants.ErrAliasRepoMissing, slug)
+		db.Close()
 		os.Exit(1)
 	}
 
@@ -43,6 +44,7 @@ func executeAliasSet(alias, slug string) {
 		err = db.UpdateAlias(alias, repoID)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, constants.ErrBareFmt, err)
+			db.Close()
 			os.Exit(1)
 		}
 
@@ -55,6 +57,7 @@ func executeAliasSet(alias, slug string) {
 	_, err = db.CreateAlias(alias, repoID)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, constants.ErrBareFmt, err)
+		db.Close()
 		os.Exit(1)
 	}
 
@@ -81,6 +84,7 @@ func runAliasRemove(args []string) {
 	err = db.DeleteAlias(alias)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, constants.ErrBareFmt, err)
+		db.Close()
 		os.Exit(1)
 	}
 
@@ -99,6 +103,7 @@ func runAliasList() {
 	aliases, err := db.ListAliasesWithRepo()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, constants.ErrBareFmt, err)
+		db.Close()
 		os.Exit(1)
 	}
 
