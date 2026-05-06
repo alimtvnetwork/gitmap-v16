@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/alimtvnetwork/gitmap-v16/gitmap/cmd/commitin"
+	"github.com/alimtvnetwork/gitmap-v16/gitmap/cmd/commitin/orchestrator"
 	"github.com/alimtvnetwork/gitmap-v16/gitmap/constants"
 )
 
@@ -20,13 +21,6 @@ func runCommitIn(args []string) {
 		fmt.Fprintf(os.Stderr, constants.CommitInErrBadArgs, perr.Message)
 		os.Exit(constants.CommitInExitBadArgs)
 	}
-	// Phase 7 wires only the dispatcher entry; the end-to-end
-	// orchestration loop is intentionally deferred to its own follow-
-	// up patch so each phase remains independently reviewable. Until
-	// then, surface a clear "not yet executable" message so users on a
-	// prerelease binary aren't left wondering whether the command
-	// silently succeeded.
-	_ = raw
-	fmt.Fprintln(os.Stderr, "commit-in: command surface registered; orchestration loop pending (spec/03-commit-in/)")
-	os.Exit(constants.CommitInExitOk)
+	exitCode := orchestrator.Run(raw, os.Stdout, os.Stderr)
+	os.Exit(exitCode)
 }
