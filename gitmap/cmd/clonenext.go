@@ -66,7 +66,7 @@ func runCloneNext(args []string) {
 
 	if len(cnFlags.VersionArg) == 0 {
 		fmt.Fprintln(os.Stderr, constants.ErrCloneNextUsage)
-		os.Exit(1)
+		exitWith(1)
 	}
 
 	requireOnline()
