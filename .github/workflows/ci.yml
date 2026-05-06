@@ -227,7 +227,41 @@ jobs:
           fi
           echo "Scanning ${#targets[@]} changed file(s) for US-English misspellings:"
           printf '  %s\n' "${targets[@]}"
-          misspell -locale US -error "${targets[@]}"
+          # Run misspell WITHOUT -error first so we capture every finding,
+          # then emit a GitHub line-level annotation per finding so each
+          # typo is clickable in the PR "Files changed" view. Misspell's
+          # default output format is:
+          #   path:line:col: "wrong" is a misspelling of "right"
+          # We translate that into ::error file=...,line=...,col=...::...
+          # Finally we exit non-zero if any finding was emitted, preserving
+          # the previous hard-gate behavior of `-error`.
+          report=$(mktemp)
+          # `|| true` so a non-zero exit (no findings vs findings) doesn't
+          # short-circuit before we annotate. We re-derive failure from the
+          # report contents below.
+          misspell -locale US "${targets[@]}" | tee "$report" || true
+          findings=0
+          while IFS= read -r line; do
+            # Match: <file>:<line>:<col>: <message>
+            if [[ "$line" =~ ^([^:]+):([0-9]+):([0-9]+):[[:space:]]*(.*)$ ]]; then
+              file="${BASH_REMATCH[1]}"
+              lno="${BASH_REMATCH[2]}"
+              col="${BASH_REMATCH[3]}"
+              msg="${BASH_REMATCH[4]}"
+              # Strip CR and any embedded ::/newlines that would break the
+              # workflow command syntax. Annotation messages may not contain
+              # literal newlines.
+              msg="${msg//$'\r'/}"
+              msg="${msg//$'\n'/ }"
+              echo "::error file=${file},line=${lno},col=${col}::[misspell] ${msg}"
+              findings=$((findings + 1))
+            fi
+          done < "$report"
+          if [ "$findings" -gt 0 ]; then
+            echo "FAIL: ${findings} misspelling(s) found. See annotations above." >&2
+            exit 1
+          fi
+          echo "OK: no misspellings in changed files."
 
   lint:
     name: Lint
