@@ -215,7 +215,7 @@ func syncCodeEntry(rootPath, name string, extras []string) {
 		RootPath: rootPath,
 		Name:     name,
 		Paths:    resolved,
-		Tags:     vscodepm.DetectTags(rootPath),
+		Tags:     vscodepm.DetectTagsCustom(rootPath),
 	}})
 	if err != nil {
 		reportVSCodePMSoftError(err)
@@ -406,7 +406,7 @@ func persistAliasPaths(rootPath, alias string, paths []string) {
 func syncAliasEntry(rootPath, name string, paths []string) {
 	if _, err := vscodepm.Sync([]vscodepm.Pair{{
 		RootPath: rootPath, Name: name, Paths: paths,
-		Tags: vscodepm.DetectTags(rootPath),
+		Tags: vscodepm.DetectTagsCustom(rootPath),
 	}}); err != nil {
 		reportVSCodePMSoftError(err)
 	}

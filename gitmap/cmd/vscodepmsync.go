@@ -66,7 +66,7 @@ func autoTagsFor(rootPath string, disabled bool) []string {
 		return nil
 	}
 
-	return vscodepm.DetectTags(rootPath)
+	return vscodepm.DetectTagsCustom(rootPath)
 }
 
 // upsertVSCodePMRecords pushes every record into the DB. Errors are

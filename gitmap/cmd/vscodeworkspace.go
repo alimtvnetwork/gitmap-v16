@@ -121,7 +121,7 @@ func matchesWorkspaceTag(rootPath, tag string) bool {
 	if tag == "" {
 		return true
 	}
-	for _, t := range vscodepm.DetectTags(rootPath) {
+	for _, t := range vscodepm.DetectTagsCustom(rootPath) {
 		if strings.EqualFold(t, tag) {
 			return true
 		}
