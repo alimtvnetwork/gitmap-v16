@@ -29,9 +29,6 @@ func runExec(args []string) {
 	}
 	cmdArgs := buildCommandArgs(append([]string{"exec"}, os.Args[2:]...))
 	taskID, taskDB := createPendingTask(constants.TaskTypeExec, workDir, workDir, "exec", cmdArgs)
-	if taskDB != nil {
-		defer taskDB.Close()
-	}
 
 	printExecBanner(gitArgs, len(records))
 
@@ -44,10 +41,12 @@ func runExec(args []string) {
 
 	if code := prog.ExitCodeForBatch(); code != 0 {
 		failPendingTask(taskDB, taskID, fmt.Sprintf("exec batch failed with exit code %d", code))
+		closeTaskDB(taskDB)
 		os.Exit(code)
 	}
 
 	completePendingTask(taskDB, taskID)
+	closeTaskDB(taskDB)
 }
 
 // execAllReposTracked runs a git command across all repos with progress.
