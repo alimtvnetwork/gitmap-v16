@@ -10,23 +10,23 @@ import "path/filepath"
 //
 // Why this exists (the failure mode it prevents):
 //
-//   A manifest authored on macOS / Linux typically writes RelativePath
-//   as `"acme/widget"`. When the same manifest is consumed on Windows
-//   and joined onto `C:\code\` via `filepath.Join`, the result is
-//   `C:\code\acme\widget` — but ONLY because Join happens to call
-//   Clean internally. Sloppier inputs slip through:
+//	A manifest authored on macOS / Linux typically writes RelativePath
+//	as `"acme/widget"`. When the same manifest is consumed on Windows
+//	and joined onto `C:\code\` via `filepath.Join`, the result is
+//	`C:\code\acme\widget` — but ONLY because Join happens to call
+//	Clean internally. Sloppier inputs slip through:
 //
-//     "acme//widget"   → Join leaves the doubled slash on Windows
-//                        when the second segment is treated as a
-//                        single token (rare, but observed with
-//                        hand-edited manifests).
-//     "./acme/widget"  → leading `.` survives into AbsolutePath that
-//                        then differs byte-for-byte from a re-scan
-//                        result, breaking dedup keys in projects.json
-//                        and the SQLite RepoTracking table.
-//     "acme/widget/"   → trailing separator survives, producing two
-//                        distinct strings ("…/widget" and "…/widget/")
-//                        for the same physical folder.
+//	  "acme//widget"   → Join leaves the doubled slash on Windows
+//	                     when the second segment is treated as a
+//	                     single token (rare, but observed with
+//	                     hand-edited manifests).
+//	  "./acme/widget"  → leading `.` survives into AbsolutePath that
+//	                     then differs byte-for-byte from a re-scan
+//	                     result, breaking dedup keys in projects.json
+//	                     and the SQLite RepoTracking table.
+//	  "acme/widget/"   → trailing separator survives, producing two
+//	                     distinct strings ("…/widget" and "…/widget/")
+//	                     for the same physical folder.
 //
 // Normalization steps (intentionally minimal — each one earns its
 // keep against a real failure mode):
