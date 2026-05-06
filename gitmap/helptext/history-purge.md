@@ -39,7 +39,18 @@ $ gitmap hp secret.env build/cache.bin --message "history cleanup"
 ▸ history-rewrite: running filter-repo (purge) for 2 path(s)
 ▸ history-rewrite: verifying sandbox
 ✓ history-rewrite: verification passed
-Push --force-with-lease to git@github.com:acme/repo.git? [y/N]: y
+
+────────────────────────────────────────────────────────────
+  ✓ Verification PASSED
+  Mode      : history-purge
+  Paths     : 2
+  Sandbox   : /tmp/gitmap-history-rewrite-1a2b
+  Remote    : git@github.com:acme/repo.git
+  Action    : git push --mirror --force-with-lease
+  WARNING   : This rewrites published history. Downstream
+              clones will need to re-clone or hard-reset.
+────────────────────────────────────────────────────────────
+Type 'yes' to force-push to git@github.com:acme/repo.git (anything else aborts): yes
 ▸ history-rewrite: pushing to git@github.com:acme/repo.git with --force-with-lease
 ✓ history-rewrite: push complete
 ```

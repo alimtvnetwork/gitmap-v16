@@ -98,7 +98,7 @@ gitmap hp .env --message "history cleanup" --yes`} />
           <li><strong className="text-foreground">Mirror-clone</strong> — <code>git clone --mirror</code> into <code>os.MkdirTemp</code> sandbox. Cleaned up on every exit path.</li>
           <li><strong className="text-foreground">filter-repo</strong> — purge: <code>--invert-paths --path P</code>; pin: <code>--blob-callback</code> with current bytes substituted for every historical blob SHA.</li>
           <li><strong className="text-foreground">Verify</strong> — purge: <code>git log --all -- P</code> must be empty. Pin: every <code>git show &lt;sha&gt;:P</code> must hash to the same SHA-256.</li>
-          <li><strong className="text-foreground">Push</strong> — prompt for <code>--force-with-lease</code> mirror push. <code>--yes</code> skips the prompt; <code>--no-push</code> short-circuits and prints the manual command.</li>
+          <li><strong className="text-foreground">Push</strong> — print a verification-passed banner (mode, path count, sandbox, remote, warning) and prompt <code>Type 'yes' to force-push…</code>. The user must type the literal token <code>yes</code> — any other input aborts. <code>--yes</code> skips the prompt; <code>--no-push</code> short-circuits and prints the manual command.</li>
         </ol>
       </section>
 
