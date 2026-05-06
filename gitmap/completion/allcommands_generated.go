@@ -223,6 +223,8 @@ var generatedCommands = []string{
 	"vh",
 	"vpath",
 	"vscode-pm-path",
+	"vscode-workspace",
+	"vsws",
 	"w",
 	"watch",
 	"x",
