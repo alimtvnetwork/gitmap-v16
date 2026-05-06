@@ -34,6 +34,13 @@ func OpenProfile(outputDir, profileName string) (*DB, error) {
 	return openDBAt(dbPath)
 }
 
+// OpenAt opens (or creates) a database at an exact filesystem path.
+// Used by features (e.g. commit-in) that anchor SQLite under a path
+// other than the default <outputDir>/data layout.
+func OpenAt(dbPath string) (*DB, error) {
+	return openDBAt(dbPath)
+}
+
 // openDBAt opens a database at an exact path.
 func openDBAt(dbPath string) (*DB, error) {
 	dbDir := filepath.Dir(dbPath)
