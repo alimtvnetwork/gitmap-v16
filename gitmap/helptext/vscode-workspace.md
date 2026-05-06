@@ -14,8 +14,8 @@ vsws
 
 ## Usage
 
-    gitmap vscode-workspace [--out <path>] [--relative] [--tag <name>]
-    gitmap vsws [--out <path>] [--relative] [--tag <name>]
+    gitmap vscode-workspace [--out <path>] [--relative] [--tag <name>] [--root-subdir <subdir>]
+    gitmap vsws [--out <path>] [--relative] [--tag <name>] [--root-subdir <subdir>]
 
 ## Flags
 
@@ -24,6 +24,7 @@ vsws
 | `--out <path>` | `./gitmap.code-workspace` | Output `.code-workspace` file path. Parent dirs are created if missing. Written atomically (temp + rename) so VS Code never sees a half-written file. |
 | `--relative` | off | Emit folder paths relative to the workspace file's directory (using forward slashes, VS Code's preferred form). Default is absolute paths so the file is portable across cwds. |
 | `--tag <name>` | _(none)_ | Include only repos whose auto-detected tag set contains the given tag (e.g. `go`, `node`, `git`). Tag detection matches what the Project Manager sync writes. |
+| `--root-subdir <subdir>` | _(none)_ | Add `<repo>/<subdir>` as the workspace folder instead of the repo root. Repos that don't contain that subdir are skipped (with a notice on stderr). Useful for monorepos where the interesting code lives under a fixed subpath like `src/`, `app/`, or `packages/web/`. |
 
 ## Output schema
 
@@ -65,6 +66,14 @@ different machine.
 
 Useful when you maintain hundreds of repos but only want one window
 per language.
+
+### Example 4: Drill into a fixed subdirectory of each repo
+
+    gitmap vsws --root-subdir src --out src-workspace.code-workspace
+
+Each folder in the resulting workspace points at `<repo>/src` rather
+than the repo root. Repos without a `src/` directory are skipped and
+reported on stderr.
 
 ## Exit codes
 
