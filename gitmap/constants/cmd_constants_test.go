@@ -242,6 +242,8 @@ func topLevelCmds() map[string]string {
 		"CmdHistoryPurgeAlias":    CmdHistoryPurgeAlias,
 		"CmdHistoryPin":           CmdHistoryPin,
 		"CmdHistoryPinAlias":      CmdHistoryPinAlias,
+		"CmdCommitIn":             CmdCommitIn,
+		"CmdCommitInAlias":        CmdCommitInAlias,
 		"CmdVSCodeWorkspace":      CmdVSCodeWorkspace,
 		"CmdVSCodeWorkspaceAlias": CmdVSCodeWorkspaceAlias,
 	}

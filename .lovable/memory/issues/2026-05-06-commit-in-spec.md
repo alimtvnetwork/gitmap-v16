@@ -27,3 +27,12 @@
 
 ## Verbatim user prompt
 The original 2026-05-06 user message ("Complete it in 7 iterations…") is the single source of truth — see git history of this file rather than duplicating the prose to avoid drift.
+
+## Progress
+- 2026-05-06 — **Phase 1 ✅** Constants + typed enums + parity tests landed.
+  Files: gitmap/constants/constants_commitin.go, gitmap/cmd/commitin/enums.go,
+  gitmap/cmd/commitin/enums_test.go; edits to constants_cli.go and
+  cmd_constants_test.go.
+- Next phases (in order): 2 DB migrations · 3 CLI parsing · 4 Workspace+source
+  resolution · 5 Walk+dedupe+replay · 6 Profiles+message pipeline ·
+  7 Function-intel+finalize.

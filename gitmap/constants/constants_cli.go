@@ -152,6 +152,12 @@ const (
 	CmdHistoryPurgeAlias = "hp"
 	CmdHistoryPin        = "history-pin"
 	CmdHistoryPinAlias   = "hpin"
+	// CmdCommitIn / CmdCommitInAlias — chronological multi-source
+	// commit replay into a single destination repo. See
+	// spec/03-commit-in/. Both tokens resolve to the same handler;
+	// short alias is `cin`.
+	CmdCommitIn      = "commit-in"
+	CmdCommitInAlias = "cin"
 )
 
 // Audit-legacy defaults + flag names. Patterns are comma-separated regexes.
