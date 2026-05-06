@@ -92,24 +92,27 @@ func parseBlobShasFromRawLog(raw string) []string {
 // will exec for every blob. It loads the JSON manifest once into a
 // dict keyed by blob SHA and rewrites blob.data on hit.
 func buildPinCallbackPython(manifestPath string) string {
-	return fmt.Sprintf(`
-import json, base64
-# filter-repo wraps this body in `def blob_callback(blob, metadata):`,
-# so the function symbol itself is NOT visible from inside. We cache
-# the manifest in a module-level dict (_pin_lookup) instead, populated
-# lazily on the first invocation.
-try:
-    _pin_lookup
-except NameError:
-    with open(%q, "r") as _f:
-        _entries = json.load(_f)
-    _pin_lookup = {}
-    for _e in _entries:
-        _data = base64.b64decode(_e["data_b64"])
-        for _sha in _e["blobs"]:
-            _pin_lookup[_sha.encode("ascii")] = _data
-_hit = _pin_lookup.get(blob.original_id)
-if _hit is not None:
-    blob.data = _hit
-`, manifestPath)
+	// filter-repo wraps this body in "def callback(blob, metadata):"
+	// (see git_filter_repo.RepoFilter._handle_arg_callbacks).
+	// The callback symbol itself is NOT visible from inside, so we
+	// stash the lookup table in the function's __globals__ via an
+	// explicit `global` declaration, populated lazily on the first
+	// invocation. Without `global`, the assignment becomes a local
+	// and the dict is rebuilt on every blob.
+	const tmpl = "" +
+		"import json, base64\n" +
+		"global _pin_lookup\n" +
+		"if '_pin_lookup' not in globals():\n" +
+		"    with open(__MANIFEST__, 'r') as _f:\n" +
+		"        _entries = json.load(_f)\n" +
+		"    _pin_lookup = {}\n" +
+		"    for _e in _entries:\n" +
+		"        _data = base64.b64decode(_e['data_b64'])\n" +
+		"        for _sha in _e['blobs']:\n" +
+		"            _pin_lookup[_sha.encode('ascii')] = _data\n" +
+		"_hit = _pin_lookup.get(blob.original_id)\n" +
+		"if _hit is not None:\n" +
+		"    blob.data = _hit\n"
+	quoted := fmt.Sprintf("%q", manifestPath)
+	return strings.ReplaceAll(tmpl, "__MANIFEST__", quoted)
 }
