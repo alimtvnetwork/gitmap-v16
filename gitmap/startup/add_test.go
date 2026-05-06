@@ -6,6 +6,7 @@ package startup
 import (
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -119,6 +120,9 @@ func TestAdd_BadName(t *testing.T) {
 // TestAdd_AutoCreatesDir confirms a missing autostart dir is created
 // rather than producing an error.
 func TestAdd_AutoCreatesDir(t *testing.T) {
+	if runtime.GOOS != "linux" {
+		t.Skip("XDG_CONFIG_HOME-based autostart dir is Linux-only")
+	}
 	root := t.TempDir()
 	t.Setenv("XDG_CONFIG_HOME", root)
 	res, err := Add(AddOptions{Name: "watch", Exec: "/x"})
