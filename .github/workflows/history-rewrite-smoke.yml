@@ -60,3 +60,27 @@ jobs:
 
       - name: Scenario 2 — history-pin collapses file to single content hash
         run: bash .github/scripts/smoke-history-pin.sh "$RUNNER_TEMP/gitmap"
+
+      - name: Scenario 3 — bad args exit 4 (no paths)
+        run: |
+          set +e
+          "$RUNNER_TEMP/gitmap" history-purge --no-push 2>/dev/null
+          rc=$?
+          set -e
+          if [ "$rc" != "4" ]; then
+            echo "FAIL: expected exit 4 for no-paths, got $rc" >&2
+            exit 1
+          fi
+          echo "PASS: history-purge with no paths exits 4"
+
+      - name: Scenario 4 — --yes and --no-push are mutually exclusive (exit 4)
+        run: |
+          set +e
+          "$RUNNER_TEMP/gitmap" history-purge anything --yes --no-push 2>/dev/null
+          rc=$?
+          set -e
+          if [ "$rc" != "4" ]; then
+            echo "FAIL: expected exit 4 for --yes+--no-push, got $rc" >&2
+            exit 1
+          fi
+          echo "PASS: --yes and --no-push conflict exits 4"

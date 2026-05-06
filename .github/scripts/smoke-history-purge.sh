@@ -51,4 +51,37 @@ if [ "$REMAINING" != "0" ]; then
   exit 1
 fi
 
-echo "PASS: history-purge removed secret.env from all history"
+# 6. README must still exist in every commit it was added to (untouched
+#    paths must survive the rewrite).
+README_COMMITS="$(git -C "$SANDBOX" log --all --oneline -- README.md | wc -l)"
+if [ "$README_COMMITS" -lt 5 ]; then
+  echo "FAIL: history-purge collapsed README.md history (got $README_COMMITS, expected >=5)" >&2
+  exit 1
+fi
+
+echo "PASS: history-purge removed secret.env from all history; README.md untouched"
+
+# ── Scenario B ────────────────────────────────────────────────────────
+# Re-run with --message and assert ONLY commits that touched secret.env
+# get the new message; the other commits keep their original message.
+rm -rf "$SANDBOX"
+SANDBOX_LINE="$("$GITMAP_BIN" history-purge secret.env --no-push --keep-sandbox \
+  --message "scrubbed by ci" 2>&1 | tee /dev/stderr | grep 'sandbox kept at' || true)"
+SANDBOX="$(echo "$SANDBOX_LINE" | sed -E 's/.*sandbox kept at //')"
+
+SCRUBBED="$(git -C "$SANDBOX" log --all --pretty=format:'%s' | grep -c '^scrubbed by ci$' || true)"
+UNTOUCHED="$(git -C "$SANDBOX" log --all --pretty=format:'%s' | grep -cE '^commit [45]$' || true)"
+
+# Commits 1-3 carried secret.env → they all collapse into a smaller set
+# of touched commits; commits 4 and 5 never touched secret.env so their
+# original messages must survive verbatim.
+if [ "$SCRUBBED" -lt 1 ]; then
+  echo "FAIL: --message did not rewrite any touched commit (got $SCRUBBED)" >&2
+  exit 1
+fi
+if [ "$UNTOUCHED" != "2" ]; then
+  echo "FAIL: --message leaked into untouched commits (expected 2 originals, got $UNTOUCHED)" >&2
+  exit 1
+fi
+
+echo "PASS: --message scoped to touched commits only ($SCRUBBED rewritten, 2 originals kept)"
