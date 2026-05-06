@@ -61,7 +61,13 @@ func TestDetectTagsCustomSkipsAndAdds(t *testing.T) {
 	os.Setenv(constants.EnvVSCodeTagAdd, "work"+constants.EnvVSCodeTagSeparator+"git")
 
 	got := DetectTagsCustom(root)
-	if containsString(got[:max(0, len(got)-2)], "git") {
+	// Detected portion = everything except the trailing always-add slice.
+	addCount := 2 // "work" and "git"
+	cutoff := len(got) - addCount
+	if cutoff < 0 {
+		cutoff = 0
+	}
+	if containsString(got[:cutoff], "git") {
 		t.Errorf("git should be skipped from detected portion, got %v", got)
 	}
 	if !containsString(got, "work") || !containsString(got, "git") {
@@ -99,12 +105,4 @@ func sortCopy(s []string) []string {
 	sort.Strings(c)
 
 	return c
-}
-
-func max(a, b int) int {
-	if a > b {
-		return a
-	}
-
-	return b
 }
