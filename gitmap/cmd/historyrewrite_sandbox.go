@@ -89,7 +89,7 @@ func runFilterRepoPurge(sandbox string, paths []string, opts historyOpts) {
 	for _, p := range paths {
 		args = append(args, "--path", p)
 	}
-	args = append(args, historyMessageArgs(opts, paths)...)
+	args = append(args, historyMessageArgs(opts, sandbox, paths)...)
 	execFilterRepo(args)
 }
 
@@ -111,49 +111,76 @@ func runFilterRepoPin(sandbox string, paths []string,
 		"-C", sandbox, "filter-repo", "--force",
 		"--blob-callback", buildPinCallbackPython(manifest),
 	}
-	args = append(args, historyMessageArgs(opts, paths)...)
+	args = append(args, historyMessageArgs(opts, sandbox, paths)...)
 	execFilterRepo(args)
 }
 
 // historyMessageArgs returns the filter-repo args needed to rewrite
-// commit messages of ONLY commits that touch one of `paths`, leaving
-// every other commit's message untouched. Returns nil when --message
-// is empty.
-func historyMessageArgs(opts historyOpts, paths []string) []string {
+// commit messages of ONLY commits that touched one of `paths` in the
+// PRE-rewrite history, leaving every other commit's message
+// untouched. Returns nil when --message is empty.
+//
+// We pre-compute the set of touched commit SHAs via `git log` in the
+// sandbox BEFORE filter-repo runs, then pass that set into the
+// commit-callback. This is required for `purge` mode, where
+// --invert-paths drops the file_changes for the target paths before
+// the callback fires — the callback would otherwise see zero touches
+// and rewrite no messages (smoke-test failure mode).
+func historyMessageArgs(opts historyOpts, sandbox string, paths []string) []string {
 	if opts.message == "" {
 		return nil
 	}
-	return []string{"--commit-callback", buildScopedMessagePython(opts.message, paths)}
+	touched := touchedCommitSHAs(sandbox, paths)
+	return []string{"--commit-callback", buildScopedMessagePython(opts.message, touched)}
+}
+
+// touchedCommitSHAs returns the lowercase hex SHAs of every commit
+// reachable from any ref in `sandbox` that touched at least one of
+// `paths`. Empty slice on git failure (caller treats as "rewrite
+// nothing", which is the safe default).
+func touchedCommitSHAs(sandbox string, paths []string) []string {
+	args := []string{"-C", sandbox, "log", "--all", "--format=%H", "--"}
+	args = append(args, paths...)
+	out, err := exec.Command(constants.HistoryGitBin, args...).Output()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, constants.HistoryErrFilterRepo, exitCodeOf(err), err.Error())
+		return nil
+	}
+	lines := strings.Split(strings.TrimSpace(string(out)), "\n")
+	shas := make([]string, 0, len(lines))
+	for _, ln := range lines {
+		ln = strings.TrimSpace(ln)
+		if ln != "" {
+			shas = append(shas, ln)
+		}
+	}
+	return shas
 }
 
 // buildScopedMessagePython renders a Python snippet for filter-repo's
-// --commit-callback that only rewrites commit.message when at least
-// one of the commit's file_changes references a path inside the
-// requested set. Path matching is exact OR prefix-with-trailing-slash
-// so that passing a folder ("dir") also scopes its descendants.
-func buildScopedMessagePython(message string, paths []string) string {
-	quoted := make([]string, 0, len(paths))
-	for _, p := range paths {
-		quoted = append(quoted, fmt.Sprintf("%q", p))
+// --commit-callback that only rewrites commit.message when the
+// commit's pre-rewrite SHA (commit.original_id) is in the set of
+// touched commits computed by `git log -- <paths>`. We rely on the
+// pre-computed SHA set instead of inspecting commit.file_changes
+// because purge mode (--invert-paths) strips those entries before the
+// callback fires.
+func buildScopedMessagePython(message string, shas []string) string {
+	quoted := make([]string, 0, len(shas))
+	for _, s := range shas {
+		quoted = append(quoted, fmt.Sprintf("%q", s))
 	}
-	pathLiteral := "[" + strings.Join(quoted, ", ") + "]"
+	setLiteral := "{" + strings.Join(quoted, ", ") + "}"
 	return fmt.Sprintf(`
-_targets = [p.encode("utf-8") for p in %s]
-def _hits(change_path):
-    if change_path is None:
-        return False
-    for _t in _targets:
-        if change_path == _t or change_path.startswith(_t + b"/"):
-            return True
-    return False
-_touched = False
-for _c in (commit.file_changes or []):
-    if _hits(_c.filename):
-        _touched = True
-        break
-if _touched:
-    commit.message = b%q
-`, pathLiteral, message)
+_touched_shas = %s
+_oid = commit.original_id
+if _oid is not None:
+    try:
+        _oid = _oid.decode("ascii")
+    except Exception:
+        _oid = ""
+    if _oid in _touched_shas:
+        commit.message = b%q
+`, setLiteral, message)
 }
 
 // execFilterRepo runs `git ...` with stdio inherited and exits 5 on
