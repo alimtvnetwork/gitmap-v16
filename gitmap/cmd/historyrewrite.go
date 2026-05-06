@@ -36,6 +36,8 @@ func runHistoryPin(args []string) {
 // Each phase is its own function so this stays under 15 lines.
 func runHistoryRewrite(mode historyMode, args []string) {
 	opts, paths := parseHistoryArgs(args)
+	opts.modeLabel = historyModeLabel(mode)
+	opts.pathCount = len(paths)
 	ensureFilterRepoInstalled()
 	originURL := readOriginURL()
 	sandbox := mirrorClone(originURL, opts)
@@ -50,6 +52,15 @@ func runHistoryRewrite(mode historyMode, args []string) {
 		return
 	}
 	finalizePush(sandbox, originURL, opts)
+}
+
+// historyModeLabel returns a short human label used in the confirm
+// banner.
+func historyModeLabel(mode historyMode) string {
+	if mode == historyModePin {
+		return "history-pin"
+	}
+	return "history-purge"
 }
 
 // loadPinPayloads reads current bytes for each path when in pin mode.

@@ -17,7 +17,7 @@ func finalizePush(sandbox, originURL string, opts historyOpts) {
 		fmt.Fprintf(os.Stdout, constants.HistoryMsgManualPush, sandbox, originURL)
 		return
 	}
-	if !opts.yes && !confirmHistoryPush(originURL) {
+	if !opts.yes && !confirmHistoryPush(sandbox, originURL, opts) {
 		fmt.Fprintf(os.Stderr, constants.HistoryMsgUserAborted, sandbox)
 		fmt.Fprintf(os.Stdout, constants.HistoryMsgManualPush, sandbox, originURL)
 		return
@@ -25,16 +25,19 @@ func finalizePush(sandbox, originURL string, opts historyOpts) {
 	pushSandbox(sandbox, originURL, opts)
 }
 
-// confirmHistoryPush blocks on stdin for a y/Y answer.
-func confirmHistoryPush(originURL string) bool {
+// confirmHistoryPush prints the verification banner and blocks on
+// stdin until the user types the literal token "yes". Any other
+// input (including empty, "y", "Y") aborts. Default is abort.
+func confirmHistoryPush(sandbox, originURL string, opts historyOpts) bool {
+	fmt.Fprintf(os.Stderr, constants.HistoryMsgConfirmBanner,
+		opts.modeLabel, opts.pathCount, sandbox, originURL)
 	fmt.Fprintf(os.Stderr, constants.HistoryMsgConfirmPush, originURL)
 	reader := bufio.NewReader(os.Stdin)
 	line, err := reader.ReadString('\n')
 	if err != nil {
 		return false
 	}
-	ans := strings.TrimSpace(line)
-	return ans == "y" || ans == "Y"
+	return strings.TrimSpace(line) == "yes"
 }
 
 // pushSandbox runs `git -C <sandbox> push --mirror --force-with-lease

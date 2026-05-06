@@ -52,9 +52,11 @@ the user's working repository.
    from `spec/15-research/.../§3` against the rewritten sandbox. Hard
    fail (exit `6`) when verification disagrees with the requested
    operation.
-5. **Push prompt** — print a delta summary (object count, repo size
-   before/after, paths touched), then prompt
-   `Push --force-with-lease to origin? [y/N]: `. Default no. `--yes`
+5. **Push prompt** — print a verification-passed banner (mode, path
+   count, sandbox path, remote URL, warning) then prompt
+   `Type 'yes' to force-push to <origin> (anything else aborts): `.
+   The user must type the literal token `yes` (case-sensitive). Any
+   other input — including empty, `y`, `Y`, `YES` — aborts. `--yes`
    skips the prompt; `--no-push` short-circuits before the prompt and
    prints the manual `git push` command instead.
 
