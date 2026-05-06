@@ -326,12 +326,14 @@ func writeInstallScriptTemp(name string, body []byte) string {
 	if strings.HasSuffix(name, ".ps1") {
 		if _, err := f.Write([]byte{0xEF, 0xBB, 0xBF}); err != nil {
 			fmt.Fprintf(os.Stderr, constants.ErrSelfInstallScriptWrite, err)
-			os.Exit(1)
+			_ = f.Close()
+			exitWith(1)
 		}
 	}
 	if _, err := f.Write(body); err != nil {
 		fmt.Fprintf(os.Stderr, constants.ErrSelfInstallScriptWrite, err)
-		os.Exit(1)
+		_ = f.Close()
+		exitWith(1)
 	}
 	if !strings.HasSuffix(name, ".ps1") {
 		_ = os.Chmod(f.Name(), 0o755)
