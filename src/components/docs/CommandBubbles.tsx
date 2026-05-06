@@ -21,6 +21,8 @@ const BUBBLES: Bubble[] = [
   { name: "cd", alias: "go", description: "Jump shell into a tracked repo" },
   { name: "group", alias: "g", description: "Manage repo groups" },
   { name: "changelog", alias: "cl", description: "View release notes" },
+  { name: "history-purge", alias: "hp", description: "Remove file(s) from all history (sandbox)", to: "/history-rewrite" },
+  { name: "history-pin", alias: "hpin", description: "Pin file(s) to current content across history", to: "/history-rewrite" },
 ];
 
 const COMMANDS_PATH = "/commands";

@@ -33,6 +33,7 @@ import {
   GitMerge,
   GitCompare,
   Download,
+  Trash2,
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 
@@ -108,6 +109,7 @@ const navItems = [
   { title: "Commit Left (planned)", url: "/commit-left", icon: GitCommit },
   { title: "Commit Right (planned)", url: "/commit-right", icon: GitCommit },
   { title: "Commit Both (planned)", url: "/commit-both", icon: GitCommit },
+  { title: "History Rewrite (purge/pin)", url: "/history-rewrite", icon: Trash2 },
   { title: "Register (as)", url: "/as", icon: Tag },
   { title: "Release Alias", url: "/release-alias", icon: Rocket },
   { title: "Release Alias Pull", url: "/release-alias-pull", icon: Rocket },
