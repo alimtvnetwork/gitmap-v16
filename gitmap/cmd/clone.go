@@ -321,6 +321,7 @@ func executeDirectClone(url, folderName string, ghDesktopFlag, noReplace bool, o
 	syncSingleClonedRepoToVSCodePM(absPath, repoName, noVSCodeSync)
 
 	completePendingTask(taskDB, taskID)
+	closeTaskDB(taskDB)
 }
 
 // upsertDirectClone persists the cloned repo in the database.
