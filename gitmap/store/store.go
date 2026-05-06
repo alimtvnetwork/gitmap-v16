@@ -169,6 +169,9 @@ func (db *DB) Migrate() error {
 		constants.SQLCreateCloneInteractiveSelection,
 		constants.SQLCreateClonePickRepoCanonIndex,
 		constants.SQLCreateClonePickNameIndex,
+		constants.SQLCreateTransaction,
+		constants.SQLCreateTransactionFile,
+		constants.SQLCreateTransactionStatusIndex,
 	}
 
 	for _, stmt := range statements {
