@@ -471,6 +471,16 @@ path → `mkdir -p && git init`. No prompt, no flag.
   `orchestrator.Run` and propagates its exit code. All files
   <200 lines, all funcs ≤15 lines. `go build ./...` clean,
   `go test ./cmd/commitin/... ./store/...` green.
+- ✅ **Step 3 — Per-commit pipeline polish (2026-05-06).** Added
+  `orchestrator/exclude.go` (applyExclusions, PathFile exact match +
+  PathFolder prefix/segment match, POSIX-normalized) and
+  `orchestrator/funcintel_block.go` (renderFunctionIntel: `git show
+  <sha>:path` + `<sha>^:path` per file, dispatched via
+  funcintel.LanguageForPath + EnabledLanguages, "" on failure per
+  spec §6.3 best-effort rule). `commit.go` now filters Files through
+  exclusions, emits `SkipReasonExcludedAllFiles` when filter empties
+  a non-empty list, and threads the §6.3 block into `message.Build`.
+  Added `exclude_test.go` (4 cases). All builds + tests green.
 - `// gitmap:cmd top-level` marker on the `CmdCommitIn` const block in
   `constants_cli.go` (drift-CI catches this on next `generate-check`).
 - CHANGELOG v4.18.0 entry documenting the new command surface +
