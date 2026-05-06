@@ -23,6 +23,10 @@ func Run() {
 	// Done first so even URL-shortcut and alias rewrites operate on
 	// already-cleaned args.
 	os.Args = append(os.Args[:1], stripVSCodeSyncDisabledFlag(os.Args[1:])...)
+	// Strip the global tag-customization flags too, persisting their
+	// values into GITMAP_VSCODE_TAG_{ADD,SKIP,MARKER} so every
+	// DetectTagsCustom caller — present and future — picks them up.
+	os.Args = append(os.Args[:1], stripVSCodeTagFlags(os.Args[1:])...)
 	if len(os.Args) < 2 {
 		PrintBinaryLocations()
 		printUsage()
