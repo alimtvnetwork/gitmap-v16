@@ -197,6 +197,14 @@ func (db *DB) Migrate() error {
 		return err
 	}
 
+	// commit-in (spec/03-commit-in/) — adds 18 tables + seeds. Keep
+	// AFTER the v15 / standard CREATE pass so commit-in DDL never
+	// races with the legacy rebuilds; keep BEFORE the schema-version
+	// stamp so a failure forces the next run to retry.
+	if err := db.migrateCommitIn(); err != nil {
+		return err
+	}
+
 	// Stamp the marker LAST so any earlier failure leaves the previous
 	// (or empty) marker in place, ensuring the next run retries.
 	db.writeSchemaVersion(constants.SchemaVersionCurrent)
