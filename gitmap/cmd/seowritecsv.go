@@ -32,7 +32,8 @@ func readCSVFile(path string) [][]string {
 	records, err := csv.NewReader(f).ReadAll()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, constants.ErrSEOCSVRead, path, err)
-		os.Exit(1)
+		_ = f.Close()
+		exitWith(1)
 	}
 
 	return records
