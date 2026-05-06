@@ -56,7 +56,7 @@ func runPull(args []string) {
 
 	if code := prog.ExitCodeForBatch(); code != 0 {
 		failPendingTask(taskDB, taskID, fmt.Sprintf("pull batch failed with exit code %d", code))
-		os.Exit(code)
+		exitWith(code)
 	}
 
 	completePendingTask(taskDB, taskID)
