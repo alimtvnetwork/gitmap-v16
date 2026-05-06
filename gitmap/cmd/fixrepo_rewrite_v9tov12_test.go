@@ -23,7 +23,7 @@ import (
 // fixRepoV9ToV12FixtureBody is the on-disk fixture: every realistic
 // shape we have seen in third-party Go repos that depend on a
 // versioned module — bare slug, dash form, slash form, and a digit-
-// adjacent token (`gitmap-v16`) that MUST NOT match `gitmap-v16`.
+// adjacent token (`gitmap-v10`) that MUST NOT match `gitmap-v9`.
 // We use `-v10` (a real, plausible neighbor version) rather than the
 // nonsensical `-v90` to keep the fixture readable while still locking
 // the negative-lookahead guard against `-v9` matching inside `-v10`.
@@ -32,17 +32,23 @@ import (
 // whose generation lags the test's MinGeneration) fails with an
 // actionable "regenerate via ..." message instead of a confusing
 // rewrite-count mismatch.
+//
+// IMPORTANT: this body MUST contain `gitmap-v9` tokens (the rewrite
+// target) and a `gitmap-v10` guarded neighbor. A previous global
+// rename collapsed every `-v9` token into `-v16` and silently broke
+// the test (rewriter found 0 tokens to bump). See
+// .lovable/memory/issues/2026-05-01-fixrepo-digit-capture-desync.md.
 const fixRepoV9ToV12FixtureBody = `// fixture-stamp: name=fixrepo-v9-to-v12 generation=1 min-current=12 for=v9->v12-width-cross sha=7e1463d1eae6
 module example.com/consumer
 
 require (
-	github.com/alimtvnetwork/gitmap-v16 v0.0.0
+	github.com/alimtvnetwork/gitmap-v9 v0.0.0
 )
 
-import gm "github.com/alimtvnetwork/gitmap-v16/gitmap/cmd"
+import gm "github.com/alimtvnetwork/gitmap-v9/gitmap/cmd"
 
-// repo URL: https://github.com/alimtvnetwork/gitmap-v16.git
-// guarded:  gitmap-v16 must NOT be rewritten by target=9 (v9 is a
+// repo URL: https://github.com/alimtvnetwork/gitmap-v9.git
+// guarded:  gitmap-v10 must NOT be rewritten by target=9 (v9 is a
 //           prefix of v10 — the negative-lookahead guard skips it)
 `
 
