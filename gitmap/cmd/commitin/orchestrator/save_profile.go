@@ -3,7 +3,6 @@ package orchestrator
 import (
 	"fmt"
 	"io"
-	"os"
 	"strings"
 
 	"github.com/alimtvnetwork/gitmap-v16/gitmap/cmd/commitin/profile"
@@ -58,15 +57,4 @@ func persistProfile(ctx *runContext, p *profile.Profile, stderr io.Writer) int {
 // classification — this path is the ONLY caller that needs the split.
 func isExistsError(err error) bool {
 	return err != nil && strings.Contains(err.Error(), "already exists")
-}
-
-// stdinIsTty reports whether os.Stdin looks like an interactive
-// terminal. Used to gate the "Save profile?" prompt so non-TTY runs
-// (CI, pipes, tests) never block waiting for input.
-func stdinIsTty() bool {
-	fi, err := os.Stdin.Stat()
-	if err != nil {
-		return false
-	}
-	return (fi.Mode() & os.ModeCharDevice) != 0
 }
