@@ -25,7 +25,7 @@ const (
 	HistoryDescYes         = "Skip the push confirmation prompt; force-push immediately on success"
 	HistoryDescNoPush      = "Stop after verification; print the manual git push command"
 	HistoryDescDryRun      = "Run the rewrite + verification in the sandbox, then exit without pushing"
-	HistoryDescMessage     = "Rewrite the commit message of every touched commit to this string"
+	HistoryDescMessage     = "Rewrite the commit message of ONLY commits that touch a requested path; other commit messages are left unchanged"
 	HistoryDescKeepSandbox = "Don't delete the temp mirror-clone on exit"
 	HistoryDescQuiet       = "Suppress per-phase progress lines; only print errors and the final summary"
 )
