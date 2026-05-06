@@ -31,6 +31,9 @@ func WalkFirstParent(repoDir string) ([]SourceCommit, error) {
 	if err != nil {
 		return nil, fmt.Errorf("walk: list shas: %w", err)
 	}
+	if len(shas) == 0 {
+		return nil, nil
+	}
 	out := make([]SourceCommit, 0, len(shas))
 	for i, sha := range shas {
 		c, hyErr := hydrate(repoDir, sha, i+1)
