@@ -71,3 +71,18 @@ The original 2026-05-06 user message ("Complete it in 7 iterations…") is the s
   (tx-wrapped) / RecordRewritten (auto-seeds ShaMap on Created) /
   RecordSkip. All hooks are swappable; tests use in-memory SQLite +
   fake git runners — no real git or filesystem required.
+- 2026-05-06 — **Phase 6 ✅** Profile + message + prompt packages
+  under gitmap/cmd/commitin/. profile/: strict JSON decode (rejects
+  unknown fields, gates SchemaVersion=1), canonical encode with §5.2
+  key order + trailing newline, atomic SaveToDisk with overwrite
+  refusal, ProfilePath under <root>/.gitmap/commit-in/profiles/,
+  Resolve() applies four-layer precedence defaults<profile<CLI.
+  message/: Build() runs §6.1 stages in order — strip rules + blank
+  collapse, override gate (honours OverrideOnlyWeak via §6.2 first-
+  word lowercase + punctuation strip), title affix on first line,
+  body affix random-pick wrap, function-intel block append, IsEmpty
+  flag for EmptyAfterMessageRules skip. prompt/: Asker honours
+  --no-prompt by emitting standardized stderr line + ErrNoPrompt for
+  exit-code mapping; AskEnum loops until valid. 18 tests across the
+  three packages; PickIndex injection keeps message tests determini-
+  stic.
