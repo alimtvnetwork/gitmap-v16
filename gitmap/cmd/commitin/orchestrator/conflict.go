@@ -1,9 +1,9 @@
 package orchestrator
 
 import (
+	"errors"
 	"fmt"
 	"io"
-	"errors"
 
 	"github.com/alimtvnetwork/gitmap-v16/gitmap/cmd/commitin/finalize"
 	"github.com/alimtvnetwork/gitmap-v16/gitmap/cmd/commitin/replay"
