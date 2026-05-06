@@ -120,3 +120,20 @@ The original 2026-05-06 user message ("Complete it in 7 iterations…") is the s
   OrderIndex cache. runCommitIn delegates to orchestrator.Run and
   propagates exit codes. go build ./... clean; go test ./cmd/
   commitin/... ./store/... all green.
+- 2026-05-06 — **Step 3 ✅** Per-commit pipeline polish: exclusions
+  filter + function-intel block + ExcludedAllFiles skip path. Two new
+  files in orchestrator/: exclude.go (applyExclusions /
+  matchesExclusion / matchesFolder — PathFile = exact rel match,
+  PathFolder = prefix or any path segment match, POSIX-normalized via
+  filepath.ToSlash), funcintel_block.go (renderFunctionIntel best-
+  effort builder that runs `git show <sha>:path` + `git show
+  <sha>^:path` per file, dispatches via funcintel.LanguageForPath +
+  EnabledLanguages, returns "" on any failure so a parser glitch never
+  aborts the commit per spec §6.3). commit.go now: filters c.Files
+  through applyExclusions, emits SkipReasonExcludedAllFiles when the
+  filter empties a non-empty file list, materializes the §6.3 block
+  via renderFunctionIntel, threads it into message.Build via the
+  FunctionIntel input field. New exclude_test.go covers 4 cases (pass-
+  through, folder+file mix, nested-segment folder match, exact-only
+  file match). go build clean; ./cmd/commitin/... ./store/... all
+  green.
