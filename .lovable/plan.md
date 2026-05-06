@@ -481,6 +481,23 @@ path → `mkdir -p && git init`. No prompt, no flag.
   exclusions, emits `SkipReasonExcludedAllFiles` when filter empties
   a non-empty list, and threads the §6.3 block into `message.Build`.
   Added `exclude_test.go` (4 cases). All builds + tests green.
+- ✅ **Step 4 — Profile save + interactive shim (2026-05-06).**
+  Added `profile/build.go` (`BuildFromResolved` materializes a
+  byte-stable `Profile` from layered `Resolved` settings) and
+  `profile/default.go` (`ClearOtherDefaults` sweeps sibling
+  `*.json` profiles bound to the same `SourceRepoPath` and flips
+  `IsDefault=false` so only the freshly-saved profile holds the
+  flag, satisfying spec §5.5 atomicity intent on the disk-only
+  layer). New `orchestrator/save_profile.go` runs once between
+  `setUp` and `executePipeline`, gated on `--save-profile <name>`:
+  honors `--save-profile-overwrite`, splits "exists" (→
+  `CommitInExitBadArgs` with `CommitInErrSaveProfileExists`) from
+  generic IO (→ `CommitInExitDbFailed`), and records a `Failed`
+  RunStatus when the save aborts before any commits. Interactive
+  prompt remains a no-op for the implemented surface — every
+  required setting has a built-in default per §02 — so `--no-prompt`
+  never produces a `MissingAnswer` exit on this code path. All
+  `go build ./...` + `go test ./cmd/commitin/... ./store/...` green.
 - `// gitmap:cmd top-level` marker on the `CmdCommitIn` const block in
   `constants_cli.go` (drift-CI catches this on next `generate-check`).
 - CHANGELOG v4.18.0 entry documenting the new command surface +
