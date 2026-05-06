@@ -13,7 +13,7 @@ import (
 // TestBuildPinCallbackPythonUsesGlobalsCache ensures the emitted
 // filter-repo callback does not depend on a function-object name such
 // as `blob_callback`, which is not guaranteed to exist inside the
-// wrapper body across filter-repo versions.
+// wrapper body across filter-repo versions, and caches via builtins.
 func TestBuildPinCallbackPythonUsesGlobalsCache(t *testing.T) {
 	got := buildPinCallbackPython("/tmp/pin.json")
 	if !strings.Contains(got, "getattr(builtins, '_gitmap_pin_lookup', None)") {
