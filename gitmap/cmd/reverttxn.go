@@ -51,6 +51,11 @@ func dispatchRevertTxn(args []string) bool {
 
 		return true
 	}
+	if raw, ok := flagValue(args, constants.FlagRevertLastN); ok {
+		runRevertLastN(raw, hasRevertFlag(args, constants.FlagRevertForce))
+
+		return true
+	}
 
 	return false
 }
