@@ -94,16 +94,21 @@ func parseBlobShasFromRawLog(raw string) []string {
 func buildPinCallbackPython(manifestPath string) string {
 	return fmt.Sprintf(`
 import json, base64
-if not hasattr(blob_callback, "_lookup"):
+# filter-repo wraps this body in `def blob_callback(blob, metadata):`,
+# so the function symbol itself is NOT visible from inside. We cache
+# the manifest in a module-level dict (_pin_lookup) instead, populated
+# lazily on the first invocation.
+try:
+    _pin_lookup
+except NameError:
     with open(%q, "r") as _f:
         _entries = json.load(_f)
-    _lookup = {}
+    _pin_lookup = {}
     for _e in _entries:
         _data = base64.b64decode(_e["data_b64"])
         for _sha in _e["blobs"]:
-            _lookup[_sha.encode("ascii")] = _data
-    blob_callback._lookup = _lookup
-_hit = blob_callback._lookup.get(blob.original_id)
+            _pin_lookup[_sha.encode("ascii")] = _data
+_hit = _pin_lookup.get(blob.original_id)
 if _hit is not None:
     blob.data = _hit
 `, manifestPath)
