@@ -373,11 +373,28 @@ path → `mkdir -p && git init`. No prompt, no flag.
   collision/release, all four `EnsureSource` branches, sibling sort
   (`demo`/`-v1`/`-v3`/`-v10`), `-N` truncation, mixed
   URL+folder classification, three-kind staging.
-- ⏳ **Phase 5 — Walk + dedupe + replay.** Implement `WalkCommits`
-  (first-parent oldest→newest), `DedupeCheck` against `ShaMap`,
-  `BuildFileSet` (with `Exclusions`), `Commit` (replicating BOTH
-  dates), `RecordResult`, `ShaMap` insert. Integration test using
-  `git plumbing` (no `git add`, mirror `smoke-history-pin.sh` style).
+- ✅ **Phase 5 — Walk + dedupe + replay (2026-05-06).** Four small
+  packages under `gitmap/cmd/commitin/`: `walk/` (first-parent
+  oldest→newest via `git rev-list --first-parent --reverse`, hydrates
+  each commit with metadata + file list using `\x1f`-delimited
+  `git show` format; empty-repo path returns nil w/o error),
+  `dedupe/` (`Lookup` against `ShaMap` returns `Verdict{IsHit,
+  PreviousRewrittenId}`; miss is success-not-error),
+  `replay/` (uses `git cat-file blob` → `git hash-object -w` →
+  `git update-index --add --cacheinfo` → `git write-tree` →
+  `git commit-tree -p HEAD` → `git update-ref HEAD`; pins BOTH dates
+  via `GIT_AUTHOR_DATE` / `GIT_COMMITTER_DATE` env vars in RFC3339;
+  `dryRun=true` short-circuits with zero side effects),
+  `runlog/` (`StartRun` / `FinishRun` / `InsertInputRepo` /
+  `InsertSourceCommit` (tx-wrapped commit + files) /
+  `RecordRewritten` (also seeds `ShaMap` on `Created`) / `RecordSkip`;
+  enum-mirror `Name → Id` lookups centralized in `lookup.go`). All
+  packages expose swappable hooks (`SetGitRunnerForTest`, `SetTestHooks`)
+  so tests run hermetically. Test suites: walk (2 cases — happy path
+  + empty repo), dedupe (3 — miss/hit/empty-input guard), replay
+  (3 — dry-run zero-call, full pipeline call sequence, both-dates
+  env-var pin), runlog (4 — start/finish flow, atomic source+files
+  insert, Created → ShaMap upsert, skip log persistence).
 - ⏳ **Phase 6 — Profiles + message pipeline.** Implement profile
   load/save (JSON + DB transaction), interactive prompts, message
   build pipeline §6.1 in canonical order, weak-word matching §6.2.
