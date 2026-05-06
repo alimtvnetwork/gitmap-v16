@@ -238,12 +238,12 @@ func topLevelCmds() map[string]string {
 		"CmdTemplatesInitAlias":   CmdTemplatesInitAlias,
 		// History-rewrite family (history-purge / history-pin) and
 		// vscode-workspace command. Added in v4.17.0 / vscode workspace.
-		"CmdHistoryPurge":          CmdHistoryPurge,
-		"CmdHistoryPurgeAlias":     CmdHistoryPurgeAlias,
-		"CmdHistoryPin":            CmdHistoryPin,
-		"CmdHistoryPinAlias":       CmdHistoryPinAlias,
-		"CmdVSCodeWorkspace":       CmdVSCodeWorkspace,
-		"CmdVSCodeWorkspaceAlias":  CmdVSCodeWorkspaceAlias,
+		"CmdHistoryPurge":         CmdHistoryPurge,
+		"CmdHistoryPurgeAlias":    CmdHistoryPurgeAlias,
+		"CmdHistoryPin":           CmdHistoryPin,
+		"CmdHistoryPinAlias":      CmdHistoryPinAlias,
+		"CmdVSCodeWorkspace":      CmdVSCodeWorkspace,
+		"CmdVSCodeWorkspaceAlias": CmdVSCodeWorkspaceAlias,
 	}
 }
 
