@@ -84,3 +84,13 @@ func failPendingTask(db *store.DB, taskID int64, reason string) {
 		fmt.Fprintf(os.Stderr, constants.WarnPendingFailUpdate, taskID, err)
 	}
 }
+
+// closeTaskDB closes a *store.DB handle returned by createPendingTask
+// when it is non-nil. Provided so call sites can release the handle
+// before invoking os.Exit (deferred Close would not run).
+func closeTaskDB(db *store.DB) {
+	if db == nil {
+		return
+	}
+	_ = db.Close()
+}
