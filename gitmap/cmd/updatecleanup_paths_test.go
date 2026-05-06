@@ -32,13 +32,17 @@ func TestDeriveDeployAppDir(t *testing.T) {
 
 func TestResolveBuildOutputDir(t *testing.T) {
 	repoPath := "/repo"
-	if got := resolveBuildOutputDir(repoPath, "./bin"); got != "/repo/bin" {
+	// Normalize to slash form so the assertion holds on Windows
+	// (filepath.Clean uses backslash there, but the test contract
+	// is "the right logical path" not "the OS's separator").
+	norm := func(s string) string { return filepath.ToSlash(s) }
+	if got := norm(resolveBuildOutputDir(repoPath, "./bin")); got != "/repo/bin" {
 		t.Fatalf("resolveBuildOutputDir relative = %q, want %q", got, "/repo/bin")
 	}
-	if got := resolveBuildOutputDir(repoPath, ""); got != "/repo/bin" {
+	if got := norm(resolveBuildOutputDir(repoPath, "")); got != "/repo/bin" {
 		t.Fatalf("resolveBuildOutputDir default = %q, want %q", got, "/repo/bin")
 	}
-	if got := resolveBuildOutputDir(repoPath, "/custom/bin"); got != "/custom/bin" {
+	if got := norm(resolveBuildOutputDir(repoPath, "/custom/bin")); got != "/custom/bin" {
 		t.Fatalf("resolveBuildOutputDir absolute = %q, want %q", got, "/custom/bin")
 	}
 }
