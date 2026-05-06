@@ -299,3 +299,57 @@ No silent loss of delete intent is acceptable.
 - ✅ Dispatcher: registered in `roottooling.go`; compact help string in `constants_helpgroups.go`; LLM docs entry in `llmdocsgroups.go`
 - ✅ Helptext: `gitmap/helptext/rescan-subtree.md` (workflow, behavior, examples, exit codes), auto-discovered by `helptext/coverage_test.go`
 - ✅ Tests: `cmd/rescansubtree_test.go` covers arg-splitting (path-only / path+flags / flags+path / inline-value / errors), `--max-depth` injection (default + space override + inline override), banner extraction, and a guardrail asserting the rescan default is deeper than the scan default
+
+## commit-in / cin — 2026-05-06 (SPEC ONLY — DO NOT IMPLEMENT until user says `next`)
+
+Spec authored under `spec/03-commit-in/` (7 files, AI-blind ready). DB
+follows project convention: PascalCase tables/columns/JSON keys/JSON
+values; every PK is `INTEGER PRIMARY KEY AUTOINCREMENT` named
+`<TableName>Id`; every classifier (Type/Status/Kind/Mode/Reason/
+Outcome/Stage/Source) is an enum mirrored to a `(Id, Name UNIQUE)`
+join table. Source-repo auto-init rule encoded: URL → clone; existing
+repo → reuse; existing non-repo folder → `git init` in place; missing
+path → `mkdir -p && git init`. No prompt, no flag.
+
+### Phased implementation (gated — execute one phase per `next`)
+
+- ⏳ **Phase 1 — Constants & enums.** Add `CmdCommitIn` /
+  `CmdCommitInAlias` to `constants_cli.go`. Add every enum
+  (`CommitInAlias`, `InputKeyword`, `InputKind`, `RunStatus`,
+  `CommitOutcome`, `SkipReason`, `ConflictMode`, `ExclusionKind`,
+  `MessageRuleKind`, `FunctionIntelLanguage`, `CommitInStage`,
+  `CommitInExit`, `ProfileSource`) under
+  `gitmap/cmd/commitin/<enum>.go`, one per file. No behavior yet.
+- ⏳ **Phase 2 — DB migrations.** Create idempotent migration files
+  per §4.5; seed every enum-mirror table with `INSERT OR IGNORE`.
+  Wire into the existing migrator. Cover with table-presence tests.
+- ⏳ **Phase 3 — CLI parsing.** Implement argv grammar from §02
+  (separator handling, quoting, `KEYWORD` exclusivity, flag set,
+  exit codes). Pure parser tests, no git, no DB.
+- ⏳ **Phase 4 — Workspace + source resolution.** Implement
+  `EnsureWorkspace`, `EnsureSource` (the four-case auto-init rule),
+  `ExpandInputs` (`all` / `-N` discovery), `CloneInputs`,
+  `AcquireLock`. Smoke test under `.github/scripts/`.
+- ⏳ **Phase 5 — Walk + dedupe + replay.** Implement `WalkCommits`
+  (first-parent oldest→newest), `DedupeCheck` against `ShaMap`,
+  `BuildFileSet` (with `Exclusions`), `Commit` (replicating BOTH
+  dates), `RecordResult`, `ShaMap` insert. Integration test using
+  `git plumbing` (no `git add`, mirror `smoke-history-pin.sh` style).
+- ⏳ **Phase 6 — Profiles + message pipeline.** Implement profile
+  load/save (JSON + DB transaction), interactive prompts, message
+  build pipeline §6.1 in canonical order, weak-word matching §6.2.
+- ⏳ **Phase 7 — Function-intel + finalize.** Per-language detectors
+  under `gitmap/cmd/commitin/funcintel/<lang>.go`, registry dispatch,
+  conflict resolution (`ForceMerge` / `Prompt`), `Finalize` summary,
+  helptext file `gitmap/helptext/commit-in.md`.
+
+### Guardrails (must hold across every phase)
+
+- No file content, no file hash, no diff payload in SQLite. Only
+  `RelativePath` strings.
+- Never rewrite an existing source-repo commit; only append.
+- Replicate BOTH `AuthorDate` AND `CommitterDate` byte-for-byte.
+- Profiles bind by absolute symlink-resolved `<source>` path, never
+  by `origin` URL.
+- Every error path logs to `os.Stderr` with the standardized format
+  (`commit-in: <stage>: <message>`); zero swallow.
