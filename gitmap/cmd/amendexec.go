@@ -15,11 +15,12 @@ import (
 func listCommitsForAmend(f amendFlags) []model.CommitEntry {
 	var args []string
 
-	if f.commitHash == "" {
+	switch {
+	case f.commitHash == "":
 		args = []string{"log", "--format=%H %s", "--reverse"}
-	} else if f.commitHash == "HEAD" {
+	case f.commitHash == "HEAD":
 		args = []string{"log", "--format=%H %s", "-1"}
-	} else {
+	default:
 		args = []string{"log", "--format=%H %s", "--reverse", f.commitHash + "^..HEAD"}
 	}
 
