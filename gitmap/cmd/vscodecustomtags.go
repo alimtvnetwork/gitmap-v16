@@ -5,9 +5,9 @@
 // override the defaults that ship in
 // constants.AutoTagMarkers / AutoTagOrder:
 //
-//   --vscode-tag <name>             always add to every entry
-//   --vscode-tag-skip <name>        drop this auto-detected tag
-//   --vscode-tag-marker <file>=<tag> register marker→tag rule
+//	--vscode-tag <name>             always add to every entry
+//	--vscode-tag-skip <name>        drop this auto-detected tag
+//	--vscode-tag-marker <file>=<tag> register marker→tag rule
 //
 // Like `--vscode-sync-disabled`, the flags are stripped from argv
 // before any subcommand sees its flagset and persisted into
