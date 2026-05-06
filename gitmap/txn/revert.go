@@ -14,7 +14,7 @@ import (
 	"github.com/alimtvnetwork/gitmap-v16/gitmap/store"
 )
 
-// RevertOptions tunes Revert behaviour.
+// RevertOptions tunes Revert behavior.
 type RevertOptions struct {
 	Force bool // skip pre-revert sha256 verification of backup blobs
 }

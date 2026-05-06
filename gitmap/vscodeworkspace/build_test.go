@@ -67,10 +67,10 @@ func TestEncodeMatchesVSCodeShape(t *testing.T) {
 // to baseDir AND use forward slashes (VS Code's preferred form on
 // every OS, including Windows).
 func TestRelativizeProducesForwardSlashes(t *testing.T) {
-	base := filepath.Join("/", "work")
+	base := string(filepath.Separator) + "work"
 	in := []Folder{
-		{Name: "a", Path: filepath.Join("/", "work", "alpha")},
-		{Name: "b", Path: filepath.Join("/", "work", "nested", "beta")},
+		{Name: "a", Path: filepath.Join(base, "alpha")},
+		{Name: "b", Path: filepath.Join(base, "nested", "beta")},
 	}
 
 	got, err := Relativize(in, base)
