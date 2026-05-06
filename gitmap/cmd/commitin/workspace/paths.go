@@ -39,7 +39,7 @@ func EnsureWorkspace(sourceRoot string) (*Paths, error) {
 
 // buildPaths assembles the Paths struct. Pure function — no syscalls.
 func buildPaths(sourceRoot string) *Paths {
-	gitmapRoot := filepath.Join(sourceRoot, constants.GitMapHiddenDir)
+	gitmapRoot := filepath.Join(sourceRoot, constants.GitMapDir)
 	commitInRoot := filepath.Join(gitmapRoot, constants.CommitInDirRoot)
 	return &Paths{
 		SourceRoot:   sourceRoot,
@@ -48,7 +48,7 @@ func buildPaths(sourceRoot string) *Paths {
 		ProfilesDir:  filepath.Join(gitmapRoot, constants.CommitInDirProfiles),
 		TempRoot:     filepath.Join(gitmapRoot, constants.CommitInDirTemp),
 		LockFile:     filepath.Join(commitInRoot, constants.CommitInLockFileName),
-		DbFile:       filepath.Join(gitmapRoot, constants.DbFileName),
+		DbFile:       filepath.Join(gitmapRoot, constants.DBFile),
 	}
 }
 
