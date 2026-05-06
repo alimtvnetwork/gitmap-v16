@@ -37,6 +37,14 @@ func PrintSummary(out io.Writer, c Counters) {
 		c.RunId, c.Created, c.Skipped, c.Failed)
 }
 
+// PrintDryRunBanner emits a one-line "DRY RUN — no commits created"
+// notice so users grepping CI logs cannot mistake a dry run for a real
+// run with zero produced commits. Caller responsibility to invoke only
+// when --dry-run was actually set.
+func PrintDryRunBanner(out io.Writer) {
+	fmt.Fprint(out, "commit-in: DRY RUN — no commits were created\n")
+}
+
 // CleanupTemp removes the run's temp staging dir unless --keep-temp
 // was passed. Errors are logged to stderr but never escalated; temp
 // leakage is preferable to masking a real run failure.
