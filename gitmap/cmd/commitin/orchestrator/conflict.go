@@ -3,11 +3,17 @@ package orchestrator
 import (
 	"fmt"
 	"io"
+	"errors"
 
 	"github.com/alimtvnetwork/gitmap-v16/gitmap/cmd/commitin/finalize"
 	"github.com/alimtvnetwork/gitmap-v16/gitmap/cmd/commitin/replay"
 	"github.com/alimtvnetwork/gitmap-v16/gitmap/cmd/commitin/walk"
 )
+
+// errConflictAborted is the sentinel recordFail receives when the
+// user aborted under Prompt mode. Kept package-private so callers
+// outside the orchestrator cannot fabricate the abort signal.
+var errConflictAborted = errors.New("conflict aborted by user")
 
 // conflictCheck inspects the planned replay for HEAD-vs-source blob
 // clobbers and consults the resolved ConflictMode. Returns:
