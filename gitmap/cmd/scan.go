@@ -78,7 +78,7 @@ func executeScan(dir string, cfg model.Config, outFile string, ghDesktop, openFo
 	if err != nil {
 		failPendingTask(taskDB, taskID, fmt.Sprintf(constants.ErrScanFailed, absDir, err))
 		fmt.Fprintf(os.Stderr, constants.ErrScanFailed, absDir, err)
-		os.Exit(1)
+		exitWith(1)
 	}
 	var records []model.ScanRecord
 	relRootBase := resolveRelativeRoot(relativeRoot, absDir, quiet)
