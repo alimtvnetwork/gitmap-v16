@@ -53,8 +53,9 @@ clean: ## Remove build artifacts
 # release pipeline's static-link contract.
 #
 # Matrix: 6 targets (windows/linux/darwin × amd64/arm64), same as
-# spec/01-app/42-cross-platform.md. Compile-only test pass
-# (`go test -count=0`) catches symbol leaks in *_test.go files too.
+# spec/01-app/42-cross-platform.md. Compile-only test pass uses
+# `go test -c` so cross-OS validation never tries to execute a foreign
+# test binary while still catching symbol leaks in *_test.go files.
 #
 # Runs sequentially (not parallel) so failures attribute cleanly to
 # the offending GOOS/GOARCH pair without interleaved output.
@@ -88,6 +89,8 @@ cross-startup: ## Cross-compile only the startup package (fast build-tag guard)
 	for os in linux darwin windows; do \
 		printf "\033[36m==> startup / GOOS=%s\033[0m\n" "$$os"; \
 		CGO_ENABLED=0 GOOS=$$os GOARCH=amd64 go build ./startup/...; \
-		CGO_ENABLED=0 GOOS=$$os GOARCH=amd64 go test -count=0 ./startup/...; \
+		for pkg in $$(CGO_ENABLED=0 GOOS=$$os GOARCH=amd64 go list ./startup/...); do \
+			CGO_ENABLED=0 GOOS=$$os GOARCH=amd64 go test -c -o /dev/null "$$pkg"; \
+		done; \
 	done; \
 	printf "\n\033[32m✓ startup package builds cleanly on all 3 OSes\033[0m\n"
