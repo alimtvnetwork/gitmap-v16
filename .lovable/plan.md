@@ -326,9 +326,19 @@ path → `mkdir -p && git init`. No prompt, no flag.
   member list, asserts PascalCase shape, exit-code uniqueness, and
   flag-name kebab-case uniqueness. `go build ./...` and
   `go test ./cmd/commitin/... ./constants/...` both pass.
-- ⏳ **Phase 2 — DB migrations.** Create idempotent migration files
-  per §4.5; seed every enum-mirror table with `INSERT OR IGNORE`.
-  Wire into the existing migrator. Cover with table-presence tests.
+- ✅ **Phase 2 — DB migrations (2026-05-06).** New
+  `gitmap/constants/constants_commitin_sql.go` defines all 18
+  commit-in tables (8 enum mirrors + Profile/2 children + 7 run/commit
+  tables) + indexes + `INSERT OR IGNORE` seeds. New
+  `gitmap/store/migrate_commitin.go` orders the DDL (mirrors before
+  Profile before run-chain) and runs it inside the existing
+  `Migrate()` pipeline, BEFORE the `SchemaVersionCurrent` stamp so
+  any failure forces a retry. `SchemaVersionCurrent` bumped 23 → 24.
+  `migrate_commitin_test.go` locks: (a) every spec §4 table is
+  present, (b) every enum-mirror seed exactly matches the spec
+  member set, (c) re-running `migrateCommitIn()` is a no-op (no
+  duplicate seed rows). `go build ./...` clean,
+  `go test ./store/... ./cmd/commitin/... ./constants/...` green.
 - ⏳ **Phase 3 — CLI parsing.** Implement argv grammar from §02
   (separator handling, quoting, `KEYWORD` exclusivity, flag set,
   exit codes). Pure parser tests, no git, no DB.
