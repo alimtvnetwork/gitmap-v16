@@ -3,6 +3,13 @@ package cmd
 // Locks the guard-aware scanner contract so the rewriter and any
 // downstream consumer (e.g. TestFixRepoRewriteV9ToV12Fixture) cannot
 // silently disagree about what counts as a stale `{base}-vN` token.
+//
+// IMPORTANT: this file MUST use a synthetic base (e.g. `acme-v9`) that is
+// NOT the project's own module suffix. The repo has been renamed to
+// `gitmap-v16` in the past, which collapses any test using `gitmap-vN`
+// into "token == its own guarded neighbor" and silently breaks the
+// negative-lookahead logic. See mem://FIX-REPO DIGIT-CAPTURE GAP and
+// .lovable/memory/issues/2026-05-01-fixrepo-digit-capture-desync.md.
 
 import (
 	"fmt"
@@ -21,35 +28,35 @@ func TestScanUnguardedTokenHits(t *testing.T) {
 	}{
 		{
 			name:      "single match mid-line",
-			body:      "use gitmap-v16 here",
-			token:     "gitmap-v16",
+			body:      "use acme-v9 here",
+			token:     "acme-v9",
 			wantHits:  []int{4},
 			wantCount: 1,
 		},
 		{
 			name:     "guarded by trailing digit (-v9 inside -v10)",
-			body:     "import gitmap-v16 // not v9",
-			token:    "gitmap-v16",
+			body:     "import acme-v10 // not v9",
+			token:    "acme-v9",
 			wantHits: nil, wantCount: 0,
 		},
 		{
 			name:      "EOF-adjacent counts as unguarded",
-			body:      "tail gitmap-v16",
-			token:     "gitmap-v16",
+			body:      "tail acme-v9",
+			token:     "acme-v9",
 			wantHits:  []int{5},
 			wantCount: 1,
 		},
 		{
 			name:      "mixed guarded + unguarded in one body",
-			body:      "a gitmap-v16 b gitmap-v16 c gitmap-v16\n",
-			token:     "gitmap-v16",
-			wantHits:  []int{2, 27},
+			body:      "a acme-v9 b acme-v10 c acme-v9\n",
+			token:     "acme-v9",
+			wantHits:  []int{2, 23},
 			wantCount: 2,
 		},
 		{
 			name:      "non-digit neighbor (letter) is unguarded",
-			body:      "gitmap-v16z",
-			token:     "gitmap-v16",
+			body:      "acme-v9z",
+			token:     "acme-v9",
 			wantHits:  []int{0},
 			wantCount: 1,
 		},
@@ -63,7 +70,7 @@ func TestScanUnguardedTokenHits(t *testing.T) {
 		{
 			name:      "token longer than body returns nothing",
 			body:      "x",
-			token:     "gitmap-v16",
+			token:     "acme-v9",
 			wantHits:  nil,
 			wantCount: 0,
 		},
@@ -86,13 +93,15 @@ func TestScanUnguardedTokenHits(t *testing.T) {
 // rewriter's substitution count. Locks the invariant that powers
 // assertDashFormBumped's `wantCount` derivation.
 func TestScannerMatchesRewriter(t *testing.T) {
-	body := "gitmap-v16 + gitmap-v16 + gitmap-v16 (eof)gitmap-v16"
+	// Body mixes 4 unguarded `acme-v9` tokens with one guarded `acme-v10`
+	// neighbor; rewriter must touch the 4 and leave the neighbor alone.
+	body := "acme-v9 + acme-v9 + acme-v9 (eof)acme-v9 // keep acme-v10"
 	const (
-		base    = "gitmap"
+		base    = "acme"
 		target  = 9
 		current = 12
 	)
-	token := "gitmap-v16"
+	token := "acme-v9"
 	want := CountUnguardedTokenHits(body, token)
 	out, count := applyAllTargets(body, base, current, []int{target})
 	if count != want {
@@ -108,8 +117,8 @@ func TestScannerMatchesRewriter(t *testing.T) {
 		t.Errorf("output has %d %s tokens, want %d",
 			strings.Count(out, wantToken), wantToken, want)
 	}
-	// guarded neighbor must survive
-	if !strings.Contains(out, "gitmap-v16") {
-		t.Errorf("guarded gitmap-v16 was rewritten: %q", out)
+	// guarded neighbor (acme-v10) must survive untouched
+	if !strings.Contains(out, "acme-v10") {
+		t.Errorf("guarded acme-v10 was rewritten: %q", out)
 	}
 }
