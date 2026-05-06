@@ -113,7 +113,7 @@ done | sort -u | wc -l   # MUST be exactly 1
 | `-y`, `--yes` | `false` | Skip the push confirmation prompt; force-push immediately on success. |
 | `--no-push` | `false` | Stop after verification; print the manual `git push --force-with-lease` command. Mutually exclusive with `--yes`. |
 | `--dry-run` | `false` | Run mirror-clone + filter-repo + verification, then **always** stop without pushing and print the sandbox path for inspection. |
-| `--message <s>` | `""` | Rewrite the commit message of every commit `filter-repo` touched (only those commits) to `<s>`. Empty = leave messages untouched. |
+| `--message <s>` | `""` | Rewrite the commit message to `<s>` **only** for commits whose `file_changes` reference one of the requested paths (exact match, or descendants when a path is a folder). Untouched commits keep their original message verbatim. Empty = no message rewrite. Implemented via `filter-repo --commit-callback` that inspects `commit.file_changes` against the requested path set. |
 | `--keep-sandbox` | `false` | Don't delete the temp mirror-clone on exit. Path is printed. Useful for debugging a verification failure. |
 | `-q`, `--quiet` | `false` | Suppress per-phase progress lines; only print errors and the final summary. |
 
