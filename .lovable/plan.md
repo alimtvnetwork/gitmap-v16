@@ -339,9 +339,24 @@ path → `mkdir -p && git init`. No prompt, no flag.
   member set, (c) re-running `migrateCommitIn()` is a no-op (no
   duplicate seed rows). `go build ./...` clean,
   `go test ./store/... ./cmd/commitin/... ./constants/...` green.
-- ⏳ **Phase 3 — CLI parsing.** Implement argv grammar from §02
-  (separator handling, quoting, `KEYWORD` exclusivity, flag set,
-  exit codes). Pure parser tests, no git, no DB.
+- ✅ **Phase 3 — CLI parsing (2026-05-06).** Pure parser under
+  `gitmap/cmd/commitin/parse*.go` (5 files, all <200 lines, every
+  func <15 lines). `Parse(args []string) (*RawArgs, *ParseError)`
+  with zero git, zero filesystem, zero DB. Splits responsibilities:
+  `parse_types.go` (RawArgs + ParseError), `parse_helpers.go`
+  (separator/quote split, `-N` keyword classifier, CSV split),
+  `parse_validate.go` (enum validators using AllX() from enums.go,
+  message-rule shape, author-pair, source/inputs presence,
+  KEYWORD-alone), `parse_flags.go` (flag.NewFlagSet registration +
+  bool/string/csv groups + bool-set for reorderer), `parse.go`
+  (orchestration, positional split, flag re-ordering, `-N` tail
+  keyword recognised as positional). Tests: AC #1 separator
+  equivalence (6 forms produce identical inputs), AC #4 keyword
+  recognition + `-0` rejection, missing positionals, author-pair
+  rule, conflict/function-intel/languages enum validators,
+  `--message-exclude` shape (Kind:Value), flags-after-positionals
+  reordering, `-d` short alias, language error lists supported set.
+  `go build ./...` clean; `go test ./cmd/commitin/...` green.
 - ⏳ **Phase 4 — Workspace + source resolution.** Implement
   `EnsureWorkspace`, `EnsureSource` (the four-case auto-init rule),
   `ExpandInputs` (`all` / `-N` discovery), `CloneInputs`,
