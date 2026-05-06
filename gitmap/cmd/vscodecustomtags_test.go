@@ -3,7 +3,6 @@ package cmd
 import (
 	"os"
 	"reflect"
-	"strings"
 	"testing"
 
 	"github.com/alimtvnetwork/gitmap-v16/gitmap/constants"
@@ -46,13 +45,13 @@ func TestStripVSCodeTagFlags(t *testing.T) {
 	}
 
 	addEnv := os.Getenv(constants.EnvVSCodeTagAdd)
-	wantAdd := strings.Join([]string{"work", "urgent", "daily"}, constants.EnvVSCodeTagSeparator)
+	wantAdd := "work" + constants.EnvVSCodeTagSeparator + "urgent" + constants.EnvVSCodeTagSeparator + "daily"
 	if addEnv != wantAdd {
 		t.Errorf("EnvVSCodeTagAdd = %q, want %q", addEnv, wantAdd)
 	}
 
 	skipEnv := os.Getenv(constants.EnvVSCodeTagSkip)
-	wantSkip := strings.Join([]string{"git", "node"}, constants.EnvVSCodeTagSeparator)
+	wantSkip := "git" + constants.EnvVSCodeTagSeparator + "node"
 	if skipEnv != wantSkip {
 		t.Errorf("EnvVSCodeTagSkip = %q, want %q", skipEnv, wantSkip)
 	}

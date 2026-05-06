@@ -1,6 +1,7 @@
 package txn
 
 import (
+	"bytes"
 	"os"
 	"path/filepath"
 	"testing"
@@ -30,7 +31,7 @@ func TestRevertActionsEditFileRestoresBytes(t *testing.T) {
 		t.Fatalf("RevertActions: %v", err)
 	}
 	got, _ := os.ReadFile(target)
-	if string(got) != string(original) {
+	if !bytes.Equal(got, original) {
 		t.Fatalf("revert restored %q, want %q", got, original)
 	}
 }

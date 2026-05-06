@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -169,7 +170,8 @@ func execFilterRepo(args []string) {
 // exitCodeOf extracts the process exit code from an exec.ExitError, or
 // returns -1 when the error is something else.
 func exitCodeOf(err error) int {
-	if exitErr, ok := err.(*exec.ExitError); ok {
+	var exitErr *exec.ExitError
+	if errors.As(err, &exitErr) {
 		return exitErr.ExitCode()
 	}
 	return -1

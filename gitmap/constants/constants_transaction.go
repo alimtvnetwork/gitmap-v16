@@ -130,7 +130,7 @@ const (
 	MsgTxnNoCommitted      = "  • no committed transactions found\n"
 	MsgTxnConfirmRevert    = "About to revert transaction #%d (%s, %d file(s)).\n"
 	MsgTxnConfirmPrompt    = "Type 'yes' to continue: "
-	MsgTxnAbortedByUser    = "  • revert cancelled by user\n"
+	MsgTxnAbortedByUser    = "  • revert canceled by user\n"
 	MsgTxnReplaceModeNote  = "  • transaction #%d ran in fix-repo --replace mode and cannot restore file bytes\n"
 	MsgTxnLastNHeader      = "About to revert %d transaction(s), newest first:\n"
 	MsgTxnLastNRow         = "  #%-4d %-10s %s  %s\n"

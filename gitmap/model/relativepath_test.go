@@ -9,7 +9,7 @@ package model
 //      collapsed via filepath.Clean.
 //   4. Already-clean OS-native input is a no-op (idempotent).
 //
-// These four properties match the failure modes catalogued in the
+// These four properties match the failure modes cataloged in the
 // relativepath.go header comment.
 
 import (

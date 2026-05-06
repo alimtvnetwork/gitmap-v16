@@ -35,7 +35,7 @@ func TestResolveBuildOutputDir(t *testing.T) {
 	// Normalize to slash form so the assertion holds on Windows
 	// (filepath.Clean uses backslash there, but the test contract
 	// is "the right logical path" not "the OS's separator").
-	norm := func(s string) string { return filepath.ToSlash(s) }
+	norm := filepath.ToSlash
 	if got := norm(resolveBuildOutputDir(repoPath, "./bin")); got != "/repo/bin" {
 		t.Fatalf("resolveBuildOutputDir relative = %q, want %q", got, "/repo/bin")
 	}
