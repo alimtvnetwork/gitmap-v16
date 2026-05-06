@@ -3,7 +3,6 @@ package workspace
 import (
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 
@@ -139,13 +138,8 @@ func runGitClone(url, target string) error {
 	return gitRunner("clone", url, target)
 }
 
-// runGitInit shells out to `git init` inside dir.
+// runGitInit invokes `git -C <dir> init` via the swappable runner so
+// tests can intercept it without spawning a real git process.
 func runGitInit(dir string) error {
-	cmd := exec.Command("git", "init")
-	cmd.Dir = dir
-	out, err := cmd.CombinedOutput()
-	if err != nil {
-		return fmt.Errorf("git init: %w (output: %s)", err, strings.TrimSpace(string(out)))
-	}
-	return nil
+	return gitRunner("-C", dir, "init")
 }
