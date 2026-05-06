@@ -26,10 +26,24 @@ func Run(raw *commitin.RawArgs, stdout, stderr io.Writer) int {
 	}
 	defer ctx.Cleanup()
 	if code := executePipeline(ctx, stdout); code != constants.CommitInExitOk {
+		_ = runlog.FinishRun(ctx.DB.Conn(), ctx.RunID, constants.CommitInRunStatusFailed, time.Now())
 		return code
 	}
+	_ = runlog.FinishRun(ctx.DB.Conn(), ctx.RunID, finalRunStatus(ctx.Counters), time.Now())
 	finalize.PrintSummary(stderr, ctx.Counters)
 	return finalize.Outcome(ctx.Counters)
+}
+
+// finalRunStatus picks the spec §4 RunStatus enum for the FinishRun
+// row based on the per-commit counters.
+func finalRunStatus(c finalize.Counters) string {
+	if c.Failed == 0 {
+		return constants.CommitInRunStatusCompleted
+	}
+	if c.Created == 0 {
+		return constants.CommitInRunStatusFailed
+	}
+	return constants.CommitInRunStatusPartiallyFailed
 }
 
 // setUp performs the no-mutation prerequisites: source resolution,
