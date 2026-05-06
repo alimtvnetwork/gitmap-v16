@@ -50,3 +50,32 @@ const (
 	FlagNoAutoTags     = "no-auto-tags"
 	FlagDescNoAutoTags = "skip auto-derived tags (git/node/go/...) when syncing VS Code Project Manager projects.json"
 )
+
+// Global tag-customization flags (v4.18.0+). Like
+// `--vscode-sync-disabled`, these are stripped from argv at Run() and
+// persisted into env vars so every code path that ultimately calls
+// vscodepm.DetectTagsCustom inherits the rules without per-flagset
+// plumbing. All three are repeatable AND accept comma-separated
+// values, e.g. `--vscode-tag work --vscode-tag urgent` is equivalent
+// to `--vscode-tag work,urgent`.
+//
+//   --vscode-tag <name>             always add <name> to every entry
+//   --vscode-tag-skip <name>        never emit auto-detected <name>
+//   --vscode-tag-marker <file>=<tag>  register marker→tag rule
+//
+// Env vars use ASCII unit separator (\x1f) between values so commas
+// inside individual tokens stay intact.
+const (
+	FlagVSCodeTag           = "vscode-tag"
+	FlagDescVSCodeTag       = "always add this tag to every VS Code Project Manager entry (repeatable; accepts comma-list)"
+	FlagVSCodeTagSkip       = "vscode-tag-skip"
+	FlagDescVSCodeTagSkip   = "drop this auto-detected tag from every VS Code Project Manager entry (repeatable; accepts comma-list)"
+	FlagVSCodeTagMarker     = "vscode-tag-marker"
+	FlagDescVSCodeTagMarker = "register a marker→tag rule, e.g. Gemfile=ruby (repeatable; accepts comma-list)"
+
+	EnvVSCodeTagAdd        = "GITMAP_VSCODE_TAG_ADD"
+	EnvVSCodeTagSkip       = "GITMAP_VSCODE_TAG_SKIP"
+	EnvVSCodeTagMarker     = "GITMAP_VSCODE_TAG_MARKER"
+	EnvVSCodeTagSeparator  = "\x1f"
+	TagMarkerKVSeparator   = "="
+)
