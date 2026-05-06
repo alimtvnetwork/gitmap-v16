@@ -36,3 +36,11 @@ The original 2026-05-06 user message ("Complete it in 7 iterations…") is the s
 - Next phases (in order): 2 DB migrations · 3 CLI parsing · 4 Workspace+source
   resolution · 5 Walk+dedupe+replay · 6 Profiles+message pipeline ·
   7 Function-intel+finalize.
+- 2026-05-06 — **Phase 2 ✅** DB migrations + enum-mirror seeds landed.
+  Files: gitmap/constants/constants_commitin_sql.go,
+  gitmap/store/migrate_commitin.go, gitmap/store/migrate_commitin_test.go;
+  edits to gitmap/store/store.go (wire-in) and
+  gitmap/constants/constants_settings.go (SchemaVersionCurrent 23→24).
+  Tables: 18 (8 enum mirrors + Profile + 2 profile children + CommitInRun,
+  InputRepo, SourceCommit, SourceCommitFile, RewrittenCommit, SkipLog,
+  ShaMap). Tests: presence, seed parity, idempotence.
