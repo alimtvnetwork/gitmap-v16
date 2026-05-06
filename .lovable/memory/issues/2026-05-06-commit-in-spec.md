@@ -50,3 +50,12 @@ The original 2026-05-06 user message ("Complete it in 7 iterations…") is the s
   validators, flag re-orderer that treats `-N` as positional. Tests
   cover AC #1, AC #4, author-pair, enum rejects, message-rule shape,
   flags-after-positionals.
+- 2026-05-06 — **Phase 4 ✅** Workspace + source resolution landed
+  under gitmap/cmd/commitin/workspace/ (paths.go, lock.go, source.go,
+  expand.go, clone.go, runner.go + workspace_test.go). EnsureWorkspace
+  is idempotent; AcquireLock reclaims stale-PID locks; EnsureSource
+  implements all four §2.3 cases via a swappable gitRunner;
+  ExpandInputs sorts versioned siblings ascending (plain base = v0)
+  and supports `-N` truncation; CloneInputs stages each input under
+  <TempRoot>/<runId>/<idx>-<basename> with local folders reused in
+  place. Hermetic tests (no real git) cover all branches.
