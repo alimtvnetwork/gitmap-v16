@@ -34,6 +34,10 @@ type runContext struct {
 	// inputRepoIds caches InputRepo PKs keyed by ResolvedInput.OrderIndex
 	// so persistSource emits exactly one InputRepo row per staged input.
 	inputRepoIds map[int]int64
+	// aborted is flipped to true by conflictCheck when the user picks
+	// Abort under Prompt mode. Pipeline loops MUST treat this as a hard
+	// stop and return CommitInExitConflictAborted.
+	aborted bool
 }
 
 func newContext(raw *commitin.RawArgs, src *workspace.SourceHandle, paths *workspace.Paths, lock *workspace.LockHandle, db dbCloser, resolved profile.Resolved, runID int64) *runContext {

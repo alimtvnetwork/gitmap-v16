@@ -22,6 +22,9 @@ func executePipeline(ctx *runContext, stdout io.Writer) int {
 		if code := processOneInput(ctx, staged, stdout); code != constants.CommitInExitOk {
 			return code
 		}
+		if ctx.aborted {
+			return constants.CommitInExitConflictAborted
+		}
 	}
 	return constants.CommitInExitOk
 }
@@ -52,6 +55,9 @@ func processOneInput(ctx *runContext, staged workspace.StagedInput, stdout io.Wr
 	picker := newPicker()
 	for _, c := range commits {
 		processOneCommit(ctx, staged, c, picker, stdout)
+		if ctx.aborted {
+			return constants.CommitInExitOk // outer loop sees ctx.aborted and exits
+		}
 	}
 	return constants.CommitInExitOk
 }

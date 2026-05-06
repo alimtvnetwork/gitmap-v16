@@ -1,3 +1,23 @@
+- ✅ **Step 5 — Conflict-mode wiring + dry-run banner (2026-05-06).**
+  Added `replay/clobber.go` (`DetectClobbers` compares
+  `<sha>:path` blob hashes via `git rev-parse` on both source and
+  target HEAD; missing-on-target = add, not clobber; empty HEAD =
+  empty repo = nothing to clobber). New `orchestrator/conflict.go`
+  introduces a package-private `errConflictAborted` sentinel and a
+  `conflictCheck(ctx, plan, c, stdout) → (abort, skip)` helper that
+  consults `finalize.Resolve(ConflictMode, sourceSha, stdout)`:
+  ForceMerge logs the clobber count and proceeds; Prompt aborts the
+  whole run by flipping `runContext.aborted`. `commit.go`
+  short-circuits replay through `conflictCheck` BEFORE
+  `replay.ApplyCommit` so an aborted run records exactly one Failed
+  row and writes nothing. `pipeline.go` polls `ctx.aborted` after
+  every commit + every input and `executePipeline` returns
+  `CommitInExitConflictAborted` so the top-level `Run` propagates
+  the spec §2.7 exit code. `finalize.PrintDryRunBanner` appends a
+  one-line "DRY RUN — no commits were created" notice when
+  `--dry-run` is set, called from `Run` after `PrintSummary` so
+  CI grep cannot mistake a dry-run for a zero-commit real run.
+  `go build ./...` + `go test ./cmd/commitin/... ./store/...` green.
 
 # Plan: Install System Overhaul + README Redesign
 
@@ -481,6 +501,23 @@ path → `mkdir -p && git init`. No prompt, no flag.
   exclusions, emits `SkipReasonExcludedAllFiles` when filter empties
   a non-empty list, and threads the §6.3 block into `message.Build`.
   Added `exclude_test.go` (4 cases). All builds + tests green.
+- ✅ **Step 4 — Profile save + interactive shim (2026-05-06).**
+  Added `profile/build.go` (`BuildFromResolved` materializes a
+  byte-stable `Profile` from layered `Resolved` settings) and
+  `profile/default.go` (`ClearOtherDefaults` sweeps sibling
+  `*.json` profiles bound to the same `SourceRepoPath` and flips
+  `IsDefault=false` so only the freshly-saved profile holds the
+  flag, satisfying spec §5.5 atomicity intent on the disk-only
+  layer). New `orchestrator/save_profile.go` runs once between
+  `setUp` and `executePipeline`, gated on `--save-profile <name>`:
+  honors `--save-profile-overwrite`, splits "exists" (→
+  `CommitInExitBadArgs` with `CommitInErrSaveProfileExists`) from
+  generic IO (→ `CommitInExitDbFailed`), and records a `Failed`
+  RunStatus when the save aborts before any commits. Interactive
+  prompt remains a no-op for the implemented surface — every
+  required setting has a built-in default per §02 — so `--no-prompt`
+  never produces a `MissingAnswer` exit on this code path. All
+  `go build ./...` + `go test ./cmd/commitin/... ./store/...` green.
 - `// gitmap:cmd top-level` marker on the `CmdCommitIn` const block in
   `constants_cli.go` (drift-CI catches this on next `generate-check`).
 - CHANGELOG v4.18.0 entry documenting the new command surface +

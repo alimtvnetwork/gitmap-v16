@@ -25,12 +25,19 @@ func Run(raw *commitin.RawArgs, stdout, stderr io.Writer) int {
 		return code
 	}
 	defer ctx.Cleanup()
+	if code := maybeSaveProfile(ctx, stderr); code != constants.CommitInExitOk {
+		_ = runlog.FinishRun(ctx.DB.Conn(), ctx.RunID, constants.CommitInRunStatusFailed, time.Now())
+		return code
+	}
 	if code := executePipeline(ctx, stdout); code != constants.CommitInExitOk {
 		_ = runlog.FinishRun(ctx.DB.Conn(), ctx.RunID, constants.CommitInRunStatusFailed, time.Now())
 		return code
 	}
 	_ = runlog.FinishRun(ctx.DB.Conn(), ctx.RunID, finalRunStatus(ctx.Counters), time.Now())
 	finalize.PrintSummary(stderr, ctx.Counters)
+	if ctx.Raw.IsDryRun {
+		finalize.PrintDryRunBanner(stderr)
+	}
 	return finalize.Outcome(ctx.Counters)
 }
 
