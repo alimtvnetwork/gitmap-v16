@@ -75,13 +75,13 @@ func runCloneNext(args []string) {
 	cwd, err := os.Getwd()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, constants.ErrCloneNextCwd, err)
-		os.Exit(1)
+		exitWith(1)
 	}
 
 	remoteURL, err := gitutil.RemoteURL(cwd)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, constants.ErrCloneNextNoRemote, err)
-		os.Exit(1)
+		exitWith(1)
 	}
 
 	currentFolder := filepath.Base(cwd)
@@ -94,7 +94,7 @@ func runCloneNext(args []string) {
 	targetVersion, err := clonenext.ResolveTarget(parsed, cnFlags.VersionArg)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, constants.ErrCloneNextBadVersion, err)
-		os.Exit(1)
+		exitWith(1)
 	}
 
 	targetName := clonenext.TargetRepoName(parsed.BaseName, targetVersion)
@@ -130,7 +130,7 @@ func runCloneNext(args []string) {
 		if chErr := os.Chdir(parentDir); chErr != nil {
 			fmt.Fprintf(os.Stderr, constants.ErrCloneNextForceFailed,
 				flattenedFolder, chErr, flattenedFolder)
-			os.Exit(1)
+			exitWith(1)
 		}
 	}
 
@@ -148,7 +148,7 @@ func runCloneNext(args []string) {
 				// or nothing" — degrading would be a footgun.
 				fmt.Fprintf(os.Stderr, constants.ErrCloneNextForceFailed,
 					flattenedFolder, removeErr, flattenedFolder)
-				os.Exit(1)
+				exitWith(1)
 			}
 			fmt.Fprintf(os.Stderr, constants.WarnCloneNextRemoveFailed, flattenedFolder, removeErr)
 			fallbackFolder := targetName
@@ -172,13 +172,13 @@ func runCloneNext(args []string) {
 		owner, _, parseErr := clonenext.ParseOwnerRepo(remoteURL)
 		if parseErr != nil {
 			fmt.Fprintf(os.Stderr, constants.ErrCloneNextRemoteParse, parseErr)
-			os.Exit(1)
+			exitWith(1)
 		}
 
 		exists, checkErr := clonenext.RepoExists(owner, targetName)
 		if checkErr != nil {
 			fmt.Fprintf(os.Stderr, constants.ErrCloneNextRepoCheck, checkErr)
-			os.Exit(1)
+			exitWith(1)
 		}
 
 		if !exists {
@@ -186,7 +186,7 @@ func runCloneNext(args []string) {
 			createErr := clonenext.CreateRepo(owner, targetName, true)
 			if createErr != nil {
 				fmt.Fprintf(os.Stderr, constants.ErrCloneNextRepoCreate, targetName, createErr)
-				os.Exit(1)
+				exitWith(1)
 			}
 			fmt.Printf(constants.MsgCloneNextCreated, targetName)
 		}
@@ -207,7 +207,7 @@ func runCloneNext(args []string) {
 	cloneResult := runGitClone(targetURL, targetPath)
 	if !cloneResult {
 		fmt.Fprintf(os.Stderr, constants.ErrCloneNextFailed, targetName)
-		os.Exit(1)
+		exitWith(1)
 	}
 	fmt.Printf(constants.MsgFlattenDone, targetName, flattenedFolder)
 
