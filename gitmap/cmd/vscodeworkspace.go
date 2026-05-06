@@ -34,6 +34,7 @@ type vscodeWorkspaceFlags struct {
 	out        string
 	isRelative bool
 	tag        string
+	rootSubdir string
 }
 
 // runVSCodeWorkspace is the dispatcher entry point.
@@ -47,7 +48,7 @@ func runVSCodeWorkspace(args []string) {
 		os.Exit(1)
 	}
 
-	folders := buildFoldersFromRecords(records, flags.tag)
+	folders := buildFoldersFromRecords(records, flags.tag, flags.rootSubdir)
 	if len(folders) == 0 {
 		fmt.Print(constants.MsgVSCodeWorkspaceEmpty)
 
@@ -69,6 +70,8 @@ func parseVSCodeWorkspaceFlags(args []string) vscodeWorkspaceFlags {
 		constants.FlagDescVSCodeWorkspaceRelative)
 	fs.StringVar(&cfg.tag, constants.FlagVSCodeWorkspaceTag, "",
 		constants.FlagDescVSCodeWorkspaceTag)
+	fs.StringVar(&cfg.rootSubdir, constants.FlagVSCodeWorkspaceRootSubdir, "",
+		constants.FlagDescVSCodeWorkspaceRootSubdir)
 
 	_ = fs.Parse(args)
 
@@ -99,20 +102,39 @@ func loadReposForWorkspace() ([]model.ScanRecord, error) {
 
 // buildFoldersFromRecords converts ScanRecords into Folder tuples,
 // applying the optional --tag filter via vscodepm.DetectTags so the
-// filter semantics match what the PM sync writes.
-func buildFoldersFromRecords(records []model.ScanRecord, tag string) []vscodeworkspace.Folder {
+// filter semantics match what the PM sync writes. When rootSubdir is
+// non-empty, each folder's path is the repo root joined with that
+// subdir; repos missing that subdir are skipped with a notice.
+func buildFoldersFromRecords(records []model.ScanRecord, tag, rootSubdir string) []vscodeworkspace.Folder {
 	out := make([]vscodeworkspace.Folder, 0, len(records))
 	for _, r := range records {
 		if !matchesWorkspaceTag(r.AbsolutePath, tag) {
 			continue
 		}
-		out = append(out, vscodeworkspace.Folder{
-			Name: r.RepoName,
-			Path: r.AbsolutePath,
-		})
+		path, ok := resolveFolderPath(r.AbsolutePath, rootSubdir)
+		if !ok {
+			fmt.Fprintf(os.Stderr, constants.MsgVSCodeWorkspaceSubdirSkip, r.RepoName, rootSubdir)
+			continue
+		}
+		out = append(out, vscodeworkspace.Folder{Name: r.RepoName, Path: path})
 	}
 
 	return out
+}
+
+// resolveFolderPath returns the workspace folder path for one repo.
+// Empty rootSubdir => repo root unchanged. Non-empty rootSubdir =>
+// joined path, only if it exists on disk as a directory.
+func resolveFolderPath(repoRoot, rootSubdir string) (string, bool) {
+	if rootSubdir == "" {
+		return repoRoot, true
+	}
+	candidate := filepath.Join(repoRoot, rootSubdir)
+	info, err := os.Stat(candidate)
+	if err != nil || !info.IsDir() {
+		return "", false
+	}
+	return candidate, true
 }
 
 // matchesWorkspaceTag returns true when the tag filter is empty OR
