@@ -59,8 +59,13 @@ func writeManifestFile(sandbox string, entries []pinManifestEntry) (string, erro
 // inside the sandbox and returns the unique SHA-1 set of blobs that
 // path ever pointed at.
 func historicalBlobsOf(sandbox, path string) ([]string, error) {
+	// `--no-abbrev` is REQUIRED: `git log --raw` defaults to abbreviated
+	// 7-char SHAs which the parser (and downstream `blob.original_id`
+	// lookup, which is full-length bytes) cannot match. Omitting this
+	// flag yields an empty blob list and the pin callback silently
+	// becomes a no-op (verifier then reports N distinct hashes).
 	cmd := exec.Command(constants.HistoryGitBin, "-C", sandbox, "log", "--all",
-		"--pretty=format:", "--raw", "--", path)
+		"--pretty=format:", "--raw", "--no-abbrev", "--", path)
 	out, err := cmd.Output()
 	if err != nil {
 		return nil, fmt.Errorf("git log for %s: %w", path, err)
