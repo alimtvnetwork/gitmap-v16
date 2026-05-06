@@ -144,6 +144,61 @@ jobs:
             echo "🆕 **Fresh build:** SHA \`${{ github.sha }}\` — full pipeline runs." >> "$GITHUB_STEP_SUMMARY"
           fi
 
+  spell-check:
+    # Fast, dedicated misspell pass over the WHOLE repo (Go + Markdown +
+    # shell + PowerShell + YAML + JSON), not just .go files. golangci-lint's
+    # `misspell` only scans Go source — this job catches typos in docs,
+    # CI scripts, and PowerShell that would otherwise slip through and
+    # surface much later as a `gofmt -l` / `golangci-lint` follow-up.
+    # Runs in seconds and gates the heavier `lint` / `full-suite-guard`
+    # jobs by short-circuiting the pipeline on any misspelling.
+    name: Spell Check (misspell, US locale)
+    runs-on: ubuntu-latest
+    needs: sha-check
+    steps:
+      - name: Already validated
+        if: needs.sha-check.outputs.already-built == 'true'
+        run: echo "✅ SHA ${{ github.sha }} already passed spell-check"
+
+      - uses: actions/checkout@v6
+        if: needs.sha-check.outputs.already-built != 'true'
+
+      - uses: actions/setup-go@v6
+        if: needs.sha-check.outputs.already-built != 'true'
+        with:
+          go-version: '1.24.13'
+          cache: false
+
+      - name: Install misspell (pinned)
+        if: needs.sha-check.outputs.already-built != 'true'
+        # Pinned to v0.6.0 — never use @latest per Core memory rule on
+        # third-party tool versions. Same locale (US) as the misspell
+        # entry inside .golangci.yml so verdicts cannot diverge.
+        run: go install github.com/client9/misspell/cmd/misspell@v0.6.0
+
+      - name: Run misspell across repo
+        if: needs.sha-check.outputs.already-built != 'true'
+        # -error => exit 1 on any finding (hard-gate).
+        # -locale US => match .golangci.yml so behaviour/colour/etc.
+        # are flagged identically in Go source AND docs/scripts.
+        # We deliberately scan everything except vendored / build-output
+        # paths so typos in README, spec/, .github/scripts, and
+        # PowerShell helpers are caught before the heavy lint job.
+        run: |
+          set -euo pipefail
+          mapfile -t targets < <(git ls-files \
+            ':!:**/*.png' ':!:**/*.jpg' ':!:**/*.jpeg' ':!:**/*.gif' \
+            ':!:**/*.ico' ':!:**/*.svg' ':!:**/*.webp' \
+            ':!:**/*.zip' ':!:**/*.tar' ':!:**/*.gz' ':!:**/*.exe' \
+            ':!:**/testdata/**' ':!:**/golden/**' \
+            ':!:**/.gitmap/release/**' ':!:**/.gitmap/release-assets/**' \
+            ':!:gitmap/completion/allcommands_generated.go')
+          if [ "${#targets[@]}" -eq 0 ]; then
+            echo "no files to scan"
+            exit 0
+          fi
+          misspell -locale US -error "${targets[@]}"
+
   lint:
     name: Lint
     runs-on: ubuntu-latest
