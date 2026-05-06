@@ -61,5 +61,17 @@ author rules drawn from a saved `Profile`.
 
 ## Status
 
-SPEC ONLY. Implementation has not started and is forbidden until the
-user explicitly types `next` per the gating rule in `plan.md`.
+All 7 gated phases complete (2026-05-06, v4.18.0):
+1. Constants + typed enums.
+2. DB migrations + 8 enum-mirror seeds (SchemaVersion 23→24).
+3. Pure CLI parser (`commitin.Parse`).
+4. Workspace + source resolution (`commitin/workspace`).
+5. Walk + dedupe + replay + runlog (`commitin/{walk,dedupe,replay,runlog}`).
+6. Profile JSON load/save + message pipeline + prompt
+   (`commitin/{profile,message,prompt}`).
+7. Function-intel detectors + finalize + dispatcher entry
+   (`commitin/{funcintel,finalize}` + `cmd/commitin.go` + helptext).
+
+Deferred non-blocking follow-ups: end-to-end orchestration glue
+inside `runCommitIn`, `// gitmap:cmd top-level` marker on the
+`CmdCommitIn` const block, CHANGELOG v4.18.0 entry.

@@ -1,6 +1,6 @@
 package message
 
-import "gitmap/cmd/commitin/profile"
+import "github.com/alimtvnetwork/gitmap-v16/gitmap/cmd/commitin/profile"
 
 // Inputs collects everything the pipeline needs to build one final
 // commit message. All fields are inputs; nothing is mutated.

@@ -6,7 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"gitmap/constants"
+	"github.com/alimtvnetwork/gitmap-v16/gitmap/constants"
 )
 
 // ProfilePath returns the absolute on-disk path for the given profile

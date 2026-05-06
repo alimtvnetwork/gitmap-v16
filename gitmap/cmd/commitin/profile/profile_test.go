@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"gitmap/constants"
+	"github.com/alimtvnetwork/gitmap-v16/gitmap/constants"
 )
 
 func TestEncodeDecodeRoundTrip(t *testing.T) {

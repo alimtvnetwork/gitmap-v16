@@ -8,7 +8,7 @@ import (
 	"os"
 	"strings"
 
-	"gitmap/constants"
+	"github.com/alimtvnetwork/gitmap-v16/gitmap/constants"
 )
 
 // ErrNoPrompt is returned when --no-prompt is set but a value is needed.
