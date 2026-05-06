@@ -190,10 +190,38 @@ jobs:
         # on push). This catches NEW typos like behaviour/colour/cancelled
         # in any text file (Markdown, shell, PowerShell, YAML, Go) without
         # forcing a sweep of pre-existing strings in README/CHANGELOG.
-        # We exclude binary assets, golden fixtures, generated files, and
-        # the internal .lovable/ agent memory (free-form English notes).
+        # Include/exclude path globs are loaded from gitmap/data/config.json
+        # (misspell.include / misspell.exclude). Patterns use shell `case`
+        # glob syntax. 'exclude' filters first; 'include' (if non-empty)
+        # then narrows the survivors. Empty/missing block => behave as
+        # before with the original hard-coded defaults.
         run: |
           set -euo pipefail
+          config="gitmap/data/config.json"
+          # Per Core CI JSON parsing rule: jq → python3 → safe defaults.
+          # Each helper prints one pattern per line for the lists.
+          read_patterns() {
+            local key="$1"
+            if command -v jq >/dev/null 2>&1 && [ -f "$config" ]; then
+              jq -r --arg k "$key" '.misspell[$k] // [] | .[]' "$config" 2>/dev/null || true
+            elif command -v python3 >/dev/null 2>&1 && [ -f "$config" ]; then
+              python3 -c "import json,sys; d=json.load(open('$config')).get('misspell',{}).get('$1',[]); print('\n'.join(d))" 2>/dev/null || true
+            fi
+          }
+          mapfile -t excludes < <(read_patterns exclude)
+          mapfile -t includes < <(read_patterns include)
+          if [ "${#excludes[@]}" -eq 0 ]; then
+            # Hard-coded fallback (matches pre-config behavior exactly).
+            excludes=(
+              "*.png" "*.jpg" "*.jpeg" "*.gif" "*.ico" "*.svg" "*.webp"
+              "*.zip" "*.tar" "*.gz" "*.exe"
+              "*/testdata/*" "*/golden/*"
+              "*/.gitmap/release/*" "*/.gitmap/release-assets/*"
+              "gitmap/completion/allcommands_generated.go"
+              ".lovable/*"
+            )
+          fi
+          echo "misspell config: ${#excludes[@]} exclude pattern(s), ${#includes[@]} include pattern(s)"
           if [ "${{ github.event_name }}" = "pull_request" ]; then
             base="origin/${{ github.base_ref }}"
           else
@@ -204,22 +232,27 @@ jobs:
             echo "no changed files vs $base — nothing to scan"
             exit 0
           fi
-          # Filter out paths the gate intentionally ignores.
+          # Apply exclude (deny-list) then include (allow-list, if any).
+          matches_any() {
+            local path="$1"; shift
+            local pat
+            for pat in "$@"; do
+              # shellcheck disable=SC2254
+              case "$path" in $pat) return 0 ;; esac
+            done
+            return 1
+          }
           targets=()
           for f in "${changed[@]}"; do
-            case "$f" in
-              *.png|*.jpg|*.jpeg|*.gif|*.ico|*.svg|*.webp) continue ;;
-              *.zip|*.tar|*.gz|*.exe)                     continue ;;
-              */testdata/*|*/golden/*)                    continue ;;
-              */.gitmap/release/*|*/.gitmap/release-assets/*) continue ;;
-              gitmap/completion/allcommands_generated.go) continue ;;
-              .lovable/*)                                  continue ;;
-              *)
-                # Skip anything that no longer exists (e.g. deleted in
-                # a follow-up commit on the same PR).
-                [ -f "$f" ] && targets+=("$f")
-                ;;
-            esac
+            if matches_any "$f" "${excludes[@]}"; then
+              continue
+            fi
+            if [ "${#includes[@]}" -gt 0 ] && ! matches_any "$f" "${includes[@]}"; then
+              continue
+            fi
+            # Skip anything that no longer exists (e.g. deleted in
+            # a follow-up commit on the same PR).
+            [ -f "$f" ] && targets+=("$f")
           done
           if [ "${#targets[@]}" -eq 0 ]; then
             echo "no scannable changed files — nothing to scan"
