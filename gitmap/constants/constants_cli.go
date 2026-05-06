@@ -102,6 +102,13 @@ const (
 	CmdCode                  = "code"
 	CmdVSCodePMPath          = "vscode-pm-path"
 	CmdVSCodePMPathAlias     = "vpath"
+	// CmdVSCodeWorkspace emits a single `.code-workspace` file listing
+	// every tracked repo as a folder, so one click in VS Code opens
+	// them all in one window. Source is the same DB the Project
+	// Manager sync reads (store.ListRepos), so the file always matches
+	// the latest scan output. Help: vscode-workspace.md.
+	CmdVSCodeWorkspace      = "vscode-workspace"
+	CmdVSCodeWorkspaceAlias = "vsws"
 	CmdLFSCommon             = "lfs-common"
 	CmdLFSCommonAlias        = "lfsc"
 	CmdReplace               = "replace"
