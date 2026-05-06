@@ -35,6 +35,9 @@ func Run(raw *commitin.RawArgs, stdout, stderr io.Writer) int {
 	}
 	_ = runlog.FinishRun(ctx.DB.Conn(), ctx.RunID, finalRunStatus(ctx.Counters), time.Now())
 	finalize.PrintSummary(stderr, ctx.Counters)
+	if ctx.Raw.IsDryRun {
+		finalize.PrintDryRunBanner(stderr)
+	}
 	return finalize.Outcome(ctx.Counters)
 }
 
