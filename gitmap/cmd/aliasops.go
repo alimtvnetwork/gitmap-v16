@@ -24,42 +24,46 @@ func runAliasSet(args []string) {
 
 // executeAliasSet resolves the slug and creates or updates the alias.
 func executeAliasSet(alias, slug string) {
+	if code := executeAliasSetCode(alias, slug); code != 0 {
+		os.Exit(code)
+	}
+}
+
+// executeAliasSetCode performs the work and returns an exit code so
+// deferred db.Close runs before any process exit.
+func executeAliasSetCode(alias, slug string) int {
 	db, err := openDB()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, constants.ErrListDBFailed, err)
-		os.Exit(1)
+		return 1
 	}
 	defer db.Close()
 
 	repos, err := db.FindBySlug(slug)
 	if err != nil || len(repos) == 0 {
 		fmt.Fprintf(os.Stderr, constants.ErrAliasRepoMissing, slug)
-		os.Exit(1)
+		return 1
 	}
 
 	repoID := repos[0].ID
 
 	if db.AliasExists(alias) {
-		err = db.UpdateAlias(alias, repoID)
-		if err != nil {
+		if err := db.UpdateAlias(alias, repoID); err != nil {
 			fmt.Fprintf(os.Stderr, constants.ErrBareFmt, err)
-			os.Exit(1)
+			return 1
 		}
-
 		fmt.Printf(constants.MsgAliasUpdated, alias, slug)
 		printHints(aliasSetHints())
-
-		return
+		return 0
 	}
 
-	_, err = db.CreateAlias(alias, repoID)
-	if err != nil {
+	if _, err := db.CreateAlias(alias, repoID); err != nil {
 		fmt.Fprintf(os.Stderr, constants.ErrBareFmt, err)
-		os.Exit(1)
+		return 1
 	}
-
 	fmt.Printf(constants.MsgAliasCreated, alias, slug)
 	printHints(aliasSetHints())
+	return 0
 }
 
 // runAliasRemove handles "alias remove <alias>".
@@ -70,40 +74,54 @@ func runAliasRemove(args []string) {
 	}
 
 	alias := args[0]
+	if code := runAliasRemoveCode(alias); code != 0 {
+		os.Exit(code)
+	}
+}
 
+// runAliasRemoveCode returns an exit code so deferred db.Close runs
+// before any process exit.
+func runAliasRemoveCode(alias string) int {
 	db, err := openDB()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, constants.ErrListDBFailed, err)
-		os.Exit(1)
+		return 1
 	}
 	defer db.Close()
 
-	err = db.DeleteAlias(alias)
-	if err != nil {
+	if err := db.DeleteAlias(alias); err != nil {
 		fmt.Fprintf(os.Stderr, constants.ErrBareFmt, err)
-		os.Exit(1)
+		return 1
 	}
-
 	fmt.Printf(constants.MsgAliasRemoved, alias)
+	return 0
 }
 
 // runAliasList handles "alias list".
 func runAliasList() {
+	if code := runAliasListCode(); code != 0 {
+		os.Exit(code)
+	}
+}
+
+// runAliasListCode returns an exit code so deferred db.Close runs
+// before any process exit.
+func runAliasListCode() int {
 	db, err := openDB()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, constants.ErrListDBFailed, err)
-		os.Exit(1)
+		return 1
 	}
 	defer db.Close()
 
 	aliases, err := db.ListAliasesWithRepo()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, constants.ErrBareFmt, err)
-		os.Exit(1)
+		return 1
 	}
-
 	printAliasList(aliases)
 	printHints(aliasListHints())
+	return 0
 }
 
 // printAliasList renders the alias table to stdout.

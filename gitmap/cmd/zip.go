@@ -43,7 +43,8 @@ func runZip(args []string) {
 	defer cleanupAllSources(resolved)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "  ✗ %v\n", err)
-		os.Exit(1)
+		cleanupAllSources(resolved)
+		exitWith(1)
 	}
 
 	opts.Sources = resolvedToPaths(resolved)
