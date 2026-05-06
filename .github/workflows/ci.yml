@@ -177,27 +177,56 @@ jobs:
         # entry inside .golangci.yml so verdicts cannot diverge.
         run: go install github.com/client9/misspell/cmd/misspell@v0.3.4
 
-      - name: Run misspell across repo
+      - name: Fetch base ref for PR diff
+        if: needs.sha-check.outputs.already-built != 'true' && github.event_name == 'pull_request'
+        run: git fetch --no-tags --depth=1 origin "${{ github.base_ref }}"
+
+      - name: Run misspell on changed files
         if: needs.sha-check.outputs.already-built != 'true'
-        # -error => exit 1 on any finding (hard-gate).
-        # -locale US => match .golangci.yml so behaviour/colour/etc.
-        # are flagged identically in Go source AND docs/scripts.
-        # We deliberately scan everything except vendored / build-output
-        # paths so typos in README, spec/, .github/scripts, and
-        # PowerShell helpers are caught before the heavy lint job.
+        # -error => exit 1 on any finding (hard-gate for the changed set).
+        # -locale US => identical to .golangci.yml so Go-source verdicts
+        # and docs/scripts verdicts cannot diverge.
+        # Scope: ONLY files added or modified in this PR (or HEAD~1..HEAD
+        # on push). This catches NEW typos like behaviour/colour/cancelled
+        # in any text file (Markdown, shell, PowerShell, YAML, Go) without
+        # forcing a sweep of pre-existing strings in README/CHANGELOG.
+        # We exclude binary assets, golden fixtures, generated files, and
+        # the internal .lovable/ agent memory (free-form English notes).
         run: |
           set -euo pipefail
-          mapfile -t targets < <(git ls-files \
-            ':!:**/*.png' ':!:**/*.jpg' ':!:**/*.jpeg' ':!:**/*.gif' \
-            ':!:**/*.ico' ':!:**/*.svg' ':!:**/*.webp' \
-            ':!:**/*.zip' ':!:**/*.tar' ':!:**/*.gz' ':!:**/*.exe' \
-            ':!:**/testdata/**' ':!:**/golden/**' \
-            ':!:**/.gitmap/release/**' ':!:**/.gitmap/release-assets/**' \
-            ':!:gitmap/completion/allcommands_generated.go')
-          if [ "${#targets[@]}" -eq 0 ]; then
-            echo "no files to scan"
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            base="origin/${{ github.base_ref }}"
+          else
+            base="HEAD~1"
+          fi
+          mapfile -t changed < <(git diff --name-only --diff-filter=AM "$base"...HEAD || true)
+          if [ "${#changed[@]}" -eq 0 ]; then
+            echo "no changed files vs $base — nothing to scan"
             exit 0
           fi
+          # Filter out paths the gate intentionally ignores.
+          targets=()
+          for f in "${changed[@]}"; do
+            case "$f" in
+              *.png|*.jpg|*.jpeg|*.gif|*.ico|*.svg|*.webp) continue ;;
+              *.zip|*.tar|*.gz|*.exe)                     continue ;;
+              */testdata/*|*/golden/*)                    continue ;;
+              */.gitmap/release/*|*/.gitmap/release-assets/*) continue ;;
+              gitmap/completion/allcommands_generated.go) continue ;;
+              .lovable/*)                                  continue ;;
+              *)
+                # Skip anything that no longer exists (e.g. deleted in
+                # a follow-up commit on the same PR).
+                [ -f "$f" ] && targets+=("$f")
+                ;;
+            esac
+          done
+          if [ "${#targets[@]}" -eq 0 ]; then
+            echo "no scannable changed files — nothing to scan"
+            exit 0
+          fi
+          echo "Scanning ${#targets[@]} changed file(s) for US-English misspellings:"
+          printf '  %s\n' "${targets[@]}"
           misspell -locale US -error "${targets[@]}"
 
   lint:
