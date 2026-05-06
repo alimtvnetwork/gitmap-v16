@@ -171,10 +171,11 @@ jobs:
 
       - name: Install misspell (pinned)
         if: needs.sha-check.outputs.already-built != 'true'
-        # Pinned to v0.6.0 — never use @latest per Core memory rule on
+        # Pinned to v0.3.4 (latest published tag of client9/misspell) —
+        # never use @latest per Core memory rule on
         # third-party tool versions. Same locale (US) as the misspell
         # entry inside .golangci.yml so verdicts cannot diverge.
-        run: go install github.com/client9/misspell/cmd/misspell@v0.6.0
+        run: go install github.com/client9/misspell/cmd/misspell@v0.3.4
 
       - name: Run misspell across repo
         if: needs.sha-check.outputs.already-built != 'true'
