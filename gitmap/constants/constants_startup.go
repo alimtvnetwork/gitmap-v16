@@ -208,3 +208,18 @@ const (
 		"registry-hklm (requires admin), or startup-folder " +
 		"(default: try all — registry, then registry-hklm, then startup-folder)"
 )
+
+// EnvStartupAutostartDir is an explicit override for AutostartDir().
+// When set and non-empty, AutostartDir() returns this path verbatim
+// on every OS (Linux, macOS, Windows), bypassing the per-OS default
+// resolution (XDG_CONFIG_HOME/autostart, ~/Library/LaunchAgents,
+// Registry/Startup folder respectively).
+//
+// Two intended uses:
+//
+//  1. Tests that need a writable, isolated autostart dir on every OS
+//     without per-OS skips. Set via t.Setenv inside the test body.
+//  2. Power users who keep their dotfiles under a non-default root
+//     and want gitmap to install autostart entries alongside them
+//     (e.g. inside a Nix profile or a portable USB-stick install).
+const EnvStartupAutostartDir = "GITMAP_AUTOSTART_DIR"

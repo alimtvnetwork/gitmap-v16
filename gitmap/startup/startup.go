@@ -52,6 +52,10 @@ type Entry struct {
 // AutostartDir returns the absolute path to the user's autostart
 // directory for the current OS.
 //
+//   - $GITMAP_AUTOSTART_DIR (if set and non-empty): returned verbatim
+//     on EVERY OS, bypassing the per-OS default below. Lets tests run
+//     cross-platform without OS-specific skips and lets power users
+//     override the install location (Nix profiles, portable installs).
 //   - Linux/Unix: honors $XDG_CONFIG_HOME, falls back to
 //     $HOME/.config/autostart per freedesktop.org base-dir spec.
 //   - macOS: $HOME/Library/LaunchAgents (per Apple's LaunchAgents
@@ -60,6 +64,10 @@ type Entry struct {
 // Returns an error on Windows so callers print the platform-specific
 // "unsupported OS" message instead of touching a non-existent dir.
 func AutostartDir() (string, error) {
+	if override := strings.TrimSpace(os.Getenv(constants.EnvStartupAutostartDir)); len(override) > 0 {
+
+		return override, nil
+	}
 	if runtime.GOOS == "windows" {
 
 		return "", fmt.Errorf(constants.ErrStartupUnsupportedOS)
