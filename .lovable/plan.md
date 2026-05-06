@@ -1,3 +1,23 @@
+- ✅ **Step 5 — Conflict-mode wiring + dry-run banner (2026-05-06).**
+  Added `replay/clobber.go` (`DetectClobbers` compares
+  `<sha>:path` blob hashes via `git rev-parse` on both source and
+  target HEAD; missing-on-target = add, not clobber; empty HEAD =
+  empty repo = nothing to clobber). New `orchestrator/conflict.go`
+  introduces a package-private `errConflictAborted` sentinel and a
+  `conflictCheck(ctx, plan, c, stdout) → (abort, skip)` helper that
+  consults `finalize.Resolve(ConflictMode, sourceSha, stdout)`:
+  ForceMerge logs the clobber count and proceeds; Prompt aborts the
+  whole run by flipping `runContext.aborted`. `commit.go`
+  short-circuits replay through `conflictCheck` BEFORE
+  `replay.ApplyCommit` so an aborted run records exactly one Failed
+  row and writes nothing. `pipeline.go` polls `ctx.aborted` after
+  every commit + every input and `executePipeline` returns
+  `CommitInExitConflictAborted` so the top-level `Run` propagates
+  the spec §2.7 exit code. `finalize.PrintDryRunBanner` appends a
+  one-line "DRY RUN — no commits were created" notice when
+  `--dry-run` is set, called from `Run` after `PrintSummary` so
+  CI grep cannot mistake a dry-run for a zero-commit real run.
+  `go build ./...` + `go test ./cmd/commitin/... ./store/...` green.
 
 # Plan: Install System Overhaul + README Redesign
 
