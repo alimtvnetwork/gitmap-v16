@@ -125,6 +125,12 @@ func syncClonedReposToVSCodePM(pairs []vscodepm.Pair, skip bool) {
 		return
 	}
 
+	if isVSCodeSyncDisabled() {
+		fmt.Print(constants.MsgVSCodePMSyncDisabled)
+
+		return
+	}
+
 	if len(pairs) == 0 {
 		return
 	}

@@ -48,6 +48,21 @@ const (
 	FlagDescNoVSCodeSync = "skip syncing scanned repos into VS Code Project Manager projects.json"
 )
 
+// Global kill switch for the VS Code Project Manager sync. When the
+// flag is passed at any position on the gitmap command line, OR when
+// the env var is set to "1", every clone/scan/reclone helper that
+// would otherwise call vscodepm.Sync short-circuits and prints
+// MsgVSCodePMSyncDisabled instead. This is the "fully disable" lever
+// for users who never want gitmap to touch projects.json — distinct
+// from the per-command `--no-vscode-sync` opt-out.
+const (
+	FlagVSCodeSyncDisabled     = "vscode-sync-disabled"
+	FlagDescVSCodeSyncDisabled = "fully disable VS Code Project Manager projects.json sync for this and all sub-invocations (sets GITMAP_VSCODE_SYNC_DISABLED=1)"
+	EnvVSCodeSyncDisabled      = "GITMAP_VSCODE_SYNC_DISABLED"
+	EnvVSCodeSyncDisabledOn    = "1"
+	MsgVSCodePMSyncDisabled    = "  • VS Code Project Manager sync disabled (--vscode-sync-disabled / GITMAP_VSCODE_SYNC_DISABLED=1)\n"
+)
+
 // Debug-paths process-wide switch. The CLI flag (FlagDebugPaths in
 // constants_cli.go) sets this env var to "1" for the current process
 // so every code path that calls canonicalizePMPath — across every
