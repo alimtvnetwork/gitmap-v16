@@ -7,8 +7,8 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/sahilm/fuzzy"
 
-	"github.com/alimtvnetwork/gitmap-v13/gitmap/constants"
-	"github.com/alimtvnetwork/gitmap-v13/gitmap/model"
+	"github.com/alimtvnetwork/gitmap-v16/gitmap/constants"
+	"github.com/alimtvnetwork/gitmap-v16/gitmap/model"
 )
 
 type browserModel struct {

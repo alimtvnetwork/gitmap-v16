@@ -7,8 +7,8 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/alimtvnetwork/gitmap-v13/gitmap/constants"
-	"github.com/alimtvnetwork/gitmap-v13/gitmap/store"
+	"github.com/alimtvnetwork/gitmap-v16/gitmap/constants"
+	"github.com/alimtvnetwork/gitmap-v16/gitmap/store"
 )
 
 // runAmendList handles the "amend-list" command.

@@ -8,8 +8,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/alimtvnetwork/gitmap-v13/gitmap/constants"
-	"github.com/alimtvnetwork/gitmap-v13/gitmap/verbose"
+	"github.com/alimtvnetwork/gitmap-v16/gitmap/constants"
+	"github.com/alimtvnetwork/gitmap-v16/gitmap/verbose"
 )
 
 // UploadAsset uploads a single file to a GitHub release.

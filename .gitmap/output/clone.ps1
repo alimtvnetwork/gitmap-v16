@@ -26,12 +26,12 @@ $succeeded = 0
 $failed = 0
 
 Write-Host "  [1/1] " -ForegroundColor Magenta -NoNewline
-Write-Host "gitmap-v3" -ForegroundColor White
+Write-Host "gitmap-v16" -ForegroundColor White
 $parentDir = Split-Path "." -Parent
 if ($parentDir -and -not (Test-Path $parentDir)) {
     New-Item -ItemType Directory -Path $parentDir -Force | Out-Null
 }
-$cloneResult = git clone -b main https://github.com/alimtvnetwork/gitmap-v3.git "." 2>&1
+$cloneResult = git clone -b main https://github.com/alimtvnetwork/gitmap-v16.git "." 2>&1
 if ($LASTEXITCODE -eq 0) {
     Write-Host "  ✓ Cloned successfully" -ForegroundColor Green
     $succeeded++

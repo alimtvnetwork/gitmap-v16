@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/alimtvnetwork/gitmap-v13/gitmap/config"
-	"github.com/alimtvnetwork/gitmap-v13/gitmap/constants"
-	"github.com/alimtvnetwork/gitmap-v13/gitmap/store"
-	"github.com/alimtvnetwork/gitmap-v13/gitmap/tui"
+	"github.com/alimtvnetwork/gitmap-v16/gitmap/config"
+	"github.com/alimtvnetwork/gitmap-v16/gitmap/constants"
+	"github.com/alimtvnetwork/gitmap-v16/gitmap/store"
+	"github.com/alimtvnetwork/gitmap-v16/gitmap/tui"
 )
 
 // parseInteractiveFlags parses flags for the interactive command.

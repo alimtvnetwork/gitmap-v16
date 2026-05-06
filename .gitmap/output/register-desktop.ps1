@@ -33,7 +33,7 @@ $succeeded = 0
 $failed = 0
 
 Write-Host "  [1/1] " -ForegroundColor Magenta -NoNewline
-Write-Host "gitmap-v3" -ForegroundColor White
+Write-Host "gitmap-v16" -ForegroundColor White
 $repoPath = Join-Path $BaseDir "."
 $repoPath = (Resolve-Path $repoPath -ErrorAction SilentlyContinue).Path
 if ($repoPath -and (Test-Path $repoPath)) {

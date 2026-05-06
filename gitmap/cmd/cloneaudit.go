@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/alimtvnetwork/gitmap-v13/gitmap/cloner"
-	"github.com/alimtvnetwork/gitmap-v13/gitmap/constants"
+	"github.com/alimtvnetwork/gitmap-v16/gitmap/cloner"
+	"github.com/alimtvnetwork/gitmap-v16/gitmap/constants"
 )
 
 // runCloneAudit implements `gitmap clone --audit`. Read-only: it parses

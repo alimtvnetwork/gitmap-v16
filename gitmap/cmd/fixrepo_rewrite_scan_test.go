@@ -21,35 +21,35 @@ func TestScanUnguardedTokenHits(t *testing.T) {
 	}{
 		{
 			name:      "single match mid-line",
-			body:      "use gitmap-v9 here",
-			token:     "gitmap-v9",
+			body:      "use gitmap-v16 here",
+			token:     "gitmap-v16",
 			wantHits:  []int{4},
 			wantCount: 1,
 		},
 		{
 			name:     "guarded by trailing digit (-v9 inside -v10)",
-			body:     "import gitmap-v10 // not v9",
-			token:    "gitmap-v1",
+			body:     "import gitmap-v16 // not v9",
+			token:    "gitmap-v16",
 			wantHits: nil, wantCount: 0,
 		},
 		{
 			name:      "EOF-adjacent counts as unguarded",
-			body:      "tail gitmap-v9",
-			token:     "gitmap-v9",
+			body:      "tail gitmap-v16",
+			token:     "gitmap-v16",
 			wantHits:  []int{5},
 			wantCount: 1,
 		},
 		{
 			name:      "mixed guarded + unguarded in one body",
-			body:      "a gitmap-v9 b gitmap-v10 c gitmap-v9\n",
-			token:     "gitmap-v9",
+			body:      "a gitmap-v16 b gitmap-v16 c gitmap-v16\n",
+			token:     "gitmap-v16",
 			wantHits:  []int{2, 27},
 			wantCount: 2,
 		},
 		{
 			name:      "non-digit neighbor (letter) is unguarded",
-			body:      "gitmap-v9z",
-			token:     "gitmap-v9",
+			body:      "gitmap-v16z",
+			token:     "gitmap-v16",
 			wantHits:  []int{0},
 			wantCount: 1,
 		},
@@ -63,7 +63,7 @@ func TestScanUnguardedTokenHits(t *testing.T) {
 		{
 			name:      "token longer than body returns nothing",
 			body:      "x",
-			token:     "gitmap-v9",
+			token:     "gitmap-v16",
 			wantHits:  nil,
 			wantCount: 0,
 		},
@@ -86,13 +86,13 @@ func TestScanUnguardedTokenHits(t *testing.T) {
 // rewriter's substitution count. Locks the invariant that powers
 // assertDashFormBumped's `wantCount` derivation.
 func TestScannerMatchesRewriter(t *testing.T) {
-	body := "gitmap-v9 + gitmap-v10 + gitmap-v9 (eof)gitmap-v9"
+	body := "gitmap-v16 + gitmap-v16 + gitmap-v16 (eof)gitmap-v16"
 	const (
 		base    = "gitmap"
 		target  = 9
 		current = 12
 	)
-	token := "gitmap-v9"
+	token := "gitmap-v16"
 	want := CountUnguardedTokenHits(body, token)
 	out, count := applyAllTargets(body, base, current, []int{target})
 	if count != want {
@@ -109,7 +109,7 @@ func TestScannerMatchesRewriter(t *testing.T) {
 			strings.Count(out, wantToken), wantToken, want)
 	}
 	// guarded neighbor must survive
-	if !strings.Contains(out, "gitmap-v10") {
-		t.Errorf("guarded gitmap-v10 was rewritten: %q", out)
+	if !strings.Contains(out, "gitmap-v16") {
+		t.Errorf("guarded gitmap-v16 was rewritten: %q", out)
 	}
 }
