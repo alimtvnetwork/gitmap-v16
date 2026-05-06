@@ -7,7 +7,6 @@ import (
 	"github.com/alimtvnetwork/gitmap-v16/gitmap/cmd/commitin/finalize"
 	"github.com/alimtvnetwork/gitmap-v16/gitmap/cmd/commitin/replay"
 	"github.com/alimtvnetwork/gitmap-v16/gitmap/cmd/commitin/walk"
-	"github.com/alimtvnetwork/gitmap-v16/gitmap/constants"
 )
 
 // conflictCheck inspects the planned replay for HEAD-vs-source blob
@@ -37,6 +36,5 @@ func conflictCheck(ctx *runContext, plan replay.Plan, c walk.SourceCommit, stdou
 	}
 	// ForceMerge: log clobber list at info-level so audits can see it.
 	fmt.Fprintf(stdout, "commit-in: %s force-merge clobbering %d file(s)\n", c.Sha, len(clobbers))
-	_ = constants.CommitInExitConflictAborted // keep constants import live for future use
 	return false, false
 }
