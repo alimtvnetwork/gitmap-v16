@@ -118,7 +118,7 @@ func splitFlagsAndPositional(args []string) ([]string, []string) {
 	positional := make([]string, 0, len(args))
 	for i := 0; i < len(args); i++ {
 		tok := args[i]
-		if !strings.HasPrefix(tok, "-") || tok == "-" {
+		if !strings.HasPrefix(tok, "-") || tok == "-" || isTailKeywordToken(tok) {
 			positional = append(positional, tok)
 			continue
 		}
@@ -129,6 +129,22 @@ func splitFlagsAndPositional(args []string) ([]string, []string) {
 		}
 	}
 	return flags, positional
+}
+
+// isTailKeywordToken recognises the spec §2.4 `-N` tail keyword so the
+// flag re-orderer doesn't mistake it for an unknown flag. Any token
+// matching `-` followed by ≥1 ASCII digit qualifies; classifyKeyword
+// re-validates N≥1 and rejects `-0`.
+func isTailKeywordToken(tok string) bool {
+	if len(tok) < 2 || tok[0] != '-' {
+		return false
+	}
+	for i := 1; i < len(tok); i++ {
+		if tok[i] < '0' || tok[i] > '9' {
+			return false
+		}
+	}
+	return true
 }
 
 // needsValue reports whether the next argv token belongs to this flag.
