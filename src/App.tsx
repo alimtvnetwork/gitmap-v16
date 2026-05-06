@@ -74,6 +74,7 @@ import MergeRightPage from "./pages/MergeRight";
 import CommitLeftPage from "./pages/CommitLeft";
 import CommitRightPage from "./pages/CommitRight";
 import CommitBothPage from "./pages/CommitBoth";
+import HistoryRewritePage from "./pages/HistoryRewrite";
 
 const queryClient = new QueryClient();
 
@@ -153,6 +154,7 @@ const App = () => (
           <Route path="/commit-left" element={<CommitLeftPage />} />
           <Route path="/commit-right" element={<CommitRightPage />} />
           <Route path="/commit-both" element={<CommitBothPage />} />
+          <Route path="/history-rewrite" element={<HistoryRewritePage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
