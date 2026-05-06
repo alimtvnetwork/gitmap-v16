@@ -138,6 +138,13 @@ const (
 	// spec-authoring/23-visibility-change/01-spec.md.
 	CmdMakePublic  = "make-public"
 	CmdMakePrivate = "make-private"
+	// CmdHistoryPurge / CmdHistoryPin wrap `git filter-repo` in a
+	// mirror-clone sandbox. Spec: spec/04-generic-cli/16-history-rewrite.md.
+	// The user's working repo is never rewritten in place.
+	CmdHistoryPurge      = "history-purge"
+	CmdHistoryPurgeAlias = "hp"
+	CmdHistoryPin        = "history-pin"
+	CmdHistoryPinAlias   = "hpin"
 )
 
 // Audit-legacy defaults + flag names. Patterns are comma-separated regexes.
