@@ -103,3 +103,20 @@ The original 2026-05-06 user message ("Complete it in 7 iterations…") is the s
   (non-blocking): end-to-end orchestration glue inside runCommitIn,
   // gitmap:cmd top-level marker on CmdCommitIn const block,
   CHANGELOG v4.18.0 entry.
+- 2026-05-06 — **Step 2 ✅** End-to-end orchestration glue landed.
+  New gitmap/cmd/commitin/orchestrator/ package (7 files, all <200
+  lines, all funcs ≤15 lines): run.go owns top-level Run + setUp +
+  finalRunStatus mapping; setup.go threads resolveSource → workspace
+  → lock → store.OpenAt+Migrate → loadProfile via new exported
+  store.OpenAt(dbPath) so the SQLite anchors at <source>/.gitmap/
+  gitmap.db per spec; cli_overrides.go projects RawArgs onto
+  profile.CliOverrides; pipeline.go expands+stages inputs then walks
+  each one with a per-run rand.New seeded picker (spec §3.4
+  determinism); commit.go runs the per-commit dedupe → message build
+  → replay → record loop with separate skip/fail/created paths and
+  routes IsDryRun to a SkipReasonDryRun branch; context.go bundles
+  handles + idempotent Cleanup (CleanupTemp respects --keep-temp);
+  input_cache.go ensures one InputRepo row per staged input via
+  OrderIndex cache. runCommitIn delegates to orchestrator.Run and
+  propagates exit codes. go build ./... clean; go test ./cmd/
+  commitin/... ./store/... all green.
