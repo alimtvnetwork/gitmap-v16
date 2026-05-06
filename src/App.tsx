@@ -75,6 +75,7 @@ import CommitLeftPage from "./pages/CommitLeft";
 import CommitRightPage from "./pages/CommitRight";
 import CommitBothPage from "./pages/CommitBoth";
 import HistoryRewritePage from "./pages/HistoryRewrite";
+import ReleaseAliasPage from "./pages/ReleaseAlias";
 
 const queryClient = new QueryClient();
 
@@ -155,6 +156,9 @@ const App = () => (
           <Route path="/commit-right" element={<CommitRightPage />} />
           <Route path="/commit-both" element={<CommitBothPage />} />
           <Route path="/history-rewrite" element={<HistoryRewritePage />} />
+          <Route path="/as" element={<ReleaseAliasPage />} />
+          <Route path="/release-alias" element={<ReleaseAliasPage />} />
+          <Route path="/release-alias-pull" element={<ReleaseAliasPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
