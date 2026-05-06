@@ -31,6 +31,9 @@ type runContext struct {
 	RunID    int64
 	TempDir  string
 	Counters finalize.Counters
+	// inputRepoIds caches InputRepo PKs keyed by ResolvedInput.OrderIndex
+	// so persistSource emits exactly one InputRepo row per staged input.
+	inputRepoIds map[int]int64
 }
 
 func newContext(raw *commitin.RawArgs, src *workspace.SourceHandle, paths *workspace.Paths, lock *workspace.LockHandle, db dbCloser, resolved profile.Resolved, runID int64) *runContext {
