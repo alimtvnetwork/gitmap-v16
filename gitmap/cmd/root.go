@@ -18,6 +18,17 @@ func Run() {
 		os.Exit(1)
 	}
 
+	// Strip the global `--vscode-sync-disabled` kill switch from argv
+	// (and flip the env var) before any subcommand sees its flagset.
+	// Done first so even URL-shortcut and alias rewrites operate on
+	// already-cleaned args.
+	os.Args = append(os.Args[:1], stripVSCodeSyncDisabledFlag(os.Args[1:])...)
+	if len(os.Args) < 2 {
+		PrintBinaryLocations()
+		printUsage()
+		os.Exit(1)
+	}
+
 	// Skip migration for commands that must produce clean stdout
 	cmd := os.Args[1]
 	if cmd != constants.CmdVersion && cmd != constants.CmdVersionAlias {
