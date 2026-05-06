@@ -109,7 +109,7 @@ func buildClonePMPair(absPath, repoName string) vscodepm.Pair {
 	return vscodepm.Pair{
 		RootPath: canonical,
 		Name:     repoName,
-		Tags:     vscodepm.DetectTags(canonical),
+		Tags:     vscodepm.DetectTagsCustom(canonical),
 	}
 }
 
