@@ -88,7 +88,7 @@ func runFilterRepoPurge(sandbox string, paths []string, opts historyOpts) {
 	for _, p := range paths {
 		args = append(args, "--path", p)
 	}
-	args = append(args, historyMessageArgs(opts)...)
+	args = append(args, historyMessageArgs(opts, paths)...)
 	execFilterRepo(args)
 }
 
@@ -110,18 +110,49 @@ func runFilterRepoPin(sandbox string, paths []string,
 		"-C", sandbox, "filter-repo", "--force",
 		"--blob-callback", buildPinCallbackPython(manifest),
 	}
-	args = append(args, historyMessageArgs(opts)...)
+	args = append(args, historyMessageArgs(opts, paths)...)
 	execFilterRepo(args)
 }
 
 // historyMessageArgs returns the filter-repo args needed to rewrite
-// commit messages of touched commits, or nil when --message is empty.
-func historyMessageArgs(opts historyOpts) []string {
+// commit messages of ONLY commits that touch one of `paths`, leaving
+// every other commit's message untouched. Returns nil when --message
+// is empty.
+func historyMessageArgs(opts historyOpts, paths []string) []string {
 	if opts.message == "" {
 		return nil
 	}
-	py := fmt.Sprintf("commit.message = b%q\n", opts.message)
-	return []string{"--commit-callback", py}
+	return []string{"--commit-callback", buildScopedMessagePython(opts.message, paths)}
+}
+
+// buildScopedMessagePython renders a Python snippet for filter-repo's
+// --commit-callback that only rewrites commit.message when at least
+// one of the commit's file_changes references a path inside the
+// requested set. Path matching is exact OR prefix-with-trailing-slash
+// so that passing a folder ("dir") also scopes its descendants.
+func buildScopedMessagePython(message string, paths []string) string {
+	quoted := make([]string, 0, len(paths))
+	for _, p := range paths {
+		quoted = append(quoted, fmt.Sprintf("%q", p))
+	}
+	pathLiteral := "[" + strings.Join(quoted, ", ") + "]"
+	return fmt.Sprintf(`
+_targets = [p.encode("utf-8") for p in %s]
+def _hits(change_path):
+    if change_path is None:
+        return False
+    for _t in _targets:
+        if change_path == _t or change_path.startswith(_t + b"/"):
+            return True
+    return False
+_touched = False
+for _c in (commit.file_changes or []):
+    if _hits(_c.filename):
+        _touched = True
+        break
+if _touched:
+    commit.message = b%q
+`, pathLiteral, message)
 }
 
 // execFilterRepo runs `git ...` with stdio inherited and exits 5 on
