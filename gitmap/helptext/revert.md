@@ -1,6 +1,11 @@
 # gitmap revert
 
-Revert the repository to a specific release version by checking out the tag.
+Two modes:
+
+1. **Version-tag mode** (legacy): revert the repo to a specific release tag.
+2. **Transaction-journal mode**: replay the stored reverse-operation for
+   any filesystem-mutating gitmap command (clone, mv, merge-*, etc.) by
+   transaction id, the most recent one, or the last N.
 
 ## Alias
 
@@ -8,11 +13,25 @@ None
 
 ## Usage
 
-    gitmap revert <version>
+    gitmap revert <version>                          # version-tag mode
+    gitmap revert --list-txn                          # list recent transactions
+    gitmap revert --show-txn <id>                     # inspect one transaction
+    gitmap revert --txn <id> [--force]                # revert one transaction
+    gitmap revert --last-txn [--force]                # revert the most recent
+    gitmap revert --last-n-txn <N> [--force]          # revert N most recent
+    gitmap revert --prune-txn                         # force a prune cycle
 
 ## Flags
 
-None.
+| Flag | Purpose |
+|------|---------|
+| `--list-txn` | List the last 50 transactions and exit. |
+| `--show-txn <id>` | Print one transaction (header + every captured file) by id. |
+| `--txn <id>` | Revert the named transaction id. |
+| `--last-txn` | Revert the most recent committed transaction. |
+| `--last-n-txn <N>` | Revert the N most recent committed transactions, newest first. Stops on the first failure (already-reverted rows are preserved). |
+| `--prune-txn` | Force a prune cycle now (drops everything beyond the 50-row cap). |
+| `--force` | Skip the confirm prompt and skip backup-sha verification. |
 
 ## Prerequisites
 
@@ -58,6 +77,22 @@ None.
     Available versions:
       v2.22.0, v2.21.0, v2.20.0, v2.19.0, ...
     → Use 'gitmap list-versions' to see all available tags
+
+### Example 4: Undo the last 3 filesystem-mutating commands
+
+    gitmap revert --last-n-txn 3
+
+**Output:**
+
+    About to revert 3 transaction(s), newest first:
+      #42   mv         2026-05-06T14:22:01Z  rename "old/" ← "new/"
+      #41   merge      2026-05-06T14:18:44Z  restore left + right pre-merge bytes
+      #40   clone      2026-05-06T14:15:09Z  remove cloned repo at /work/foo
+    Type 'yes' to continue: yes
+      ✓ reverted transaction #42 (mv)
+      ✓ reverted transaction #41 (merge)
+      ✓ reverted transaction #40 (clone)
+      ✓ reverted 3 transaction(s)
 
 ## See Also
 
