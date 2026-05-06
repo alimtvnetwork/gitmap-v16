@@ -25,7 +25,14 @@ func processOneCommit(ctx *runContext, staged workspace.StagedInput, c walk.Sour
 	if handleDedupe(ctx, srcID, c, stdout) {
 		return
 	}
-	finalMsg := buildMessage(ctx, c, pick)
+	keptFiles := applyExclusions(c.Files, ctx.Resolved.Exclusions)
+	if len(c.Files) > 0 && len(keptFiles) == 0 {
+		recordSkip(ctx, srcID, constants.CommitInSkipReasonExcludedAllFiles, stdout, c.Sha)
+		return
+	}
+	c.Files = keptFiles
+	intelBlock := renderFunctionIntel(staged.WorkPath, c, keptFiles, ctx.Resolved.FunctionIntel)
+	finalMsg := buildMessage(ctx, c, intelBlock, pick)
 	if finalMsg.IsEmpty {
 		recordSkip(ctx, srcID, constants.CommitInSkipReasonEmptyAfterMessageRules, stdout, c.Sha)
 		return
@@ -84,9 +91,10 @@ func handleDedupe(ctx *runContext, srcID int64, c walk.SourceCommit, stdout io.W
 	return true
 }
 
-func buildMessage(ctx *runContext, c walk.SourceCommit, pick func(int) int) message.Result {
+func buildMessage(ctx *runContext, c walk.SourceCommit, intelBlock string, pick func(int) int) message.Result {
 	return message.Build(message.Inputs{
 		OriginalMessage: c.OriginalMessage,
+		FunctionIntel:   intelBlock,
 		Resolved:        ctx.Resolved,
 		PickIndex:       pick,
 	})
