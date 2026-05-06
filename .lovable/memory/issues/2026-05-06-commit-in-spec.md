@@ -86,3 +86,20 @@ The original 2026-05-06 user message ("Complete it in 7 iterations…") is the s
   exit-code mapping; AskEnum loops until valid. 18 tests across the
   three packages; PickIndex injection keeps message tests determini-
   stic.
+- 2026-05-06 — **Phase 7 ✅** Function-intel detectors + finalize +
+  dispatcher landed. funcintel/: per-language regex detectors in
+  isolated files (Go, JS, TS reusing JS+arrow, Rust, Python, PHP,
+  Java shared with C#) self-registering via init() into a central
+  registry; render.go emits §6.3 per-file block sorted ascending,
+  includes newly-added files even when no functions detected.
+  finalize/: Counters + Outcome (PartiallyFailed when Failed>0),
+  PrintSummary using CommitInMsgSummaryLine, CleanupTemp honours
+  --keep-temp, Resolve maps ConflictMode→ConflictDecision with
+  standardized abort banner. Dispatcher: runCommitIn parses argv +
+  exits BadArgs on parse error + emits "orchestration loop pending"
+  stub; rootcore.go registers CmdCommitIn/CmdCommitInAlias.
+  helptext/commit-in.md (105 lines, 5 examples, flag + exit-code
+  tables). Version 4.17.0 → 4.18.0. 13 tests added. Deferred
+  (non-blocking): end-to-end orchestration glue inside runCommitIn,
+  // gitmap:cmd top-level marker on CmdCommitIn const block,
+  CHANGELOG v4.18.0 entry.

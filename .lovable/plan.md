@@ -426,11 +426,44 @@ path → `mkdir -p && git init`. No prompt, no flag.
   prompt (4 — no-prompt error path with field name in stderr,
   fallback on empty input, typed answer pass-through, enum retry
   loop until valid).
-- ⏳ **Phase 7 — Function-intel + finalize.** Per-language detectors
-  under `gitmap/cmd/commitin/funcintel/<lang>.go`, registry dispatch,
-  conflict resolution (`ForceMerge` / `Prompt`), `Finalize` summary,
-  helptext file `gitmap/helptext/commit-in.md`, top-level command
-  wire-up in `cmd/commitin.go`.
+- ✅ **Phase 7 — Function-intel + finalize (2026-05-06).** Two new
+  packages plus dispatcher wire-up:
+  `funcintel/` — `types.go` (Detector interface + FileChange),
+  `registry.go` (extension→language map + `Get` / `register` /
+  `EnabledLanguages`), `diff.go` (shared `addedNames` set-diff +
+  line regex extractor), one self-registering file per language
+  (`lang_go.go`, `lang_js.go`, `lang_ts.go` reusing JS regex,
+  `lang_rust.go`, `lang_python.go`, `lang_php.go`, `lang_java.go`
+  shared with C#), `render.go` (§6.3 per-file block, sorted
+  ascending, includes newly-added files even when empty).
+  `finalize/` — `finalize.go` (`Counters`, `Outcome` mapping
+  `Failed>0` to `CommitInExitPartiallyFailed`, `PrintSummary` using
+  `CommitInMsgSummaryLine`, `CleanupTemp` honouring `--keep-temp`),
+  `conflict.go` (`Resolve(mode, sha, out)` returning
+  `ConflictDecisionTakeTheirs` for `ForceMerge` vs `Abort` for
+  `Prompt`, prints standardized banner via `CommitInErrConflictAborted`).
+  Dispatcher: `gitmap/cmd/commitin.go` adds `runCommitIn` (parses
+  argv, exits `CommitInExitBadArgs` on parse error, prints a
+  "orchestration loop pending" stub for now); `gitmap/cmd/rootcore.go`
+  registers `{CmdCommitIn, CmdCommitInAlias} → runCommitIn`.
+  Helptext: `gitmap/helptext/commit-in.md` (105 lines, 5 realistic
+  examples, full flag table, exit-code table). Version bumped
+  4.17.0 → 4.18.0. All files <200 lines, all funcs ≤15 lines. Tests
+  (8 funcintel + 5 finalize): extension dispatch, Go/TS/Python/Java
+  detector matrices, EnabledLanguages filter, render output format,
+  unchanged-decl noise rejection, Outcome partition, summary format
+  uses constants, ForceMerge silent / Prompt prints+aborts,
+  CleanupTemp honours keep flag.
+
+## Deferred follow-ups (not blocking the gated 7-phase plan)
+- Top-level orchestration loop in `runCommitIn` wiring workspace →
+  walk → dedupe → replay → runlog → finalize end-to-end. Each Phase
+  3-7 sub-package already exposes the seam needed; this is glue, not
+  new design.
+- `// gitmap:cmd top-level` marker on the `CmdCommitIn` const block in
+  `constants_cli.go` (drift-CI catches this on next `generate-check`).
+- CHANGELOG v4.18.0 entry documenting the new command surface +
+  spec/03-commit-in/ link.
 - ⏳ **Phase 7 — Function-intel + finalize.** Per-language detectors
   under `gitmap/cmd/commitin/funcintel/<lang>.go`, registry dispatch,
   conflict resolution (`ForceMerge` / `Prompt`), `Finalize` summary,
