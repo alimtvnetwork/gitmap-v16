@@ -11,11 +11,11 @@ import (
 // wrapper body across filter-repo versions.
 func TestBuildPinCallbackPythonUsesGlobalsCache(t *testing.T) {
 	got := buildPinCallbackPython("/tmp/pin.json")
-	if !strings.Contains(got, "globals().get('_pin_lookup')") {
-		t.Fatalf("callback missing globals cache lookup: %q", got)
+	if !strings.Contains(got, "getattr(builtins, '_gitmap_pin_lookup', None)") {
+		t.Fatalf("callback missing builtins cache lookup: %q", got)
 	}
-	if !strings.Contains(got, "globals()['_pin_lookup'] = _pin_lookup") {
-		t.Fatalf("callback missing globals cache store: %q", got)
+	if !strings.Contains(got, "setattr(builtins, '_gitmap_pin_lookup', _pin_lookup)") {
+		t.Fatalf("callback missing builtins cache store: %q", got)
 	}
 	if strings.Contains(got, "blob_callback") {
 		t.Fatalf("callback must not reference blob_callback: %q", got)
