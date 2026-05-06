@@ -16,6 +16,8 @@ type historyOpts struct {
 	keepSandbox bool
 	quiet       bool
 	message     string
+	modeLabel   string
+	pathCount   int
 }
 
 // parseHistoryArgs splits args into flags and positional paths,
