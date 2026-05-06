@@ -44,3 +44,9 @@ The original 2026-05-06 user message ("Complete it in 7 iterations…") is the s
   Tables: 18 (8 enum mirrors + Profile + 2 profile children + CommitInRun,
   InputRepo, SourceCommit, SourceCommitFile, RewrittenCommit, SkipLog,
   ShaMap). Tests: presence, seed parity, idempotence.
+- 2026-05-06 — **Phase 3 ✅** Pure CLI parser landed (5 files under
+  gitmap/cmd/commitin/parse*.go + parse_test.go). RawArgs/ParseError,
+  separator+quote split, -N keyword classifier, CSV/enum/author-pair
+  validators, flag re-orderer that treats `-N` as positional. Tests
+  cover AC #1, AC #4, author-pair, enum rejects, message-rule shape,
+  flags-after-positionals.
