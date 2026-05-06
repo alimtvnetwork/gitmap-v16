@@ -109,12 +109,12 @@ const (
 	// the latest scan output. Help: vscode-workspace.md.
 	CmdVSCodeWorkspace      = "vscode-workspace"
 	CmdVSCodeWorkspaceAlias = "vsws"
-	CmdLFSCommon             = "lfs-common"
-	CmdLFSCommonAlias        = "lfsc"
-	CmdReplace               = "replace"
-	CmdReplaceAlias          = "rpl"
-	CmdInject                = "inject"
-	CmdInjectAlias           = "inj"
+	CmdLFSCommon            = "lfs-common"
+	CmdLFSCommonAlias       = "lfsc"
+	CmdReplace              = "replace"
+	CmdReplaceAlias         = "rpl"
+	CmdInject               = "inject"
+	CmdInjectAlias          = "inj"
 	// CmdRegoldens runs `go test -run <pattern>` in two passes: pass 1
 	// regenerates golden fixtures with both gate env vars set; pass 2
 	// re-runs the same tests with the env vars unset to verify the

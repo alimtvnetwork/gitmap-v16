@@ -34,8 +34,8 @@ func (j *Journal) RecordRename(from, to string) error {
 	rec := model.TransactionFileRecord{
 		TransactionID: j.id,
 		RelPath:       j.relTo(from),
-		AbsPath:       to,                 // post-mutation location
-		BackupPath:    from,               // pre-mutation location (the inverse)
+		AbsPath:       to,   // post-mutation location
+		BackupPath:    from, // pre-mutation location (the inverse)
 		Action:        constants.TxnActionRename,
 	}
 

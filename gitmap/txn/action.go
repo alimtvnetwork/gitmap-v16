@@ -3,7 +3,7 @@
 // This sits ON TOP of the existing TransactionFile byte-snapshot journal:
 //
 //   - RecordEditFile  → snapshots bytes (TransactionFile row) AND writes
-//                       an edit_file action row with a BackupRef pointer.
+//     an edit_file action row with a BackupRef pointer.
 //   - RecordRenamePath → writes a rename_path action row only (no bytes).
 //
 // On revert (RevertActions), rows are walked Seq DESC and dispatched
