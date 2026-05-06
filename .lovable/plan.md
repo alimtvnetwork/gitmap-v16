@@ -395,9 +395,42 @@ path → `mkdir -p && git init`. No prompt, no flag.
   (3 — dry-run zero-call, full pipeline call sequence, both-dates
   env-var pin), runlog (4 — start/finish flow, atomic source+files
   insert, Created → ShaMap upsert, skip log persistence).
-- ⏳ **Phase 6 — Profiles + message pipeline.** Implement profile
-  load/save (JSON + DB transaction), interactive prompts, message
-  build pipeline §6.1 in canonical order, weak-word matching §6.2.
+- ✅ **Phase 6 — Profiles + message pipeline (2026-05-06).** Three
+  small packages under `gitmap/cmd/commitin/`:
+  `profile/` (`types.go` Profile/Author/Exclusion/MessageRule/FunctionIntel +
+  LoadError; `json.go` strict `Decode` with `DisallowUnknownFields` +
+  SchemaVersion gate, canonical `Encode` with fixed §5.2 key order +
+  trailing newline for stable diffs; `io.go` atomic `LoadFromDisk` /
+  `SaveToDisk` with `--save-profile-overwrite` refusal; `resolve.go`
+  four-layer precedence `defaults < profile < CLI` via
+  `Resolve(*CliOverrides, *Profile) Resolved`),
+  `message/` (`types.go` Inputs/Result; `strip.go` §6.1 step-1
+  StartsWith/EndsWith/Contains line-strip + blank-line collapse;
+  `weak.go` §6.2 first-word lowercased + punctuation-stripped
+  matcher; `affix.go` title-only first-line affix + body pool
+  random-pick wrap; `pipeline.go` `Build()` runs the 6 stages in
+  spec order and sets IsEmpty for the EmptyAfterMessageRules skip),
+  `prompt/` (`Asker` with swappable `In`/`Out`; `AskString` /
+  `AskEnum` honour `--no-prompt` by emitting the standardized
+  `commit-in: --no-prompt set but %s is unset` line + returning
+  `ErrNoPrompt` for exit-code mapping). All funcs ≤15 lines, all
+  files <200 lines. Test suites: profile (7 — encode/decode round
+  trip, unknown-field rejection, SchemaVersion gate, overwrite
+  refusal + override, missing-file load, ProfilePath layout, auto-
+  mkdir, four-layer precedence with CLI winning over profile and
+  defaults filling unset weak-words), message (7 — strip+collapse,
+  weak-word matrix incl UPPERCASE+colon+empty, override-only-weak
+  fires for weak/skips for strong, title affix scoped to first line,
+  body affix wraps, function-intel block append, empty-after-strip
+  flag, pipeline ordering keeps strip before override gate),
+  prompt (4 — no-prompt error path with field name in stderr,
+  fallback on empty input, typed answer pass-through, enum retry
+  loop until valid).
+- ⏳ **Phase 7 — Function-intel + finalize.** Per-language detectors
+  under `gitmap/cmd/commitin/funcintel/<lang>.go`, registry dispatch,
+  conflict resolution (`ForceMerge` / `Prompt`), `Finalize` summary,
+  helptext file `gitmap/helptext/commit-in.md`, top-level command
+  wire-up in `cmd/commitin.go`.
 - ⏳ **Phase 7 — Function-intel + finalize.** Per-language detectors
   under `gitmap/cmd/commitin/funcintel/<lang>.go`, registry dispatch,
   conflict resolution (`ForceMerge` / `Prompt`), `Finalize` summary,
