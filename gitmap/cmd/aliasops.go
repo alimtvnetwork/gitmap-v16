@@ -158,7 +158,7 @@ func runAliasShow(args []string) {
 	resolved, err := db.ResolveAlias(alias)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, constants.ErrBareFmt, err)
-		os.Exit(1)
+		exitWith(1)
 	}
 
 	fmt.Printf(constants.MsgAliasResolved, resolved.Alias, resolved.AbsolutePath, resolved.Slug)

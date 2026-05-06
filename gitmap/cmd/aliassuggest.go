@@ -25,7 +25,7 @@ func runAliasSuggest(args []string) {
 	repos, err := db.ListUnaliasedRepos()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, constants.ErrBareFmt, err)
-		os.Exit(1)
+		exitWith(1)
 	}
 
 	if len(repos) == 0 {
