@@ -456,18 +456,25 @@ path → `mkdir -p && git init`. No prompt, no flag.
   CleanupTemp honours keep flag.
 
 ## Deferred follow-ups (not blocking the gated 7-phase plan)
-- Top-level orchestration loop in `runCommitIn` wiring workspace →
-  walk → dedupe → replay → runlog → finalize end-to-end. Each Phase
-  3-7 sub-package already exposes the seam needed; this is glue, not
-  new design.
+- ✅ **Step 2 — End-to-end orchestration (2026-05-06).** New
+  `gitmap/cmd/commitin/orchestrator/` package wires the full pipeline:
+  `run.go` (top-level Run + setUp/finishSetUp + finalRunStatus),
+  `setup.go` (resolveSource → ensureWorkspace → acquireLock →
+  openAndMigrate via new `store.OpenAt` → loadProfile/pickProfile),
+  `cli_overrides.go` (RawArgs → profile.CliOverrides projection),
+  `pipeline.go` (expandAndStage + per-input walk loop with PRNG
+  picker for affix randomization), `commit.go` (per-commit dedupe →
+  message build → replay → record with skip/fail/created paths),
+  `context.go` (runContext bundle + idempotent Cleanup), and
+  `input_cache.go` (one InputRepo row per staged input via OrderIndex
+  cache). `runCommitIn` in `gitmap/cmd/commitin.go` now delegates to
+  `orchestrator.Run` and propagates its exit code. All files
+  <200 lines, all funcs ≤15 lines. `go build ./...` clean,
+  `go test ./cmd/commitin/... ./store/...` green.
 - `// gitmap:cmd top-level` marker on the `CmdCommitIn` const block in
   `constants_cli.go` (drift-CI catches this on next `generate-check`).
 - CHANGELOG v4.18.0 entry documenting the new command surface +
   spec/03-commit-in/ link.
-- ⏳ **Phase 7 — Function-intel + finalize.** Per-language detectors
-  under `gitmap/cmd/commitin/funcintel/<lang>.go`, registry dispatch,
-  conflict resolution (`ForceMerge` / `Prompt`), `Finalize` summary,
-  helptext file `gitmap/helptext/commit-in.md`.
 
 ### Guardrails (must hold across every phase)
 
