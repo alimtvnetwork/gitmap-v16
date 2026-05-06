@@ -12,14 +12,14 @@ import (
 // customizations on top, sourced from env vars set by the global
 // CLI flag stripper (cmd/vscodecustomtags.go):
 //
-//   1. Extra marker→tag rules (GITMAP_VSCODE_TAG_MARKER) extend the
-//      marker map for this call only — built-in rules win on conflict.
-//   2. Skip set (GITMAP_VSCODE_TAG_SKIP) drops named tags from the
-//      detected set BEFORE always-add tags are appended, so a user
-//      can simultaneously skip "git" and force-add "git" if they
-//      want every entry to carry it regardless of detection.
-//   3. Always-add set (GITMAP_VSCODE_TAG_ADD) is appended last and
-//      union'd with whatever survived steps 1-2.
+//  1. Extra marker→tag rules (GITMAP_VSCODE_TAG_MARKER) extend the
+//     marker map for this call only — built-in rules win on conflict.
+//  2. Skip set (GITMAP_VSCODE_TAG_SKIP) drops named tags from the
+//     detected set BEFORE always-add tags are appended, so a user
+//     can simultaneously skip "git" and force-add "git" if they
+//     want every entry to carry it regardless of detection.
+//  3. Always-add set (GITMAP_VSCODE_TAG_ADD) is appended last and
+//     union'd with whatever survived steps 1-2.
 //
 // Output order: detected tags in canonical order first, then the
 // always-add tags in user-supplied order. Determinism guaranteed

@@ -3,21 +3,21 @@ package constants
 // History-rewrite (`history-purge` / `history-pin`) flag names. See
 // spec/04-generic-cli/16-history-rewrite.md.
 const (
-	HistoryFlagYes          = "yes"
-	HistoryFlagYesShort     = "y"
-	HistoryFlagNoPush       = "no-push"
-	HistoryFlagDryRun       = "dry-run"
-	HistoryFlagMessage      = "message"
-	HistoryFlagKeepSandbox  = "keep-sandbox"
-	HistoryFlagQuiet        = "quiet"
-	HistoryFlagQuietShort   = "q"
-	HistoryPathSep          = ","
-	HistorySandboxPrefix    = "gitmap-history-rewrite-"
-	HistoryFilterRepoBin    = "git-filter-repo"
-	HistoryGitBin           = "git"
-	HistoryRemoteOrigin     = "origin"
-	HistoryPushRefSpec      = "--mirror"
-	HistoryForceWithLease   = "--force-with-lease"
+	HistoryFlagYes         = "yes"
+	HistoryFlagYesShort    = "y"
+	HistoryFlagNoPush      = "no-push"
+	HistoryFlagDryRun      = "dry-run"
+	HistoryFlagMessage     = "message"
+	HistoryFlagKeepSandbox = "keep-sandbox"
+	HistoryFlagQuiet       = "quiet"
+	HistoryFlagQuietShort  = "q"
+	HistoryPathSep         = ","
+	HistorySandboxPrefix   = "gitmap-history-rewrite-"
+	HistoryFilterRepoBin   = "git-filter-repo"
+	HistoryGitBin          = "git"
+	HistoryRemoteOrigin    = "origin"
+	HistoryPushRefSpec     = "--mirror"
+	HistoryForceWithLease  = "--force-with-lease"
 )
 
 // History-rewrite flag descriptions (rendered in --help).
@@ -32,13 +32,13 @@ const (
 
 // History-rewrite exit codes. Match spec §6 exactly.
 const (
-	HistoryExitOk             = 0
-	HistoryExitNotInRepo      = 2
-	HistoryExitNoFilterRepo   = 3
-	HistoryExitBadArgs        = 4
-	HistoryExitFilterFailed   = 5
-	HistoryExitVerifyFailed   = 6
-	HistoryExitPushFailed     = 7
+	HistoryExitOk           = 0
+	HistoryExitNotInRepo    = 2
+	HistoryExitNoFilterRepo = 3
+	HistoryExitBadArgs      = 4
+	HistoryExitFilterFailed = 5
+	HistoryExitVerifyFailed = 6
+	HistoryExitPushFailed   = 7
 )
 
 // History-rewrite user-facing messages. All literals live here (no
@@ -66,18 +66,18 @@ const (
 
 // History-rewrite errors.
 const (
-	HistoryErrNotInRepo      = "history-rewrite: not inside a git repository: %v\n"
-	HistoryErrNoOrigin       = "history-rewrite: cannot read origin remote: %v\n"
-	HistoryErrNoFilterRepo   = "history-rewrite: `git filter-repo` is not installed.\n"
-	HistoryErrBadArgs        = "history-rewrite: %s\n"
-	HistoryErrNoPaths        = "expected at least one path argument"
-	HistoryErrConflictFlags  = "--yes and --no-push are mutually exclusive"
+	HistoryErrNotInRepo       = "history-rewrite: not inside a git repository: %v\n"
+	HistoryErrNoOrigin        = "history-rewrite: cannot read origin remote: %v\n"
+	HistoryErrNoFilterRepo    = "history-rewrite: `git filter-repo` is not installed.\n"
+	HistoryErrBadArgs         = "history-rewrite: %s\n"
+	HistoryErrNoPaths         = "expected at least one path argument"
+	HistoryErrConflictFlags   = "--yes and --no-push are mutually exclusive"
 	HistoryErrPathNotReadable = "pin: cannot read %s from working tree: %v"
-	HistoryErrMirrorClone    = "history-rewrite: mirror-clone failed: %v\n"
-	HistoryErrFilterRepo     = "history-rewrite: filter-repo failed (exit %d): %s\n"
-	HistoryErrVerifyPurge    = "history-rewrite: verification failed: path %s still has %d commit(s) in history\n"
-	HistoryErrVerifyPin      = "history-rewrite: verification failed: path %s has %d distinct content hashes across history (expected 1)\n"
-	HistoryErrPush           = "history-rewrite: push failed: %v\n"
-	HistoryErrSandbox        = "history-rewrite: cannot create sandbox: %v\n"
-	HistoryErrManifest       = "history-rewrite: cannot write blob manifest: %v\n"
+	HistoryErrMirrorClone     = "history-rewrite: mirror-clone failed: %v\n"
+	HistoryErrFilterRepo      = "history-rewrite: filter-repo failed (exit %d): %s\n"
+	HistoryErrVerifyPurge     = "history-rewrite: verification failed: path %s still has %d commit(s) in history\n"
+	HistoryErrVerifyPin       = "history-rewrite: verification failed: path %s has %d distinct content hashes across history (expected 1)\n"
+	HistoryErrPush            = "history-rewrite: push failed: %v\n"
+	HistoryErrSandbox         = "history-rewrite: cannot create sandbox: %v\n"
+	HistoryErrManifest        = "history-rewrite: cannot write blob manifest: %v\n"
 )

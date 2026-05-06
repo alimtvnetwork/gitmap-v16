@@ -59,9 +59,9 @@ const (
 // values, e.g. `--vscode-tag work --vscode-tag urgent` is equivalent
 // to `--vscode-tag work,urgent`.
 //
-//   --vscode-tag <name>             always add <name> to every entry
-//   --vscode-tag-skip <name>        never emit auto-detected <name>
-//   --vscode-tag-marker <file>=<tag>  register marker→tag rule
+//	--vscode-tag <name>             always add <name> to every entry
+//	--vscode-tag-skip <name>        never emit auto-detected <name>
+//	--vscode-tag-marker <file>=<tag>  register marker→tag rule
 //
 // Env vars use ASCII unit separator (\x1f) between values so commas
 // inside individual tokens stay intact.
@@ -73,9 +73,9 @@ const (
 	FlagVSCodeTagMarker     = "vscode-tag-marker"
 	FlagDescVSCodeTagMarker = "register a marker→tag rule, e.g. Gemfile=ruby (repeatable; accepts comma-list)"
 
-	EnvVSCodeTagAdd        = "GITMAP_VSCODE_TAG_ADD"
-	EnvVSCodeTagSkip       = "GITMAP_VSCODE_TAG_SKIP"
-	EnvVSCodeTagMarker     = "GITMAP_VSCODE_TAG_MARKER"
-	EnvVSCodeTagSeparator  = "\x1f"
-	TagMarkerKVSeparator   = "="
+	EnvVSCodeTagAdd       = "GITMAP_VSCODE_TAG_ADD"
+	EnvVSCodeTagSkip      = "GITMAP_VSCODE_TAG_SKIP"
+	EnvVSCodeTagMarker    = "GITMAP_VSCODE_TAG_MARKER"
+	EnvVSCodeTagSeparator = "\x1f"
+	TagMarkerKVSeparator  = "="
 )

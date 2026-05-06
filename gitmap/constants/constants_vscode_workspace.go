@@ -23,20 +23,20 @@ const (
 
 // CLI flag IDs for `gitmap vscode-workspace`.
 const (
-	FlagVSCodeWorkspaceOut          = "out"
-	FlagDescVSCodeWorkspaceOut      = "output `.code-workspace` file path (default: ./" + VSCodeWorkspaceDefaultFilename + ")"
-	FlagVSCodeWorkspaceRelative     = "relative"
-	FlagDescVSCodeWorkspaceRelative = "emit folder paths relative to the workspace file's directory"
-	FlagVSCodeWorkspaceTag          = "tag"
-	FlagDescVSCodeWorkspaceTag      = "include only repos whose auto-detected tag set contains the given tag (e.g. go, node, git)"
+	FlagVSCodeWorkspaceOut            = "out"
+	FlagDescVSCodeWorkspaceOut        = "output `.code-workspace` file path (default: ./" + VSCodeWorkspaceDefaultFilename + ")"
+	FlagVSCodeWorkspaceRelative       = "relative"
+	FlagDescVSCodeWorkspaceRelative   = "emit folder paths relative to the workspace file's directory"
+	FlagVSCodeWorkspaceTag            = "tag"
+	FlagDescVSCodeWorkspaceTag        = "include only repos whose auto-detected tag set contains the given tag (e.g. go, node, git)"
 	FlagVSCodeWorkspaceRootSubdir     = "root-subdir"
 	FlagDescVSCodeWorkspaceRootSubdir = "add `<repo>/<subdir>` as the workspace folder instead of the repo root; repos without that subdir are skipped"
 )
 
 // User-facing messages.
 const (
-	MsgVSCodeWorkspaceWritten = "  ✓ wrote %s with %d folder(s)\n"
-	MsgVSCodeWorkspaceEmpty   = "  • no tracked repos — workspace not written (run `gitmap scan` first)\n"
+	MsgVSCodeWorkspaceWritten    = "  ✓ wrote %s with %d folder(s)\n"
+	MsgVSCodeWorkspaceEmpty      = "  • no tracked repos — workspace not written (run `gitmap scan` first)\n"
 	MsgVSCodeWorkspaceSubdirSkip = "  • skipped %s: subdir %q not found\n"
 )
 
