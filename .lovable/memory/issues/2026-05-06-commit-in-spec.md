@@ -59,3 +59,15 @@ The original 2026-05-06 user message ("Complete it in 7 iterations…") is the s
   and supports `-N` truncation; CloneInputs stages each input under
   <TempRoot>/<runId>/<idx>-<basename> with local folders reused in
   place. Hermetic tests (no real git) cover all branches.
+- 2026-05-06 — **Phase 5 ✅** Walk + dedupe + replay + runlog landed
+  as four sibling packages under gitmap/cmd/commitin/.
+  walk/: first-parent oldest→newest via rev-list, \x1f-delimited
+  hydrate (author+committer dates + files), empty-repo path returns
+  nil. dedupe/: ShaMap lookup; miss is non-error. replay/: byte-perfect
+  date replication via plumbing pipeline (cat-file blob → hash-object
+  → update-index --cacheinfo → write-tree → commit-tree -p HEAD →
+  update-ref). dryRun short-circuits all hooks. runlog/: enum-id
+  lookups + StartRun/FinishRun/InsertInputRepo/InsertSourceCommit
+  (tx-wrapped) / RecordRewritten (auto-seeds ShaMap on Created) /
+  RecordSkip. All hooks are swappable; tests use in-memory SQLite +
+  fake git runners — no real git or filesystem required.
