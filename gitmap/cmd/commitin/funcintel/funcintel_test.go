@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"gitmap/constants"
+	"github.com/alimtvnetwork/gitmap-v16/gitmap/constants"
 )
 
 func TestLanguageForPath(t *testing.T) {
