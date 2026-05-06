@@ -357,10 +357,22 @@ path → `mkdir -p && git init`. No prompt, no flag.
   `--message-exclude` shape (Kind:Value), flags-after-positionals
   reordering, `-d` short alias, language error lists supported set.
   `go build ./...` clean; `go test ./cmd/commitin/...` green.
-- ⏳ **Phase 4 — Workspace + source resolution.** Implement
-  `EnsureWorkspace`, `EnsureSource` (the four-case auto-init rule),
-  `ExpandInputs` (`all` / `-N` discovery), `CloneInputs`,
-  `AcquireLock`. Smoke test under `.github/scripts/`.
+- ✅ **Phase 4 — Workspace + source resolution (2026-05-06).** New
+  `gitmap/cmd/commitin/workspace/` package with one helper per file:
+  `paths.go` (`EnsureWorkspace` → idempotent `<source>/.gitmap/{,commit-in/{,profiles},temp}` layout),
+  `lock.go` (`AcquireLock` / `LockHandle.Release`, stale-PID reclaim,
+  spec §2.7 `CommitInExitLockBusy` message),
+  `source.go` (`EnsureSource` four-case rule: clone URL / reuse repo /
+  init-in-place / mkdir+init), `expand.go` (explicit token classifier
+  + `all` / `-N` sibling discovery via `-vN` regex, ascending sort),
+  `clone.go` (`CloneInputs` stages every input under
+  `<TempRoot>/<runId>/<idx>-<basename>`; local folders reused in
+  place), `runner.go` (swappable `gitRunner` + `SetGitRunnerForTest`
+  hook). All funcs ≤15 lines, all files <200 lines. Hermetic test
+  suite (`workspace_test.go`) with 9 cases covers idempotency, lock
+  collision/release, all four `EnsureSource` branches, sibling sort
+  (`demo`/`-v1`/`-v3`/`-v10`), `-N` truncation, mixed
+  URL+folder classification, three-kind staging.
 - ⏳ **Phase 5 — Walk + dedupe + replay.** Implement `WalkCommits`
   (first-parent oldest→newest), `DedupeCheck` against `ShaMap`,
   `BuildFileSet` (with `Exclusions`), `Commit` (replicating BOTH
