@@ -98,7 +98,7 @@ func closeTaskDB(db *store.DB) {
 // exitWith is an indirection over os.Exit used at call sites that
 // have a deferred cleanup the gocritic exitAfterDefer linter cannot
 // reason about (e.g. a conditional file/log close that runs in a
-// nested branch). The underlying behaviour is identical to os.Exit;
+// nested branch). The underlying behavior is identical to os.Exit;
 // the redirection only exists to bypass the purely-syntactic AST
 // match performed by the linter, after we have manually verified
 // the cleanup either runs unconditionally before this call or is
